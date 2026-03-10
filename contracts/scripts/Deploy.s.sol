@@ -15,18 +15,15 @@ contract DeployEcoChain is Script {
 
         vm.startBroadcast();
 
-        EcoChainAccess access = new EcoChainAccess();
+        new EcoChainAccess();
 
         CarbonCredit token = new CarbonCredit();
 
-        CarbonMarketplace market =
-            new CarbonMarketplace(address(token));
+        new CarbonMarketplace(address(token));
 
-        CreditRetirement retirement =
-            new CreditRetirement(address(token));
+        new CreditRetirement(address(token));
 
-        AuditRegistry registry =
-            new AuditRegistry();
+        new AuditRegistry();
 
         vm.stopBroadcast();
     }

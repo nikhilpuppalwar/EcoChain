@@ -14,9 +14,16 @@ export default function DashboardLayout() {
     const isAdmin = user?.role === 'admin';
     const roleLabel = isIndustry ? 'Industry Portal' : isAuditor ? 'Auditor Portal' : isAdmin ? 'Admin Portal' : 'Government Admin';
 
-    const industryLinks = [
+    type NavLink = {
+        name: string;
+        href: string;
+        icon: string;
+        exact?: boolean;
+    };
+
+    const industryLinks: NavLink[] = [
         { name: 'Dashboard', href: '/industry/dashboard', icon: 'bar_chart' },
-        { name: 'Emission History', href: '/industry/emissions', icon: 'eco' },
+        { name: 'Emission History', href: '/industry/emissions', icon: 'eco', exact: true },
         { name: 'Add Emission', href: '/industry/emissions/new', icon: 'add_circle' },
         { name: 'Submission Tracker', href: '/industry/tracker', icon: 'assignment_turned_in' },
         { name: 'AI Forecast', href: '/industry/ai-forecast', icon: 'monitoring' },
@@ -26,7 +33,7 @@ export default function DashboardLayout() {
         { name: 'Notifications', href: '/industry/notifications', icon: 'notifications' },
     ];
 
-    const govLinks = [
+    const govLinks: NavLink[] = [
         { name: 'Dashboard', href: '/gov/dashboard', icon: 'bar_chart' },
         { name: 'Report Review', href: '/gov/reports', icon: 'description' },
         { name: 'Issue Credits', href: '/gov/issue-credits', icon: 'verified_user' },
@@ -37,7 +44,7 @@ export default function DashboardLayout() {
         { name: 'Send Notifications', href: '/gov/notifications', icon: 'campaign' },
     ];
 
-    const auditorLinks = [
+    const auditorLinks: NavLink[] = [
         { name: 'Dashboard', href: '/auditor/dashboard', icon: 'bar_chart' },
         { name: 'Audit Queue', href: '/auditor/queue', icon: 'assignment' },
         { name: 'Verify & Submit', href: '/auditor/verify/new', icon: 'fact_check' },
@@ -45,7 +52,7 @@ export default function DashboardLayout() {
         { name: 'History & Alerts', href: '/auditor/history', icon: 'history' },
     ];
 
-    const adminLinks = [
+    const adminLinks: NavLink[] = [
         { name: 'Dashboard', href: '/admin/dashboard', icon: 'bar_chart' },
         { name: 'User Management', href: '/admin/users', icon: 'people' },
         { name: 'System Config', href: '/admin/config', icon: 'settings' },
@@ -75,7 +82,7 @@ export default function DashboardLayout() {
 
             <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto">
                 {navLinks.map((link) => {
-                    const isActive = location.pathname === link.href || location.pathname.startsWith(link.href + '/');
+                    const isActive = location.pathname === link.href || (!link.exact && location.pathname.startsWith(link.href + '/'));
                     return (
                         <Link
                             key={link.name}
