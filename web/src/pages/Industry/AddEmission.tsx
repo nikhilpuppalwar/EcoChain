@@ -126,7 +126,7 @@ export default function AddEmission() {
 
                             <div className="space-y-2">
                                 <label className="text-sm font-bold text-slate-700 flex items-center justify-between">
-                                    <span>Amount (tCO₂e)*</span>
+                                    <span>Amount (ton)*</span>
                                     <span className="text-xs font-normal text-slate-500">Metric Tons</span>
                                 </label>
                                 <input

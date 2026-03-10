@@ -19,6 +19,7 @@ EcoChain is a full-stack, blockchain-powered carbon emission monitoring and trad
 - [Core Workflow](#core-workflow)
 - [API Reference](#api-reference)
 - [Environment Variables](#environment-variables)
+- [Setup](#setup)
 - [Getting Started](#getting-started)
 - [Blockchain Setup (Foundry)](#blockchain-setup-foundry)
 - [Deployment](#deployment)
@@ -442,6 +443,69 @@ VITE_POLYGON_RPC=https://polygon-mainnet.g.alchemy.com/v2/your_key
 VITE_CARBON_CREDIT_ADDRESS=0x...
 VITE_MARKETPLACE_ADDRESS=0x...
 ```
+
+---
+
+## Setup
+
+This hackathon repo is a trimmed version of EcoChain with three main parts:
+
+- `web` – React + Vite frontend
+- `backend` – Node.js + Express API
+- `contracts` – Foundry Solidity contracts
+
+### 1. Install dependencies
+
+```bash
+# from repo root
+cd backend
+npm install
+
+cd ../web
+npm install
+```
+
+### 2. Configure environment variables
+
+- Copy `.env.example` to `.env` in `backend` and `web` (if examples exist), or create `.env` using the **Environment Variables** section above.
+- Make sure you set:
+  - MongoDB connection (`MONGODB_URI`) in `backend`
+  - JWT secrets in `backend`
+  - RPC URL + `CARBON_CREDIT_ADDRESS` in `backend` for on-chain calls
+  - `VITE_API_URL` and `VITE_SOCKET_URL` in `web`
+
+### 3. Run a local blockchain (optional for Web3 features)
+
+```bash
+cd contracts
+forge install
+forge build
+anvil                      # starts local node on http://127.0.0.1:8545
+
+# in a new terminal, still in contracts/
+forge script scripts/Deploy.s.sol --rpc-url http://127.0.0.1:8545 --broadcast
+```
+
+- Take the deployed `CarbonCredit` and `CarbonMarketplace` addresses from the deploy output and:
+  - put them into `web/src/contracts/addresses.json`
+  - set `CARBON_CREDIT_ADDRESS` in `backend/.env`
+
+### 4. Start backend and frontend
+
+```bash
+# backend API (http://localhost:5000)
+cd backend
+npm run dev
+
+# frontend (http://localhost:5173 by default)
+cd ../web
+npm run dev
+```
+
+Once all are running, you can:
+- log in / register users via the UI,
+- connect a wallet from the `web` app,
+- issue, trade, and retire carbon credits against your local or testnet blockchain.
 
 ---
 

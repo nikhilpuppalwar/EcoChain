@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import AnimatedCounter from './components/AnimatedCounter';
 import LoginPage from './pages/LoginPage';
+import ResetPassword from './pages/ResetPassword';
 
 
 import IndustryStep1 from './pages/onboarding/IndustryStep1';
@@ -281,11 +282,11 @@ function LandingPage() {
             </p>
 
             <div className="flex flex-wrap gap-4">
-              <Link to="/register" className="btn-primary h-13 px-8 text-base">
+              <Link to="/register" className="btn-primary h-14 px-8 text-base">
                 Get Started Free
                 <span className="material-symbols-outlined">arrow_forward</span>
               </Link>
-              <Link to="/public/dashboard" className="btn-secondary h-13 px-8 text-base">
+              <Link to="/public/dashboard" className="btn-secondary h-14 px-8 text-base">
                 <span className="material-symbols-outlined">public</span>
                 Explore Public Data
               </Link>
@@ -816,6 +817,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
 
         {/* Dashboard Layout with Protected Routes */}
         <Route element={<DashboardLayout />}>

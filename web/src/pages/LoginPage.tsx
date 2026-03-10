@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { useAuthStore } from '../store/authStore';
 import toast from 'react-hot-toast';
+import api from '../lib/api';
 
 export default function LoginPage() {
     const navigate = useNavigate();
@@ -67,9 +68,18 @@ export default function LoginPage() {
             setError("Please enter your email to reset password.");
             return;
         }
-        // TODO: Map to actual forgot password endpoint
-        // await api.post('/auth/forgot-password', { email });
-        toast.success("Password reset email sent (mocked)");
+        try {
+            const response = await api.post('/auth/forgot-password', { email });
+            const data = response.data;
+            toast.success(data.message || "Password reset link created.");
+
+            // In hackathon mode backend returns a resetPath we can navigate to directly
+            if (data.resetPath) {
+                navigate(data.resetPath);
+            }
+        } catch (err: any) {
+            setError(err.response?.data?.message || 'Failed to start password reset. Please try again.');
+        }
     };
 
     return (

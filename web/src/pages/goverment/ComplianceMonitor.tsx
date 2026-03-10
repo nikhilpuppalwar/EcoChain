@@ -92,7 +92,7 @@ export default function ComplianceMonitor() {
                     <p className="text-slate-300 text-xs font-bold uppercase tracking-wider mb-2">Total Penalties Assessed</p>
                     <div className="flex items-baseline gap-2">
                         <h3 className="text-3xl font-bold font-syne text-white">
-                            ${(companies.reduce((sum, c) => sum + c.penalty, 0) / 1000).toLocaleString()}k
+                            ₹{(companies.reduce((sum, c) => sum + c.penalty, 0) / 1000).toLocaleString()}k
                         </h3>
                     </div>
                     <div className="absolute -right-4 -bottom-4 opacity-10">
@@ -177,7 +177,7 @@ export default function ComplianceMonitor() {
                                             </td>
                                             <td className="px-6 py-4 text-right">
                                                 {company.penalty > 0 ? (
-                                                    <span className="font-bold text-slate-800 text-sm">${company.penalty.toLocaleString()}</span>
+                                                    <span className="font-bold text-slate-800 text-sm">₹{company.penalty.toLocaleString()}</span>
                                                 ) : (
                                                     <span className="text-slate-400 text-sm">-</span>
                                                 )}

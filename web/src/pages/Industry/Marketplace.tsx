@@ -115,7 +115,7 @@ export default function Marketplace() {
                         <div className="space-y-4">
                             <div className="flex justify-between items-center">
                                 <span className="text-sm text-slate-500">Average Price</span>
-                                <span className="font-bold text-slate-800">$18.40/cr</span>
+                                <span className="font-bold text-slate-800">₹18.40/cr</span>
                             </div>
                             <div className="flex justify-between items-center">
                                 <span className="text-sm text-slate-500">24h Volume</span>
@@ -160,7 +160,7 @@ export default function Marketplace() {
                                         </div>
                                         <div>
                                             <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Price</p>
-                                            <p className="font-bold text-[#1A7A4A] text-lg">${listing.pricePerCredit.toFixed(2)} <span className="text-sm font-normal text-slate-500">/cr</span></p>
+                                            <p className="font-bold text-[#1A7A4A] text-lg">₹{listing.pricePerCredit.toFixed(2)} <span className="text-sm font-normal text-slate-500">/cr</span></p>
                                         </div>
                                     </div>
                                 </div>

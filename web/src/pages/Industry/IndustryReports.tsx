@@ -15,25 +15,7 @@ export default function IndustryReports() {
             </div>
 
             {/* Report type selector */}
-            <div className="grid sm:grid-cols-3 gap-4">
-                {reportTypes.map(r => (
-                    <div key={r.id} className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm hover:shadow-md hover:border-[#1A7A4A]/30 transition-all cursor-pointer group">
-                        <div className="w-12 h-12 rounded-xl bg-green-50 flex items-center justify-center mb-4 group-hover:bg-[#1A7A4A]/10 transition-colors">
-                            <span className="material-symbols-outlined text-[#1A7A4A]">{r.icon}</span>
-                        </div>
-                        <h3 className="font-black text-gray-900 mb-1">{r.label}</h3>
-                        <p className="text-xs text-gray-400 leading-relaxed mb-4">{r.desc}</p>
-                        <div className="flex gap-2">
-                            <button onClick={() => toast.success(`${r.label} generating...`)} className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-[#1A7A4A] text-white text-xs font-black rounded-xl hover:bg-[#15613b] transition-colors">
-                                <span className="material-symbols-outlined text-xs">download</span>PDF
-                            </button>
-                            <button onClick={() => toast.success('Download link copied!')} className="px-3 py-2 border border-gray-200 rounded-xl text-xs font-bold text-gray-500 hover:bg-gray-50 transition-colors">
-                                <span className="material-symbols-outlined text-xs">share</span>
-                            </button>
-                        </div>
-                    </div>
-                ))}
-            </div>
+    
 
             {/* Filters */}
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
@@ -87,9 +69,7 @@ export default function IndustryReports() {
                 </div>
                 <div className="divide-y divide-gray-50">
                     {[
-                        { name: 'ESG Annual Report 2024', date: 'Feb 15, 2025', size: '2.4 MB', type: 'ESG' },
-                        { name: 'Carbon Compliance Q3 2024', date: 'Nov 28, 2024', size: '0.8 MB', type: 'Carbon' },
-                        { name: 'ESG Annual Report 2023', date: 'Feb 20, 2024', size: '2.1 MB', type: 'ESG' },
+                        { name: 'Annual Report 2024', date: 'Feb 15, 2025', size: '2.4 MB', type: 'BRSR' },
                     ].map((r, i) => (
                         <div key={i} className="flex items-center gap-4 p-4 hover:bg-gray-50 transition-colors">
                             <div className="w-9 h-9 rounded-xl bg-red-50 flex items-center justify-center flex-shrink-0">

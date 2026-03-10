@@ -18,7 +18,7 @@ const platformStats = [
     { label: 'Credits Minted', value: '1.24M tCO₂e', icon: 'token', color: 'text-amber-600' },
     { label: 'Credits Traded', value: '892K tCO₂e', icon: 'swap_horiz', color: 'text-blue-600' },
     { label: 'Credits Retired', value: '456K tCO₂e', icon: 'local_fire_department', color: 'text-red-600' },
-    { label: 'Market Volume', value: '$22.4M', icon: 'attach_money', color: 'text-green-600' },
+    { label: 'Market Volume', value: '₹22.4M', icon: 'attach_money', color: 'text-green-600' },
 ];
 
 const activityData = [

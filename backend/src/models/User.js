@@ -39,6 +39,10 @@ const userSchema = new mongoose.Schema({
         superAdmin: { type: Boolean, default: false },
     },
 
+    // Password reset
+    resetPasswordToken: String,
+    resetPasswordExpires: Date,
+
     isActive: { type: Boolean, default: false },
     refreshToken: String,
     createdAt: { type: Date, default: Date.now },
