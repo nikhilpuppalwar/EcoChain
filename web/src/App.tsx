@@ -2,6 +2,58 @@ import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import AnimatedCounter from './components/AnimatedCounter';
 import LoginPage from './pages/LoginPage';
 
+
+import IndustryStep1 from './pages/onboarding/IndustryStep1';
+import IndustryStep2 from './pages/onboarding/IndustryStep2';
+import IndustryStep3 from './pages/onboarding/IndustryStep3';
+import GovStep1 from './pages/onboarding/GovStep1';
+import GovStep2 from './pages/onboarding/GovStep2';
+import GovStep3 from './pages/onboarding/GovStep3';
+import IndustryDashboard from './pages/Industry/IndustryDashboard';
+import AddEmission from './pages/Industry/AddEmission';
+import EmissionHistory from './pages/Industry/EmissionHistory';
+import Marketplace from './pages/Industry/Marketplace';
+import Wallet from './pages/Industry/Wallet';
+import AiForecast from './pages/Industry/AiForecast';
+import IndustryReports from './pages/Industry/IndustryReports';
+import GovDashboard from './pages/goverment/GovDashboard';
+import ReportReview from './pages/goverment/ReportReview';
+import IssueCredits from './pages/goverment/IssueCredits';
+import ComplianceMonitor from './pages/goverment/ComplianceMonitor';
+import GovMonitoring from './pages/goverment/GovMonitoring';
+import GovAnalytics from './pages/goverment/GovAnalytics';
+import GovBlockchain from './pages/goverment/GovBlockchain';
+import GovNotifications from './pages/goverment/GovNotifications';
+import TransparencyDashboard from './pages/TransparencyDashboard';
+import NotFound from './pages/NotFound';
+import GovPendingVerification from './pages/GovPendingVerification';
+// Landing & Public pages
+import HowItWorks from './pages/HowItWorks';
+import Contact from './pages/Contact';
+import Register from './pages/Register';
+import PublicDashboard from './pages/public/PublicDashboard';
+import EmissionMap from './pages/public/EmissionMap';
+import CarbonMarket from './pages/public/CarbonMarket';
+import PoliciesReports from './pages/public/PoliciesReports';
+// Auditor pages
+import AuditorDashboard from './pages/auditor/AuditorDashboard';
+import AuditQueue from './pages/auditor/AuditQueue';
+import VerifySubmit from './pages/auditor/VerifySubmit';
+import AuditorBlockchain from './pages/auditor/AuditorBlockchain';
+import AuditorHistory from './pages/auditor/AuditorHistory';
+// Admin pages
+import AdminDashboard from './pages/admin/AdminDashboard';
+import AdminUsers from './pages/admin/AdminUsers';
+import AdminConfig from './pages/admin/AdminConfig';
+import AdminLogs from './pages/admin/AdminLogs';
+import AdminContent from './pages/admin/AdminContent';
+import AdminSettings from './pages/admin/AdminSettings';
+import SubmissionTracker from './pages/Industry/SubmissionTracker';
+import IndustryNotifications from './pages/Industry/IndustryNotifications';
+import ProtectedRoute from './components/ProtectedRoute';
+import DashboardLayout from './components/DashboardLayout';
+import { Toaster } from 'react-hot-toast';
+
 // ─── 6 Feature Cards Data ──────────────────────────────────────────────
 const features = [
   {
@@ -750,20 +802,6 @@ function LandingPage() {
     </>
   );
 }
-
-
-
-// Landing & Public pages
-import HowItWorks from './pages/HowItWorks';
-import Contact from './pages/Contact';
-import Register from './pages/Register';
-import PublicDashboard from './pages/public/PublicDashboard';
-import EmissionMap from './pages/public/EmissionMap';
-import CarbonMarket from './pages/public/CarbonMarket';
-import PoliciesReports from './pages/public/PoliciesReports';
-
-import { Toaster } from 'react-hot-toast';
-
 export default function App() {
   return (
     <Router>
@@ -776,10 +814,57 @@ export default function App() {
         <Route path="/login" element={<LoginPage />} />
 
         {/* Dashboard Layout with Protected Routes */}
+        <Route element={<DashboardLayout />}>
+          {/* Industry Routes */}
+          <Route path="/industry/dashboard" element={<ProtectedRoute allowedRoles={['industry']}><IndustryDashboard /></ProtectedRoute>} />
+          <Route path="/industry/emissions/new" element={<ProtectedRoute allowedRoles={['industry']}><AddEmission /></ProtectedRoute>} />
+          <Route path="/industry/emissions" element={<ProtectedRoute allowedRoles={['industry']}><EmissionHistory /></ProtectedRoute>} />
+          <Route path="/industry/marketplace" element={<ProtectedRoute allowedRoles={['industry']}><Marketplace /></ProtectedRoute>} />
+          <Route path="/industry/ai-forecast" element={<ProtectedRoute allowedRoles={['industry']}><AiForecast /></ProtectedRoute>} />
+          <Route path="/industry/wallet" element={<ProtectedRoute allowedRoles={['industry']}><Wallet /></ProtectedRoute>} />
+          <Route path="/industry/tracker" element={<ProtectedRoute allowedRoles={['industry']}><SubmissionTracker /></ProtectedRoute>} />
+          <Route path="/industry/notifications" element={<ProtectedRoute allowedRoles={['industry']}><IndustryNotifications /></ProtectedRoute>} />
+          <Route path="/industry/reports" element={<ProtectedRoute allowedRoles={['industry']}><IndustryReports /></ProtectedRoute>} />
 
+          {/* Government Routes */}
+          <Route path="/gov/dashboard" element={<ProtectedRoute allowedRoles={['government']}><GovDashboard /></ProtectedRoute>} />
+          <Route path="/gov/reports" element={<ProtectedRoute allowedRoles={['government']}><ReportReview /></ProtectedRoute>} />
+          <Route path="/gov/issue-credits" element={<ProtectedRoute allowedRoles={['government']}><IssueCredits /></ProtectedRoute>} />
+          <Route path="/gov/compliance" element={<ProtectedRoute allowedRoles={['government']}><ComplianceMonitor /></ProtectedRoute>} />
+          <Route path="/gov/monitoring" element={<ProtectedRoute allowedRoles={['government']}><GovMonitoring /></ProtectedRoute>} />
+          <Route path="/gov/analytics" element={<ProtectedRoute allowedRoles={['government']}><GovAnalytics /></ProtectedRoute>} />
+          <Route path="/gov/blockchain" element={<ProtectedRoute allowedRoles={['government']}><GovBlockchain /></ProtectedRoute>} />
+          <Route path="/gov/notifications" element={<ProtectedRoute allowedRoles={['government']}><GovNotifications /></ProtectedRoute>} />
 
+          {/* Auditor Routes */}
+          <Route path="/auditor/dashboard" element={<ProtectedRoute allowedRoles={['auditor']}><AuditorDashboard /></ProtectedRoute>} />
+          <Route path="/auditor/queue" element={<ProtectedRoute allowedRoles={['auditor']}><AuditQueue /></ProtectedRoute>} />
+          <Route path="/auditor/verify/:id" element={<ProtectedRoute allowedRoles={['auditor']}><VerifySubmit /></ProtectedRoute>} />
+          <Route path="/auditor/blockchain" element={<ProtectedRoute allowedRoles={['auditor']}><AuditorBlockchain /></ProtectedRoute>} />
+          <Route path="/auditor/history" element={<ProtectedRoute allowedRoles={['auditor']}><AuditorHistory /></ProtectedRoute>} />
+
+          {/* Admin Routes */}
+          <Route path="/admin/dashboard" element={<ProtectedRoute allowedRoles={['admin']}><AdminDashboard /></ProtectedRoute>} />
+          <Route path="/admin/users" element={<ProtectedRoute allowedRoles={['admin']}><AdminUsers /></ProtectedRoute>} />
+          <Route path="/admin/config" element={<ProtectedRoute allowedRoles={['admin']}><AdminConfig /></ProtectedRoute>} />
+          <Route path="/admin/logs" element={<ProtectedRoute allowedRoles={['admin']}><AdminLogs /></ProtectedRoute>} />
+          <Route path="/admin/content" element={<ProtectedRoute allowedRoles={['admin']}><AdminContent /></ProtectedRoute>} />
+          <Route path="/admin/settings" element={<ProtectedRoute allowedRoles={['admin']}><AdminSettings /></ProtectedRoute>} />
+        </Route>
+
+        {/* Industry Onboarding */}
+        <Route path="/register/industry/step1" element={<IndustryStep1 />} />
+        <Route path="/register/industry/step2" element={<IndustryStep2 />} />
+        <Route path="/register/industry/review" element={<IndustryStep3 />} />
+
+        {/* Government Onboarding */}
+        <Route path="/register/government/step1" element={<GovStep1 />} />
+        <Route path="/register/government/step2" element={<GovStep2 />} />
+        <Route path="/register/government/review" element={<GovStep3 />} />
+        <Route path="/register/government/pending" element={<GovPendingVerification />} />
 
         {/* Public Routes */}
+        <Route path="/transparency" element={<TransparencyDashboard />} />
         <Route path="/how-it-works" element={<HowItWorks />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/register" element={<Register />} />
@@ -789,6 +874,7 @@ export default function App() {
         <Route path="/public/policies" element={<PoliciesReports />} />
 
         {/* Catch-all 404 Route */}
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </Router>
   );

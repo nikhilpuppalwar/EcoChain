@@ -14,10 +14,21 @@ export const useAuthStore = create(
             login: async (credentials) => {
                 set({ isLoading: true });
                 try {
-                    const response = await api.post('/auth/login', credentials);
-                    const { accessToken, user } = response.data;
+                    // MOCK LOGIN FOR DEVELOPMENT
+                    const user = {
+                        id: 'mock-user-123',
+                        role: credentials.role,
+                        email: credentials.email,
+                        name: 'Mock User',
+                        governmentProfile: { status: 'approved' } // Bypass pending verification
+                    };
+                    const accessToken = 'mock-jwt-token-123';
+
+                    // Simulate network delay
+                    await new Promise(resolve => setTimeout(resolve, 500));
+
                     set({ user, accessToken, isAuthenticated: true, isLoading: false });
-                    return response.data;
+                    return { user, accessToken };
                 } catch (error) {
                     set({ isLoading: false });
                     throw error;
