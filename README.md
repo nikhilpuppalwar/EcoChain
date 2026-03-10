@@ -19,7 +19,6 @@ EcoChain is a full-stack, blockchain-powered carbon emission monitoring and trad
 - [Core Workflow](#core-workflow)
 - [API Reference](#api-reference)
 - [Environment Variables](#environment-variables)
-- [Setup](#setup)
 - [Getting Started](#getting-started)
 - [Blockchain Setup (Foundry)](#blockchain-setup-foundry)
 - [Deployment](#deployment)
@@ -166,57 +165,22 @@ EcoChain addresses three critical failures in existing carbon markets:
 
 ## Project Structure
 
-```
-ecochain/
-├── client/                        # React.js Frontend
-│   └── src/
-│       ├── pages/
-│       │   ├── landing/           # L1–L5 Landing Page screens
-│       │   ├── public/            # P1–P4 Public Data Portal screens
-│       │   ├── government/        # G1–G7 Government Portal screens
-│       │   ├── auditor/           # A1–A5 Auditor Portal screens
-│       │   ├── industry/          # I1–I6 Industry Portal screens
-│       │   └── admin/             # AD1–AD6 Admin Portal screens
-│       ├── components/
-│       │   ├── shared/            # Navbar, Sidebar, Cards
-│       │   ├── charts/            # Recharts components
-│       │   ├── maps/              # Leaflet components
-│       │   ├── tables/            # TanStack Table
-│       │   └── forms/             # React Hook Form
-│       ├── store/                 # Zustand global state stores
-│       ├── hooks/                 # Custom React hooks
-│       ├── services/              # Axios API call functions
-│       └── utils/                 # Helper functions
-│
-├── server/                        # Node.js + Express.js Backend
-│   ├── routes/                    # 16 API route modules
-│   ├── controllers/               # Route handler functions
-│   ├── services/                  # Business logic layer (12 services)
-│   ├── models/                    # Mongoose schemas (16 collections)
-│   ├── middleware/                # JWT auth, RBAC, validation, rate limit
-│   ├── jobs/                      # node-cron scheduled jobs
-│   ├── utils/                     # Email helpers, PDF generator, blockchain connector
-│   └── config/                    # DB, env, Swagger
-│
-├── ai/                            # Python FastAPI AI/ML Microservice
-│   ├── models/                    # Trained ML model files (.pkl, .h5)
-│   ├── routes/                    # FastAPI endpoint definitions (9 endpoints)
-│   ├── services/                  # ML inference logic per model
-│   ├── training/                  # Model training scripts (Google Colab)
-│   └── utils/                     # Data processing helpers
-│
-├── contracts/                     # Foundry Smart Contract Project
-│   ├── src/                       # Solidity contract source files
-│   ├── test/                      # Solidity test files (.t.sol)
-│   ├── script/                    # Deployment scripts (.s.sol)
-│   ├── lib/                       # OpenZeppelin contracts (via forge)
-│   └── foundry.toml               # Foundry configuration
-│
-└── .github/
-    └── workflows/
-        ├── deploy-client.yml      # Vercel auto-deploy
-        ├── deploy-server.yml      # Render backend auto-deploy
-        └── deploy-ai.yml          # Render AI service auto-deploy
+```bash
+CHK-1772889891795-6236/
+├── backend/                  # Node.js + Express API server
+│   ├── src/                  # Controllers, routes, and models (User, Emission, Report)
+│   └── package.json          
+├── contracts/                # Foundry-based Solidity smart contracts
+│   ├── src/                  # CarbonCredit, CarbonMarketplace, AuditRegistry, CreditRetirement 
+│   ├── scripts/              # Foundry deployment scripts
+│   ├── test/                 # Foundry test suites
+│   └── foundry.toml          
+├── Docs/                     # Project documentation, PRDs, and architecture blueprints
+├── Database/                 # Database schemas and models
+├── Reports/                  # Generated compliance and audit reports
+└── web/                      # React.js + Vite frontend application
+    ├── src/                  # React components, pages, context, and ABIs
+    └── package.json          
 ```
 
 ---
@@ -446,167 +410,57 @@ VITE_MARKETPLACE_ADDRESS=0x...
 
 ---
 
-## Setup
+## Getting Started
 
-This hackathon repo is a trimmed version of EcoChain with three main parts:
+### Prerequisites
 
-- `web` – React + Vite frontend
-- `backend` – Node.js + Express API
-- `contracts` – Foundry Solidity contracts
+- [Node.js](https://nodejs.org/) (v18+)
+- [Foundry](https://book.getfoundry.sh/getting-started/installation) (for smart contract interactions)
+- [MongoDB](https://www.mongodb.com/) (Local or Atlas)
 
-### 1. Install dependencies
+
+### 1. Clone the Repository
 
 ```bash
-# from repo root
-cd backend
-npm install
-
-cd ../web
-npm install
+git clone https://github.com/nikhilpuppalwar/CHK-1772889891795-6236.git
+cd CHK-1772889891795-6236
 ```
 
-### 2. Configure environment variables
-
-- Copy `.env.example` to `.env` in `backend` and `web` (if examples exist), or create `.env` using the **Environment Variables** section above.
-- Make sure you set:
-  - MongoDB connection (`MONGODB_URI`) in `backend`
-  - JWT secrets in `backend`
-  - RPC URL + `CARBON_CREDIT_ADDRESS` in `backend` for on-chain calls
-  - `VITE_API_URL` and `VITE_SOCKET_URL` in `web`
-
-### 3. Run a local blockchain (optional for Web3 features)
+### 2. Smart Contracts (Foundry)
 
 ```bash
 cd contracts
 forge install
 forge build
-anvil                      # starts local node on http://127.0.0.1:8545
 
-# in a new terminal, still in contracts/
+# Start local testnet
+anvil 
+
+# In a new terminal, deploy contracts to Anvil:
 forge script scripts/Deploy.s.sol --rpc-url http://127.0.0.1:8545 --broadcast
 ```
 
-- Take the deployed `CarbonCredit` and `CarbonMarketplace` addresses from the deploy output and:
-  - put them into `web/src/contracts/addresses.json`
-  - set `CARBON_CREDIT_ADDRESS` in `backend/.env`
+*Note: Update the deployed contract addresses in your backend and web environments.*
 
-### 4. Start backend and frontend
+### 3. Backend Setup
 
 ```bash
-# backend API (http://localhost:5000)
 cd backend
-npm run dev
-
-# frontend (http://localhost:5173 by default)
-cd ../web
+npm install
+cp .env.example .env # Add your MongoDB URI, JWT secrets, and RPC URLs
 npm run dev
 ```
+*API will be running on `http://localhost:5000` by default.*
 
-Once all are running, you can:
-- log in / register users via the UI,
-- connect a wallet from the `web` app,
-- issue, trade, and retire carbon credits against your local or testnet blockchain.
-
----
-
-## Getting Started
-
-### Prerequisites
-
-- Node.js v18+
-- Python 3.11+
-- Git
-- Foundry — install via `curl -L https://foundry.paradigm.xyz | bash && foundryup`
-
-### 1. Clone the Repository
+### 4. Frontend Setup
 
 ```bash
-git clone https://github.com/your-org/ecochain.git
-cd ecochain
-```
-
-### 2. Start the Frontend
-
-```bash
-cd client
+cd web
 npm install
-cp .env.example .env      # fill in variables
-npm run dev               # starts on http://localhost:3000
+cp .env.example .env # Set your VITE_API_URL and Smart Contract Addresses
+npm run dev
 ```
-
-### 3. Start the Backend
-
-```bash
-cd server
-npm install
-cp .env.example .env      # fill in variables
-npm run dev               # starts on http://localhost:5000
-```
-
-### 4. Start the AI Service
-
-```bash
-cd ai
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
-pip install -r requirements.txt
-cp .env.example .env
-uvicorn main:app --reload --port 8000
-```
-
-### 5. Setup Smart Contracts
-
-```bash
-cd contracts
-forge install              # installs OpenZeppelin
-forge build                # compile all contracts
-anvil                      # start local testnet on port 8545
-
-# In a new terminal — deploy to local testnet
-forge script script/Deploy.s.sol --rpc-url http://localhost:8545 --broadcast
-```
-
----
-
-## Blockchain Setup (Foundry)
-
-```bash
-# Install Foundry
-curl -L https://foundry.paradigm.xyz | bash
-foundryup
-
-# Initialize project (already done in repo)
-forge init contracts
-cd contracts
-
-# Install OpenZeppelin
-forge install OpenZeppelin/openzeppelin-contracts
-
-# Compile
-forge build
-
-# Run tests
-forge test -vvv
-
-# Gas report
-forge test --gas-report
-
-# Deploy to Polygon Mumbai testnet
-forge script script/Deploy.s.sol \
-  --rpc-url $MUMBAI_RPC_URL \
-  --private-key $PRIVATE_KEY \
-  --broadcast \
-  --verify \
-  --etherscan-api-key $POLYGONSCAN_API_KEY
-
-# Deploy to Polygon Mainnet
-forge script script/Deploy.s.sol \
-  --rpc-url $POLYGON_RPC_URL \
-  --private-key $PRIVATE_KEY \
-  --broadcast \
-  --verify \
-  --etherscan-api-key $POLYGONSCAN_API_KEY
-```
+*App will be running on `http://localhost:5173` by default.*
 
 ---
 
