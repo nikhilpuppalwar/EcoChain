@@ -9,6 +9,9 @@ import IndustryStep3 from './pages/onboarding/IndustryStep3';
 import GovStep1 from './pages/onboarding/GovStep1';
 import GovStep2 from './pages/onboarding/GovStep2';
 import GovStep3 from './pages/onboarding/GovStep3';
+import AuditorStep1 from './pages/onboarding/AuditorStep1';
+import AuditorStep2 from './pages/onboarding/AuditorStep2';
+import AuditorStep3 from './pages/onboarding/AuditorStep3';
 import IndustryDashboard from './pages/Industry/IndustryDashboard';
 import AddEmission from './pages/Industry/AddEmission';
 import EmissionHistory from './pages/Industry/EmissionHistory';
@@ -27,6 +30,7 @@ import GovNotifications from './pages/goverment/GovNotifications';
 import TransparencyDashboard from './pages/TransparencyDashboard';
 import NotFound from './pages/NotFound';
 import GovPendingVerification from './pages/GovPendingVerification';
+import AuditorPendingVerification from './pages/AuditorPendingVerification';
 // Landing & Public pages
 import HowItWorks from './pages/HowItWorks';
 import Contact from './pages/Contact';
@@ -862,6 +866,12 @@ export default function App() {
         <Route path="/register/government/step2" element={<GovStep2 />} />
         <Route path="/register/government/review" element={<GovStep3 />} />
         <Route path="/register/government/pending" element={<GovPendingVerification />} />
+
+        {/* Auditor Onboarding */}
+        <Route path="/register/auditor/step1" element={<AuditorStep1 />} />
+        <Route path="/register/auditor/step2" element={<AuditorStep2 />} />
+        <Route path="/register/auditor/review" element={<AuditorStep3 />} />
+        <Route path="/register/auditor/pending" element={<AuditorPendingVerification />} />
 
         {/* Public Routes */}
         <Route path="/transparency" element={<TransparencyDashboard />} />

@@ -25,17 +25,18 @@ export default function GovStep1() {
     const setStep1 = useGovOnboardingStore((state) => state.setStep1);
     const existingData = useGovOnboardingStore((state) => state.step1);
 
-    const { register, handleSubmit, watch, formState: { errors } } = useForm<GovStep1FormValues>({
-        resolver: zodResolver(govStep1Schema),
-        defaultValues: existingData || {
-            ministry: '',
-            department: '',
-            jurisdiction: '',
-            authorizationCode: '',
-            officeAddress: '',
-            websiteUrl: '',
-        }
-    });
+   const { register, handleSubmit, watch, formState: { errors } } = useForm<GovStep1FormValues>({
+    resolver: zodResolver(govStep1Schema),
+    // Use a function or a ternary to safely map existing data
+    defaultValues: {
+        ministry: existingData?.ministry || '',
+        department: (existingData?.department as GovStep1FormValues['department']) || '',
+        jurisdiction: existingData?.jurisdiction || '',
+        authorizationCode: existingData?.authorizationCode || '',
+        officeAddress: existingData?.officeAddress || '',
+        websiteUrl: existingData?.websiteUrl || '',
+    }
+});
 
     const selectedDept = watch('department');
 

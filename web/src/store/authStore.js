@@ -14,18 +14,8 @@ export const useAuthStore = create(
             login: async (credentials) => {
                 set({ isLoading: true });
                 try {
-                    // MOCK LOGIN FOR DEVELOPMENT
-                    const user = {
-                        id: 'mock-user-123',
-                        role: credentials.role,
-                        email: credentials.email,
-                        name: 'Mock User',
-                        governmentProfile: { status: 'approved' } // Bypass pending verification
-                    };
-                    const accessToken = 'mock-jwt-token-123';
-
-                    // Simulate network delay
-                    await new Promise(resolve => setTimeout(resolve, 500));
+                    const response = await api.post('/auth/login', credentials);
+                    const { user, accessToken } = response.data;
 
                     set({ user, accessToken, isAuthenticated: true, isLoading: false });
                     return { user, accessToken };
