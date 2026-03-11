@@ -51,10 +51,12 @@ exports.createEmission = async (req, res, next) => {
         const { periodMonth, periodYear, quantityTonnes, emissionSource, notes } = req.body;
         let evidenceCID = null;
         let evidenceFileName = null;
+        let evidenceUrl = null;
 
         if (req.file) {
             evidenceFileName = req.file.originalname;
             evidenceCID = await pinataUtil.uploadFile(req.file.buffer, evidenceFileName, req.file.mimetype);
+            evidenceUrl = `https://gateway.pinata.cloud/ipfs/${evidenceCID}`;
         }
 
         const emission = await EmissionEntry.create({
@@ -65,7 +67,8 @@ exports.createEmission = async (req, res, next) => {
             emissionSource,
             notes,
             evidenceCID,
-            evidenceFileName
+            evidenceFileName,
+            evidenceUrl
         });
 
         // Notify government users
@@ -128,7 +131,12 @@ exports.updateEmission = async (req, res, next) => {
 
         if (req.file) {
             emission.evidenceFileName = req.file.originalname;
-            emission.evidenceCID = await pinataUtil.uploadFile(req.file.buffer, emission.evidenceFileName, req.file.mimetype);
+            emission.evidenceCID = await pinataUtil.uploadFile(
+                req.file.buffer,
+                emission.evidenceFileName,
+                req.file.mimetype
+            );
+            emission.evidenceUrl = `https://gateway.pinata.cloud/ipfs/${emission.evidenceCID}`;
         }
 
         await emission.save();

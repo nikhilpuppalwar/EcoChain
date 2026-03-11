@@ -3,6 +3,7 @@ const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const Company = require('../models/Company');
+const { uploadFile } = require('../utils/pinata');
 
 const hackathonMode = process.env.HACKATHON_MODE === 'true';
 
@@ -93,11 +94,19 @@ exports.registerGovernment = async (req, res, next) => {
         const salt = await bcrypt.genSalt(12);
         const hashedPassword = await bcrypt.hash(password, salt);
 
-        // If file was uploaded via multer, this will be handled by IPFS later
-        // For now we get Cid from req.file or bypass
         let identityDocumentCID = "PENDING_IPFS_UPLOAD";
-
-        // TODO: Upload to pinata here if req.file exists
+        if (req.file) {
+            try {
+                identityDocumentCID = await uploadFile(
+                    req.file.buffer,
+                    req.file.originalname,
+                    req.file.mimetype
+                );
+            } catch (error) {
+                console.error('Pinata upload failed:', error);
+                return res.status(500).json({ success: false, message: 'Failed to upload identity document to IPFS' });
+            }
+        }
 
         const user = await User.create({
             email: officialEmail.toLowerCase(),
@@ -145,8 +154,19 @@ exports.registerAuditor = async (req, res, next) => {
         const salt = await bcrypt.genSalt(12);
         const hashedPassword = await bcrypt.hash(password, salt);
 
-        // Upload to pinata/ipfs for license document if needed
-        let identityDocumentCID = "PENDING_IPFS_UPLOAD";
+        let licenseDocumentCID = "PENDING_IPFS_UPLOAD";
+        if (req.file) {
+            try {
+                licenseDocumentCID = await uploadFile(
+                    req.file.buffer,
+                    req.file.originalname,
+                    req.file.mimetype
+                );
+            } catch (error) {
+                console.error('Pinata upload failed:', error);
+                return res.status(500).json({ success: false, message: 'Failed to upload license document to IPFS' });
+            }
+        }
 
         const user = await User.create({
             email: workEmail.toLowerCase(),
@@ -158,6 +178,7 @@ exports.registerAuditor = async (req, res, next) => {
                 organization,
                 designation,
                 licenseNumber,
+                licenseDocumentCID,
                 specialization: JSON.parse(specialization || '[]'),
                 yearsExperience: parseInt(experience, 10),
                 status: hackathonMode ? 'approved' : 'pending'

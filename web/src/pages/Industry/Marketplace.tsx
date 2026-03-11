@@ -7,7 +7,7 @@ import toast from 'react-hot-toast';
 
 export default function Marketplace() {
     const { user } = useAuthStore();
-    const { isConnected } = useAccount();
+    const { isConnected, chain } = useAccount();
     const [filter, setFilter] = useState('All');
 
     // Web3 Hooks
@@ -21,11 +21,12 @@ export default function Marketplace() {
         hash: txHash,
     });
 
+    // Price per credit in ETH (contract expects wei). Use small values so total cost is payable.
     const [listings, setListings] = useState([
-        { id: '1', seller: 'SolarFarm India Ltd', project: 'Rajasthan 100MW Solar', type: 'Renewable Energy', amount: 5000, pricePerCredit: 12.50, vintage: 2023 },
-        { id: '2', seller: 'AgriCorp Co.', project: 'Punjab Soil Sequestration', type: 'Agriculture', amount: 1200, pricePerCredit: 18.00, vintage: 2024 },
-        { id: '3', seller: 'Govt of MP', project: 'Bhopal Reforestation Initiative', type: 'Forestry', amount: 10000, pricePerCredit: 15.75, vintage: 2022 },
-        { id: '4', seller: 'EcoTech Innovations', project: 'Direct Air Capture Pilot', type: 'Technology', amount: 300, pricePerCredit: 45.00, vintage: 2024 },
+        { id: '0', seller: 'SolarFarm India Ltd', project: 'Rajasthan 100MW Solar', type: 'Renewable Energy', amount: 5000, pricePerCreditEth: 0.00001, vintage: 2023 },
+        { id: '1', seller: 'AgriCorp Co.', project: 'Punjab Soil Sequestration', type: 'Agriculture', amount: 1200, pricePerCreditEth: 0.00002, vintage: 2024 },
+        { id: '2', seller: 'Govt of MP', project: 'Bhopal Reforestation Initiative', type: 'Forestry', amount: 10000, pricePerCreditEth: 0.000015, vintage: 2022 },
+        { id: '3', seller: 'EcoTech Innovations', project: 'Direct Air Capture Pilot', type: 'Technology', amount: 300, pricePerCreditEth: 0.00005, vintage: 2024 },
     ]);
 
     const filteredListings = listings.filter(l => {
@@ -35,28 +36,26 @@ export default function Marketplace() {
 
     useEffect(() => {
         if (isTxSuccess && purchasingId && txHash) {
+            const explorerUrl = chain?.id === 11155111 ? `https://sepolia.etherscan.io/tx/${txHash}` : null;
             toast.success(
                 <div>
-                    Purchase confirmed!{' '}
-                    <a
-                        href={`https://sepolia.etherscan.io/tx/${txHash}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="underline font-bold"
-                    >
-                        View on Etherscan
-                    </a>
+                    Purchase confirmed!
+                    {explorerUrl ? (
+                        <a href={explorerUrl} target="_blank" rel="noreferrer" className="underline font-bold ml-1">View on Etherscan</a>
+                    ) : (
+                        <span className="ml-1 font-mono text-xs">Tx: {txHash.slice(0, 10)}...</span>
+                    )}
                 </div>,
                 { duration: 5000 }
             );
-            setListings(listings.filter(l => l.id !== purchasingId));
+            setListings(prev => prev.filter(l => l.id !== purchasingId));
             refetchBalance();
             setPurchasingId(null);
             setTxHash(undefined);
         }
-    }, [isTxSuccess, txHash]);
+    }, [isTxSuccess, txHash, purchasingId, chain?.id, refetchBalance]);
 
-    const handlePurchase = async (id: string, amount: number, price: number) => {
+    const handlePurchase = async (id: string, amount: number, pricePerCreditEth: number) => {
         if (!isConnected) {
             toast.error("Please connect your wallet first.");
             return;
@@ -64,13 +63,13 @@ export default function Marketplace() {
 
         try {
             setPurchasingId(id);
-            // using string for ID as listingId, normally this is a sequential index
-            const hash = await buyCredits(Number(id), amount, price.toString());
+            const hash = await buyCredits(Number(id), amount, pricePerCreditEth.toString());
             setTxHash(hash);
             toast.success("Transaction submitted. Waiting for confirmation...");
         } catch (error: any) {
             console.error(error);
-            toast.error(error?.shortMessage || "Purchase failed");
+            const msg = error?.shortMessage || error?.message || "Purchase failed";
+            toast.error(msg);
             setPurchasingId(null);
         }
     };
@@ -160,13 +159,13 @@ export default function Marketplace() {
                                         </div>
                                         <div>
                                             <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Price</p>
-                                            <p className="font-bold text-[#1A7A4A] text-lg">₹{listing.pricePerCredit.toFixed(2)} <span className="text-sm font-normal text-slate-500">/cr</span></p>
+                                            <p className="font-bold text-[#1A7A4A] text-lg">{listing.pricePerCreditEth.toFixed(5)} <span className="text-sm font-normal text-slate-500">ETH/cr</span></p>
                                         </div>
                                     </div>
                                 </div>
                                 <div className="bg-slate-50 p-4 border-t border-slate-200">
                                     <button
-                                        onClick={() => handlePurchase(listing.id, listing.amount, listing.pricePerCredit)}
+                                        onClick={() => handlePurchase(listing.id, listing.amount, listing.pricePerCreditEth)}
                                         disabled={purchasingId === listing.id && (isBuying || isTxWaiting)}
                                         className={`w-full py-2 text-white font-bold rounded-lg transition-colors shadow-sm flex items-center justify-center gap-2
                                             ${purchasingId === listing.id && (isBuying || isTxWaiting) ? 'bg-slate-400 cursor-not-allowed' : 'bg-slate-800 hover:bg-slate-700'}`}

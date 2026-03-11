@@ -10,6 +10,7 @@ const emissionEntrySchema = new mongoose.Schema({
 
     evidenceCID: String, // IPFS CID 
     evidenceFileName: String, // Original filename for display
+    evidenceUrl: String, // Full HTTP URL to view/download evidence
 
     status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
     reviewedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, // Gov reviewer ID

@@ -25,6 +25,15 @@ contract CarbonCredit is ERC20 {
         issuer = msg.sender;
     }
 
+    /// @notice Minimal overrides to avoid EVM stack overflow on some nodes (e.g. Anvil) when wallets call symbol()/name()
+    function symbol() public pure override returns (string memory) {
+        return "CCR";
+    }
+
+    function name() public pure override returns (string memory) {
+        return "EcoChain Carbon Credit";
+    }
+
     modifier onlyIssuer() {
         _onlyIssuer();
         _;

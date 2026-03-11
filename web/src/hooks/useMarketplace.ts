@@ -1,11 +1,14 @@
 import { useReadContract, useWriteContract, useAccount } from 'wagmi';
+import { hardhat } from 'wagmi/chains';
 import CarbonMarketplaceArtifact from '../contracts/CarbonMarketplace.json';
 import CarbonCreditArtifact from '../contracts/CarbonCredit.json';
 import Addresses from '../contracts/addresses.json';
 import { parseEther } from 'viem';
 
+const SUPPORTED_CHAIN_ID = hardhat.id;
+
 export function useMarketplace() {
-    const { address } = useAccount();
+    const { address, chain } = useAccount();
     const marketAddress = Addresses.CarbonMarketplace as `0x${string}`;
     const tokenAddress = Addresses.CarbonCredit as `0x${string}`;
 
@@ -24,6 +27,9 @@ export function useMarketplace() {
 
     const listCredits = async (amount: number, pricePerCreditEth: string) => {
         if (!address) throw new Error("Wallet not connected");
+        if (chain?.id !== SUPPORTED_CHAIN_ID) {
+            throw new Error(`Please switch to Hardhat local network. Contracts are not deployed on ${chain?.name || 'this network'}.`);
+        }
 
         // 1. Approve Market to spend Credits
         await approveCreditsAsync({
@@ -47,6 +53,9 @@ export function useMarketplace() {
 
     const buyCredits = async (listingId: number, amount: number, pricePerCreditEth: string) => {
         if (!address) throw new Error("Wallet not connected");
+        if (chain?.id !== SUPPORTED_CHAIN_ID) {
+            throw new Error(`Please switch to Hardhat local network. Contracts are not deployed on ${chain?.name || 'this network'}.`);
+        }
 
         const totalCostInEth = (amount * parseFloat(pricePerCreditEth)).toString();
         const valueInWei = parseEther(totalCostInEth);

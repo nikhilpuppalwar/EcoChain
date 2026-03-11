@@ -1,10 +1,13 @@
 import { useReadContract, useWriteContract, useWaitForTransactionReceipt, useAccount } from 'wagmi';
+import { hardhat } from 'wagmi/chains';
 import CarbonCreditArtifact from '../contracts/CarbonCredit.json';
 import Addresses from '../contracts/addresses.json';
 import { parseEther } from 'viem';
 
+export const SUPPORTED_CHAIN_ID = hardhat.id; // Contracts are deployed on Hardhat local
+
 export function useCarbonCredit() {
-    const { address } = useAccount();
+    const { address, chain } = useAccount();
     const tokenAddress = Addresses.CarbonCredit as `0x${string}`;
 
     // Read Balance
@@ -29,6 +32,9 @@ export function useCarbonCredit() {
     } = useWriteContract();
 
     const issueCredits = async (to: string, amount: number) => {
+        if (chain?.id !== SUPPORTED_CHAIN_ID) {
+            throw new Error(`Please switch to Hardhat local network. Contracts are not deployed on ${chain?.name || 'this network'}.`);
+        }
         const hash = await issueCreditsAsync({
             address: tokenAddress,
             abi: CarbonCreditArtifact.abi,
@@ -40,6 +46,9 @@ export function useCarbonCredit() {
 
     const retireCredits = async (amount: number) => {
         if (!address) throw new Error("Wallet not connected");
+        if (chain?.id !== SUPPORTED_CHAIN_ID) {
+            throw new Error(`Please switch to Hardhat local network. Contracts are not deployed on ${chain?.name || 'this network'}.`);
+        }
         const hash = await retireCreditsAsync({
             address: tokenAddress,
             abi: CarbonCreditArtifact.abi,
@@ -55,6 +64,8 @@ export function useCarbonCredit() {
         issueCredits,
         isIssuing,
         retireCredits,
-        isRetiring
+        isRetiring,
+        isWrongChain: !!chain && chain.id !== SUPPORTED_CHAIN_ID,
+        supportedChainId: SUPPORTED_CHAIN_ID,
     };
 }

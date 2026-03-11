@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useAuthStore } from '../../store/authStore';
-import { useAccount } from 'wagmi';
+import { useAccount, useSwitchChain, useWaitForTransactionReceipt } from 'wagmi';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { useCarbonCredit } from '../../hooks/useCarbonCredit';
 import toast from 'react-hot-toast';
-import { useWaitForTransactionReceipt } from 'wagmi';
 
 export default function Wallet() {
     const { user } = useAuthStore();
     const { address, isConnected, chain } = useAccount();
-    const { balance, refetchBalance, retireCredits, isRetiring } = useCarbonCredit();
+    const switchChain = useSwitchChain();
+    const { balance, refetchBalance, retireCredits, isRetiring, isWrongChain, supportedChainId } = useCarbonCredit();
 
     // UI State
     const [retireAmount, setRetireAmount] = useState('');
@@ -29,17 +29,15 @@ export default function Wallet() {
 
     useEffect(() => {
         if (isTxSuccess && txHash) {
+            const explorerUrl = chain?.id === 11155111 ? `https://sepolia.etherscan.io/tx/${txHash}` : null;
             toast.success(
                 <div>
-                    Transaction confirmed!{' '}
-                    <a
-                        href={`https://sepolia.etherscan.io/tx/${txHash}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="underline font-bold"
-                    >
-                        View on Etherscan
-                    </a>
+                    Transaction confirmed!
+                    {explorerUrl ? (
+                        <a href={explorerUrl} target="_blank" rel="noreferrer" className="underline font-bold ml-1">View on Etherscan</a>
+                    ) : (
+                        <span className="ml-1 font-mono text-xs">Tx: {txHash.slice(0, 10)}...</span>
+                    )}
                 </div>,
                 { duration: 5000 }
             );
@@ -47,7 +45,7 @@ export default function Wallet() {
             setRetireAmount('');
             setRetireReason('');
         }
-    }, [isTxSuccess, refetchBalance, txHash]);
+    }, [isTxSuccess, refetchBalance, txHash, chain?.id]);
 
     const handleRetire = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -79,12 +77,50 @@ export default function Wallet() {
 
         } catch (error: any) {
             console.error(error);
-            toast.error(error?.shortMessage || "Transaction failed or rejected");
+            toast.error(error?.shortMessage || error?.message || "Transaction failed or rejected");
         }
+    };
+
+    const handleSwitchToHardhat = () => {
+        switchChain.switchChain({ chainId: supportedChainId });
     };
 
     return (
         <div className="space-y-6 max-w-6xl mx-auto">
+            {isConnected && isWrongChain && (
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 space-y-4">
+                    <div className="flex items-center justify-between gap-4 flex-wrap">
+                        <div className="flex items-center gap-3">
+                            <span className="material-symbols-outlined text-amber-600 text-2xl">warning</span>
+                            <div>
+                                <h4 className="font-bold text-amber-900">Wrong network</h4>
+                                <p className="text-sm text-amber-800 mt-0.5">
+                                    Carbon contracts are on <strong>Hardhat local</strong>. Switch your wallet to avoid &quot;Simulation Failed&quot; and transaction errors.
+                                </p>
+                            </div>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={handleSwitchToHardhat}
+                            disabled={switchChain.isPending}
+                            className="px-4 py-2 bg-amber-600 hover:bg-amber-700 disabled:opacity-50 text-white font-bold rounded-lg text-sm transition-colors"
+                        >
+                            {switchChain.isPending ? 'Switching...' : 'Switch to Hardhat'}
+                        </button>
+                    </div>
+                    <details className="text-sm text-amber-900 bg-amber-100/60 rounded-lg p-3 border border-amber-200">
+                        <summary className="font-bold cursor-pointer">Switch not working? Add Hardhat manually</summary>
+                        <p className="mt-2 mb-2">In your wallet (e.g. Rainbow), add a custom network with:</p>
+                        <ul className="list-disc list-inside space-y-1 font-mono text-xs bg-white/80 p-3 rounded border border-amber-200">
+                            <li><strong>Network name:</strong> Hardhat Local</li>
+                            <li><strong>RPC URL:</strong> http://127.0.0.1:8545</li>
+                            <li><strong>Chain ID:</strong> 31337</li>
+                            <li><strong>Currency symbol:</strong> ETH</li>
+                        </ul>
+                        <p className="mt-2 text-amber-800">Then select this network. Make sure Anvil is running (<code className="bg-white/80 px-1 rounded">anvil</code> in the contracts folder).</p>
+                    </details>
+                </div>
+            )}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-bold font-syne text-slate-800">Web3 Carbon Wallet</h1>
@@ -188,9 +224,9 @@ export default function Wallet() {
                             </div>
                             <button
                                 type="submit"
-                                disabled={isRetiring || isTxWaiting || !isConnected || !retireAmount || !retireReason}
+                                disabled={isRetiring || isTxWaiting || !isConnected || !retireAmount || !retireReason || isWrongChain}
                                 className={`w-full py-2.5 rounded-lg font-bold text-sm text-white shadow-sm transition-all flex items-center justify-center gap-2
-                                    ${isRetiring || isTxWaiting || !isConnected || !retireAmount || !retireReason
+                                    ${isRetiring || isTxWaiting || !isConnected || !retireAmount || !retireReason || isWrongChain
                                         ? 'bg-slate-300 cursor-not-allowed text-slate-500'
                                         : 'bg-red-600 hover:bg-red-700 active:scale-[0.98]'}`}
                             >

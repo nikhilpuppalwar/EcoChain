@@ -10,6 +10,7 @@ type EmissionData = {
     description: string;
     location: string;
     skipped?: boolean;
+    evidenceDocument?: File | null;
 };
 
 type WizardData = {
@@ -41,6 +42,7 @@ export default function AddEmission() {
         date: new Date().toISOString().split('T')[0],
         description: '',
         location: '',
+        evidenceDocument: null,
     });
 
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -75,8 +77,15 @@ export default function AddEmission() {
     };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-        const { name, value } = e.target;
-        setCurrentFormData(prev => ({ ...prev, [name]: value }));
+        const { name, value, type } = e.target;
+        
+        if (type === 'file') {
+            const fileInput = e.target as HTMLInputElement;
+            const file = fileInput.files?.[0] || null;
+            setCurrentFormData(prev => ({ ...prev, evidenceDocument: file }));
+        } else {
+            setCurrentFormData(prev => ({ ...prev, [name]: value }));
+        }
     };
 
     const saveCurrentStepData = (skipped = false) => {
@@ -137,9 +146,11 @@ export default function AddEmission() {
             date: new Date().toISOString().split('T')[0],
             description: '',
             location: '',
+            evidenceDocument: null,
         });
     };
 
+// Wait a moment so import isn't completely stripped (must be at top - but we modify only inside the submit block here, with the import at top)
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         
@@ -149,13 +160,48 @@ export default function AddEmission() {
         setIsSubmitting(true);
 
         try {
-            // Mock API Submission - sending the full wizardData object
-            console.log("Submitting payload:", wizardData);
-            await new Promise(resolve => setTimeout(resolve, 1500));
+            // We must wait for the state to be saved, so let's use the most current state combination
+            const finalWizardData = {
+                ...wizardData,
+                [`scope${currentStep}` as keyof WizardData]: { ...currentFormData }
+            };
+
+            const promises = Object.entries(finalWizardData).map(async ([scopeKey, data]) => {
+                if (!data || data.skipped) return null;
+
+                const formData = new FormData();
+                // Map the frontend names to backend expected keys
+                const [year, month] = data.date.split('-');
+                formData.append('periodYear', year);
+                formData.append('periodMonth', month);
+                formData.append('quantityTonnes', data.amount);
+                formData.append('emissionSource', data.source);
+                formData.append('notes', data.description || '');
+                if (data.location) formData.append('location', data.location);
+
+                if (data.evidenceDocument) {
+                    formData.append('evidenceDocument', data.evidenceDocument);
+                }
+
+                // Import API lazily if not at top, or just use the global api
+                // We'll require it from lib/api
+                const { default: api } = await import('../../lib/api');
+
+                const response = await api.post('/emissions', formData, {
+                    headers: {
+                        'Content-Type': 'multipart/form-data',
+                    }
+                });
+                
+                return response.data;
+            });
+
+            await Promise.all(promises.filter(p => p !== null));
             toast.success("Emission records successfully logged and pending verification.");
             navigate('/industry/dashboard');
         } catch (error) {
-            toast.error("Failed to log emissions.");
+            toast.error("Failed to log emissions. Please try again.");
+            console.error("Submission Error:", error);
         } finally {
             setIsSubmitting(false);
         }
@@ -289,11 +335,24 @@ export default function AddEmission() {
 
                                 <div className="space-y-2 md:col-span-2 pt-2 border-t border-slate-100">
                                     <label className="text-sm font-bold text-slate-700 block mb-2">Upload Documentation (Optional)</label>
-                                    <div className="border-2 border-dashed border-slate-300 rounded-xl p-6 flex flex-col items-center justify-center text-center bg-slate-50 hover:bg-slate-100 transition-colors cursor-pointer">
-                                        <span className="material-symbols-outlined text-slate-400 text-3xl mb-2">cloud_upload</span>
-                                        <p className="text-sm font-bold text-slate-700">Click to upload or drag and drop</p>
-                                        <p className="text-xs text-slate-500 mt-1">PDF, XSLX, or JPG (max. 10MB)</p>
-                                    </div>
+                                    <label className="border-2 border-dashed border-slate-300 rounded-xl p-6 flex flex-col items-center justify-center text-center bg-slate-50 hover:bg-slate-100 transition-colors cursor-pointer group">
+                                         <input 
+                                            type="file" 
+                                            name="evidenceDocument" 
+                                            onChange={handleChange} 
+                                            className="hidden" 
+                                            accept=".pdf,.jpg,.jpeg,.png,.xlsx"
+                                        />
+                                        <span className={`material-symbols-outlined text-3xl mb-2 ${currentFormData.evidenceDocument ? 'text-[#1A7A4A]' : 'text-slate-400 group-hover:text-[#1A7A4A]'}`}>
+                                            {currentFormData.evidenceDocument ? 'task' : 'cloud_upload'}
+                                        </span>
+                                        <p className="text-sm font-bold text-slate-700">
+                                            {currentFormData.evidenceDocument ? currentFormData.evidenceDocument.name : 'Click to upload or drag and drop'}
+                                        </p>
+                                        <p className="text-xs text-slate-500 mt-1">
+                                             {currentFormData.evidenceDocument ? `${(currentFormData.evidenceDocument.size / 1024 / 1024).toFixed(2)} MB` : 'PDF, XSLX, or JPG (max. 10MB)'}
+                                        </p>
+                                    </label>
                                 </div>
                             </div>
 
