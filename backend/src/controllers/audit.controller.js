@@ -225,3 +225,255 @@ async function finaliseAuditDecision(submission, auditReport, decision) {
         // Emitting socket / emails logic would go here
     }
 }
+
+exports.getPendingAssignments = async (req, res, next) => {
+    try {
+        const queue = await EmissionEntry.find({ status: 'pending_govt_assignment' })
+            .populate('company', 'name sector')
+            .sort({ createdAt: -1 });
+            
+        // Fetch AI risk scores to display on the queue
+        const AnomalyReport = require('../models/AnomalyReport');
+        const submissionIds = queue.map(q => q._id);
+        const anomalyReports = await AnomalyReport.find({ report: { $in: submissionIds } });
+        
+        const data = queue.map(submission => {
+            const anomalyReport = anomalyReports.find(r => r.report.toString() === submission._id.toString());
+            return {
+                ...submission.toObject(),
+                aiResult: anomalyReport ? {
+                    riskScore: anomalyReport.riskScore,
+                    riskFlag: anomalyReport.riskFlag,
+                    anomalyDetails: anomalyReport.anomalyDetails
+                } : null
+            };
+        });
+
+        res.status(200).json({ success: true, count: data.length, data });
+    } catch (error) {
+        next(error);
+    }
+};
+
+exports.getAvailableAuditors = async (req, res, next) => {
+    try {
+        const { excludeIndustryId } = req.query;
+
+        const auditors = await User.find({ role: 'auditor' }).select('name email auditorProfile');
+
+        const data = auditors.map(auditor => {
+            const profile = auditor.auditorProfile || {};
+            const assignments = profile.currentAssignments || [];
+            
+            const isAssignedToExcluded = excludeIndustryId && assignments.some(a => a.industryId && a.industryId.toString() === excludeIndustryId);
+            if (isAssignedToExcluded) return null;
+
+            return {
+                _id: auditor._id,
+                name: auditor.name || auditor.email.split('@')[0],
+                organization: profile.organization || 'Independent',
+                specializations: profile.specializations || [],
+                activeAssignmentCount: assignments.length,
+                certExpiryTimestamp: profile.certExpiryTimestamp
+            };
+        }).filter(a => a !== null);
+
+        data.sort((a, b) => a.activeAssignmentCount - b.activeAssignmentCount);
+
+        res.status(200).json({ success: true, count: data.length, data });
+    } catch (error) {
+        next(error);
+    }
+};
+
+// ─── A1: Dashboard Stats ──────────────────────────────────────────────────────
+exports.getDashboardStats = async (req, res, next) => {
+    try {
+        const auditorId = req.user._id;
+
+        const [pending, completed, total, dualActive] = await Promise.all([
+            EmissionEntry.countDocuments({
+                assignedAuditors: auditorId,
+                status: { $in: ['pending_audit', 'awaiting_second_auditor', 'under_review'] }
+            }),
+            ReportReview.countDocuments({ 'auditors.auditorId': auditorId }),
+            EmissionEntry.countDocuments({ assignedAuditors: auditorId }),
+            EmissionEntry.countDocuments({
+                assignedAuditors: auditorId,
+                auditType: 'dual',
+                status: { $in: ['pending_audit', 'awaiting_second_auditor'] }
+            })
+        ]);
+
+        const approvals = await ReportReview.countDocuments({ 'auditors.auditorId': auditorId, finalDecision: 'approved' });
+        const approvalRate = completed > 0 ? Math.round((approvals / completed) * 100) : 0;
+
+        const user = await User.findById(auditorId).select('auditorProfile');
+        const assignedCount = (user?.auditorProfile?.currentAssignments || []).length;
+
+        res.status(200).json({
+            success: true,
+            data: {
+                assignedIndustries: assignedCount,
+                pendingAudits: pending,
+                completedThisPeriod: completed,
+                approvalRate: `${approvalRate}%`,
+                dualAuditsActive: dualActive,
+                certExpiryDate: user?.auditorProfile?.certExpiryTimestamp || null
+            }
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+// ─── A3: Get AI Result for a Submission ──────────────────────────────────────
+exports.getAIResult = async (req, res, next) => {
+    try {
+        const { submissionId } = req.params;
+
+        const submission = await EmissionEntry.findById(submissionId);
+        if (!submission) return res.status(404).json({ success: false, message: 'Submission not found' });
+
+        // Check auditor is assigned
+        if (!submission.assignedAuditors.map(id => id.toString()).includes(req.user._id.toString())) {
+            return res.status(403).json({ success: false, message: 'Not authorised to view this submission' });
+        }
+
+        const AnomalyReport = require('../models/AnomalyReport');
+        const aiReport = await AnomalyReport.findOne({ report: submissionId });
+
+        res.status(200).json({ success: true, data: aiReport || null });
+    } catch (error) {
+        next(error);
+    }
+};
+
+// ─── A4: Get Co-Auditor Decision (for dual audits) ───────────────────────────
+exports.getCoAuditorDecision = async (req, res, next) => {
+    try {
+        const { submissionId } = req.params;
+
+        const submission = await EmissionEntry.findById(submissionId).populate('assignedAuditors', 'name email');
+        if (!submission) return res.status(404).json({ success: false, message: 'Submission not found' });
+        if (submission.auditType !== 'dual') {
+            return res.status(400).json({ success: false, message: 'This is not a dual audit submission' });
+        }
+
+        const auditReport = await ReportReview.findOne({ report: submissionId });
+        if (!auditReport || auditReport.auditors.length === 0) {
+            return res.status(200).json({ success: true, data: null, message: 'No co-auditor decision yet' });
+        }
+
+        // Return the decision that is NOT this auditor's
+        const coAuditorEntry = auditReport.auditors.find(a => a.auditorId.toString() !== req.user._id.toString());
+        if (!coAuditorEntry) {
+            return res.status(200).json({ success: true, data: null, message: 'Co-auditor has not submitted yet' });
+        }
+
+        const coUser = submission.assignedAuditors.find(a => a._id.toString() === coAuditorEntry.auditorId.toString());
+
+        res.status(200).json({
+            success: true,
+            data: {
+                auditorName: coUser?.name || 'Co-Auditor',
+                auditorEmail: coUser?.email,
+                role: coAuditorEntry.role,
+                decision: coAuditorEntry.decision,
+                remarks: coAuditorEntry.remarks,
+                signedAt: coAuditorEntry.signedAt
+            }
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+// ─── A4: Save Document Checklist State ───────────────────────────────────────
+exports.updateChecklist = async (req, res, next) => {
+    try {
+        const { submissionId } = req.params;
+        const { checklist } = req.body; // { fuelInvoices: true, electricityBills: false, ... }
+
+        const submission = await EmissionEntry.findById(submissionId);
+        if (!submission) return res.status(404).json({ success: false, message: 'Submission not found' });
+
+        if (!submission.assignedAuditors.map(id => id.toString()).includes(req.user._id.toString())) {
+            return res.status(403).json({ success: false, message: 'Not authorised' });
+        }
+
+        let auditReport = await ReportReview.findOne({ report: submissionId });
+        if (!auditReport) {
+            auditReport = new ReportReview({ report: submissionId });
+        }
+
+        auditReport.documentChecklist = checklist;
+        await auditReport.save();
+
+        res.status(200).json({ success: true, message: 'Checklist saved' });
+    } catch (error) {
+        next(error);
+    }
+};
+
+// ─── A7: Audit History ───────────────────────────────────────────────────────
+exports.getAuditHistory = async (req, res, next) => {
+    try {
+        const auditReports = await ReportReview.find({ 'auditors.auditorId': req.user._id })
+            .populate({ path: 'report', populate: { path: 'company', select: 'name sector' } })
+            .sort({ updatedAt: -1 });
+
+        const history = auditReports.map(ar => {
+            const myEntry = ar.auditors.find(a => a.auditorId.toString() === req.user._id.toString());
+            return {
+                reportId: ar.report?._id,
+                reviewId: ar._id,
+                company: ar.report?.company?.name || 'Unknown',
+                sector: ar.report?.company?.sector || '',
+                period: ar.report?.reportingPeriod || '',
+                decision: myEntry?.decision,
+                finalDecision: ar.finalDecision,
+                remarks: myEntry?.remarks,
+                submittedAt: myEntry?.signedAt,
+                totalEmissions: ar.report?.totalEmissions
+            };
+        });
+
+        res.status(200).json({ success: true, count: history.length, data: history });
+    } catch (error) {
+        next(error);
+    }
+};
+
+// ─── A6: Flag Submission for Compliance Review ───────────────────────────────
+exports.flagCompliance = async (req, res, next) => {
+    try {
+        const { submissionId, reason } = req.body;
+
+        const submission = await EmissionEntry.findById(submissionId);
+        if (!submission) return res.status(404).json({ success: false, message: 'Submission not found' });
+
+        // Flag the submission
+        submission.complianceFlag = {
+            flaggedBy: req.user._id,
+            flaggedAt: new Date(),
+            reason: reason || 'Compliance threshold exceeded'
+        };
+        await submission.save();
+
+        // Notify government users
+        const govtUsers = await User.find({ role: 'government' }).select('_id');
+        const notifs = govtUsers.map(g => ({
+            user: g._id,
+            type: 'compliance_flag',
+            title: 'Submission Flagged for Regulatory Review',
+            message: `Auditor ${req.user.name} flagged submission by ${submission.company} for compliance review. Reason: ${reason}`
+        }));
+        await Notification.insertMany(notifs);
+
+        res.status(200).json({ success: true, message: 'Submission flagged for regulatory review. Government notified.' });
+    } catch (error) {
+        next(error);
+    }
+};
+

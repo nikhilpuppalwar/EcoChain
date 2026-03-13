@@ -102,7 +102,7 @@ EcoChain addresses three critical failures in existing carbon markets:
 ### AI / ML
 | Tool | Purpose |
 |---|---|
-| Python 3.11 + FastAPI | ML model serving as REST microservice |
+| Python 3.13 (or 3.12 for TF) + FastAPI | ML model serving as REST microservice |
 | scikit-learn | Isolation Forest, regression, clustering |
 | TensorFlow | LSTM time-series emission forecasting |
 | Prophet (Meta) | National and industry emission forecasting |
@@ -240,6 +240,8 @@ chisel
 
 ```
 POST /ai/anomaly-detect      → Isolation Forest on emission data
+POST /ai/detect-smoke        → MobileNetV2 satellite imagery smoke detection
+POST /ai/risk-score          → Weighted Risk Score (Anomaly + Smoke + Benchmark)
 POST /ai/baseline-model      → Regression + clustering baseline
 POST /ai/predict-emissions   → Prophet/LSTM forecast
 POST /ai/suggestions         → Ranked reduction recommendations
@@ -250,6 +252,8 @@ GET  /ai/national-forecast   → Country-level emission forecast
 GET  /ai/credit-price        → Short-term credit price prediction
 ```
 
+> **Note on AI Environment**: The FastAPI service requires Python 3.12 to run the full suite including TensorFlow for smoke detection. On Python 3.13+, TensorFlow is skipped and anomaly detection/risk scoring functions normally using scikit-learn.
+
 ---
 
 ## User Roles & Portals
@@ -259,7 +263,7 @@ EcoChain has **6 portals** with **33 total screens**, all role-gated via JWT + R
 | Role | Portal | Verified By | Screens |
 |---|---|---|---|
 | Admin | Admin Portal | Self (super user) | AD1–AD6 |
-| Government | Government Portal | Admin | G1–G7 |
+| Government | Government Portal | Admin | G1–G8 (incl. AI Verifier) |
 | Auditor | Auditor Portal | Government | A1–A5 |
 | Industry | Industry Portal | Government | I1–I6 |
 | Public | Public Portal | No registration required | P1–P4 |
@@ -456,6 +460,18 @@ npm run dev
 ```
 *App will be running on `http://localhost:5173` by default.*
 
+### 5. AI Service Setup (Python FastAPI)
+
+```bash
+cd ai
+# Install dependencies (use Python 3.12 if you specifically need the TensorFlow smoke detection model)
+pip install fastapi "uvicorn[standard]" scikit-learn joblib numpy pillow python-multipart pydantic
+
+# Start the AI microservice
+python -m uvicorn main:app --reload --port 8000
+```
+*API will be running on `http://localhost:8000` by default. Update your Express backend's `.env` to include `AI_SERVICE_URL=http://localhost:8000`.*
+
 ---
 
 ## Deployment
@@ -561,7 +577,7 @@ npm run dev
 | **Phase 1 — Foundation** | 1–4 | Monorepo setup, auth system (JWT + 2FA + RBAC), Landing Page (L1/L4/L5), Admin Portal (AD1/AD2), Govt Verification (G5), all 16 Mongoose schemas, Foundry init |
 | **Phase 2 — Core Workflow** | 5–8 | Industry Portal (I1/I2/I3), Emission Calculator, Python AI service (Isolation Forest + Baseline), Auditor Portal (A1/A2/A3), CarbonCredit.sol + AuditRegistry.sol deployed to Mumbai |
 | **Phase 3 — Credit System** | 9–12 | CarbonMarketplace.sol + CreditRetirement.sol, Industry Wallet + Trading (I5), Govt Credit Oversight (G4), credit minting flow, Socket.io real-time, Public Portal (P1/P3), The Graph indexing |
-| **Phase 4 — AI & Analytics** | 13–16 | Prophet + LSTM forecasting, fraud detection, reduction suggestions, What-If simulator, Govt AI Monitor (G3), ESG Report Generator, Leaflet emission map (P2) |
+| **Phase 4 — AI & Analytics** | 13–16 | Python FastAPI service (Isolation Forest + MobileNetV2), Anomaly Detection risk score, Govt AI Verifier (G3) with Live Feed & Repeat Offenders |
 | **Phase 5 — Polish & Launch** | 17–20 | All 33 screens finalized, Polygon Mainnet deployment, security audit, Redis caching, GitHub Actions CI/CD, UptimeRobot + Sentry, UAT, Swagger + README docs |
 
 ---

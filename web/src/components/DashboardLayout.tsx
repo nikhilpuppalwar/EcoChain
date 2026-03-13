@@ -35,6 +35,8 @@ export default function DashboardLayout() {
 
     const govLinks: NavLink[] = [
         { name: 'Dashboard', href: '/gov/dashboard', icon: 'bar_chart' },
+        { name: 'AI Verifier', href: '/gov/ai-verifier', icon: 'psychology' },
+        { name: 'Assign Auditors', href: '/gov/assignment', icon: 'assignment_ind' },
         { name: 'Report Review', href: '/gov/reports', icon: 'description' },
         { name: 'Issue Credits', href: '/gov/issue-credits', icon: 'verified_user' },
         { name: 'Compliance Monitor', href: '/gov/compliance', icon: 'admin_panel_settings' },
@@ -43,6 +45,7 @@ export default function DashboardLayout() {
         { name: 'Blockchain Records', href: '/gov/blockchain', icon: 'link' },
         { name: 'Send Notifications', href: '/gov/notifications', icon: 'campaign' },
     ];
+
 
     const auditorLinks: NavLink[] = [
         { name: 'Dashboard', href: '/auditor/dashboard', icon: 'bar_chart' },

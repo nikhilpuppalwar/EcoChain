@@ -28,6 +28,8 @@ import GovMonitoring from './pages/goverment/GovMonitoring';
 import GovAnalytics from './pages/goverment/GovAnalytics';
 import GovBlockchain from './pages/goverment/GovBlockchain';
 import GovNotifications from './pages/goverment/GovNotifications';
+import GovAIVerifier from './pages/goverment/GovAIVerifier';
+import GovAuditorAssignment from './pages/goverment/GovAuditorAssignment';
 import TransparencyDashboard from './pages/TransparencyDashboard';
 import NotFound from './pages/NotFound';
 import GovPendingVerification from './pages/GovPendingVerification';
@@ -841,6 +843,8 @@ export default function App() {
           <Route path="/gov/analytics" element={<ProtectedRoute allowedRoles={['government']}><GovAnalytics /></ProtectedRoute>} />
           <Route path="/gov/blockchain" element={<ProtectedRoute allowedRoles={['government']}><GovBlockchain /></ProtectedRoute>} />
           <Route path="/gov/notifications" element={<ProtectedRoute allowedRoles={['government']}><GovNotifications /></ProtectedRoute>} />
+          <Route path="/gov/ai-verifier" element={<ProtectedRoute allowedRoles={['government']}><GovAIVerifier /></ProtectedRoute>} />
+          <Route path="/gov/assignment" element={<ProtectedRoute allowedRoles={['government']}><GovAuditorAssignment /></ProtectedRoute>} />
 
           {/* Auditor Routes */}
           <Route path="/auditor/dashboard" element={<ProtectedRoute allowedRoles={['auditor']}><AuditorDashboard /></ProtectedRoute>} />

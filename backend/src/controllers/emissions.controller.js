@@ -4,6 +4,7 @@ const User = require('../models/User');
 const cloudinaryUtil = require('../utils/cloudinary');
 const { broadcastToRole } = require('../utils/websocket');
 const { calculateCO2e } = require('../utils/co2Calculator');
+const { internalTriggerAICheck } = require('./ai.controller'); // Import AI Logic
 
 /* ===========================
  * GET ALL ENTRIES (FOR USER'S COMPANY)
@@ -88,6 +89,14 @@ exports.createEmission = async (req, res, next) => {
             status: 'submitted' // Starts at submitted, awaits AI check -> 'pending_govt_assignment'
         });
 
+        // Auto-Trigger the AI Check in the background
+        try {
+            await internalTriggerAICheck(emission._id);
+        } catch (aiError) {
+            console.error('Failed to run AI check automatically on submission:', aiError.message);
+            // It will stay 'submitted' and can be manually re-triggered later or retried by a cron job
+        }
+
         // Notify government users
         const govUsers = await User.find({ role: 'government', isActive: true });
 
@@ -96,7 +105,7 @@ exports.createEmission = async (req, res, next) => {
             user: govUser._id,
             type: 'compliance_alert',
             title: 'New Emission Report',
-            message: `A new emission report of ${quantityTonnes} tCO2e was submitted and is pending AI check.`
+            message: `A new emission report of ${quantityTonnes} tCO2e was submitted and processed.`
         }));
         await Notification.insertMany(notifications);
 

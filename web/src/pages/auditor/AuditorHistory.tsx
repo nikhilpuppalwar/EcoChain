@@ -1,158 +1,238 @@
 import { useState } from 'react';
+import toast from 'react-hot-toast';
 
-const history = [
-    { id: 'AUD-2024-0084', company: 'SteelMax Industries', period: 'Q4 2024', decision: 'Approved', date: '2026-03-07', co2: '4,200 tCO₂e', score: 91 },
-    { id: 'AUD-2024-0081', company: 'GreenTransport Co.', period: 'Q3 2024', decision: 'Approved', date: '2026-02-28', co2: '1,400 tCO₂e', score: 98 },
-    { id: 'AUD-2024-0078', company: 'AgroChem United', period: 'Q2 2024', decision: 'Rejected', date: '2026-02-14', co2: '6,500 tCO₂e', score: 0 },
-    { id: 'AUD-2024-0075', company: 'SolarEdge Industries', period: 'Q2 2024', decision: 'Approved', date: '2026-01-15', co2: '3,800 tCO₂e', score: 99 },
-    { id: 'AUD-2024-0068', company: 'CoalTech Energy', period: 'Q1 2024', decision: 'Approved', date: '2025-12-20', co2: '7,900 tCO₂e', score: 82 },
+const historyData = [
+    { id: 'AUD-2024-0084', company: 'SteelMax Industries', period: 'Q4 2024', decision: 'approved', submittedDate: '2026-03-07', co2: '3,198.7 tCO₂e', riskFlag: 'red', riskScore: 72, auditType: 'dual', remarks: 'Emissions significantly higher than prior period. Fuel documentation cross-checked. Despite anomaly flags, supporting documentation was verified as plausible given reported equipment upgrades.' },
+    { id: 'AUD-2024-0081', company: 'AgroChem United', period: 'Q4 2024', decision: 'correction', submittedDate: '2026-02-28', co2: '2,650 tCO₂e', riskFlag: 'yellow', riskScore: 45, auditType: 'single', remarks: 'Scope 3 transport data incomplete. Vehicle mileage logs missing for Nov–Dec. Requested correction on logistics documentation.' },
+    { id: 'AUD-2024-0078', company: 'CoalTech Energy', period: 'Q4 2024', decision: 'approved', submittedDate: '2026-02-14', co2: '8,850 tCO₂e', riskFlag: 'green', riskScore: 18, auditType: 'dual', remarks: 'All documents verified. Emission levels consistent with production scale and industry benchmarks.' },
+    { id: 'AUD-2024-0075', company: 'GreenTransport Co.', period: 'Q3 2024', decision: 'approved', submittedDate: '2026-01-21', co2: '1,400 tCO₂e', riskFlag: 'green', riskScore: 12, auditType: 'single', remarks: 'Clean submission. Fuel and transport data consistent. Scope 2 within expected range.' },
+    { id: 'AUD-2024-0071', company: 'SolarEdge Industries', period: 'Q3 2024', decision: 'rejected', submittedDate: '2025-12-15', co2: '4,200 tCO₂e', riskFlag: 'red', riskScore: 88, auditType: 'dual', remarks: 'Severe inconsistency in electricity usage data. Grid unit mismatched (kVAh vs kWh). Production logs do not align with claimed Scope 1 emissions. Rejected pending complete re-submission.' },
+    { id: 'AUD-2024-0068', company: 'TechParts Ltd.', period: 'Q2 2024', decision: 'approved', submittedDate: '2025-11-09', co2: '980 tCO₂e', riskFlag: 'green', riskScore: 9, auditType: 'single', remarks: 'Straightforward, well-documented submission. Emission intensity well within sector benchmarks.' },
 ];
 
 const notifications = [
-    { id: 1, type: 'assignment', title: 'New Audit Assigned', body: 'AgroChem United Q4 2024 — deadline March 14', time: '2 hr ago', read: false },
-    { id: 2, type: 'deadline', title: 'Deadline Approaching', body: 'SteelMax Industries — 2 days remaining', time: '4 hr ago', read: false },
-    { id: 3, type: 'resubmit', title: 'Resubmission Received', body: 'GreenTransport Co. resubmitted Q3 data with corrections', time: 'Yesterday', read: true },
-    { id: 4, type: 'system', title: 'AI Model Updated', body: 'Anomaly detection model retrained with updated baselines', time: '2 days ago', read: true },
-    { id: 5, type: 'cert', title: 'Certification Expiry Reminder', body: 'Your ISO 14064 certification expires in 28 days', time: '3 days ago', read: true },
+    { id: 1, type: 'assignment', message: 'New audit assigned: SteelMax Industries Q4 2024', time: '2 hrs ago', read: false, link: '/auditor/queue' },
+    { id: 2, type: 'deadline', message: 'Deadline reminder: AgroChem United submission due in 3 days', time: '5 hrs ago', read: false, link: '/auditor/queue' },
+    { id: 3, type: 'dual_audit', message: 'Dual audit update: Your co-auditor Dr. Sarah Jenkins has submitted for SteelMax Industries', time: '1 day ago', read: false, link: '/auditor/verify/1' },
+    { id: 4, type: 'correction', message: 'Industry response received: AgroChem United submitted corrections', time: '2 days ago', read: true, link: '/auditor/queue' },
+    { id: 5, type: 'blockchain', message: 'Blockchain confirmed: SteelMax Q3 audit (TX: 0x8a7c2f9d1b4e3c) — 12 confirmations', time: '3 days ago', read: true, link: '/auditor/blockchain' },
+    { id: 6, type: 'system', message: 'System: Your ISO 14064 certification expires in 28 days. Renew now.', time: '3 days ago', read: true, link: '#' },
 ];
 
+const performanceStats = [
+    { label: 'Total Audits Completed', value: '28', icon: 'check_circle', color: 'text-green-600' },
+    { label: 'Approval Rate', value: '91%', icon: 'thumb_up', color: 'text-emerald-600' },
+    { label: 'Avg Turnaround', value: '2.4 days', icon: 'timer', color: 'text-purple-600' },
+    { label: 'RED Flag Reviews', value: '6', icon: 'warning', color: 'text-red-600' },
+    { label: 'Dual Audits Handled', value: '11', icon: 'group', color: 'text-indigo-600' },
+    { label: 'Rejections Issued', value: '3', icon: 'cancel', color: 'text-orange-600' },
+];
+
+const notifIcons: Record<string, string> = {
+    assignment: 'assignment',
+    deadline: 'schedule',
+    dual_audit: 'group',
+    correction: 'assignment_return',
+    blockchain: 'link',
+    system: 'notification_important',
+};
+const notifColors: Record<string, string> = {
+    assignment: 'text-blue-600',
+    deadline: 'text-orange-600',
+    dual_audit: 'text-purple-600',
+    correction: 'text-amber-600',
+    blockchain: 'text-green-600',
+    system: 'text-gray-500',
+};
+
 export default function AuditorHistory() {
+    const [selectedRecord, setSelectedRecord] = useState<typeof historyData[0] | null>(null);
+    const [notifList, setNotifList] = useState(notifications);
     const [tab, setTab] = useState<'history' | 'notifications'>('history');
-    const [selectedHistory, setSelectedHistory] = useState<typeof history[0] | null>(null);
 
-    const notifIcons: Record<string, string> = {
-        assignment: 'assignment',
-        deadline: 'schedule',
-        resubmit: 'refresh',
-        system: 'computer',
-        cert: 'badge',
+    const unreadCount = notifList.filter(n => !n.read).length;
+
+    const markRead = (id: number) => {
+        setNotifList(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
     };
 
-    const notifColors: Record<string, string> = {
-        assignment: 'text-blue-600 bg-blue-50',
-        deadline: 'text-orange-600 bg-orange-50',
-        resubmit: 'text-purple-600 bg-purple-50',
-        system: 'text-gray-600 bg-gray-100',
-        cert: 'text-amber-600 bg-amber-50',
+    const markAllRead = () => {
+        setNotifList(prev => prev.map(n => ({ ...n, read: true })));
+        toast.success('All notifications marked as read');
     };
+
+    const decisionColor = (d: string) => d === 'approved' ? 'bg-green-100 text-green-700' : d === 'correction' ? 'bg-orange-100 text-orange-700' : 'bg-red-100 text-red-700';
+    const flagEmoji = (f: string) => f === 'red' ? '🔴' : f === 'yellow' ? '🟡' : '🟢';
 
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-2xl font-black text-gray-900">History & Notifications</h1>
-                    <p className="text-gray-400 text-sm mt-1">Audit history and notification inbox</p>
+                    <p className="text-gray-400 text-sm mt-1">Your past audits and system notifications</p>
                 </div>
                 <div className="flex items-center gap-2 bg-white rounded-xl border border-gray-200 p-1">
-                    {['history', 'notifications'].map(t => (
-                        <button key={t} onClick={() => setTab(t as 'history' | 'notifications')} className={`px-4 py-2 rounded-lg text-sm font-bold capitalize transition-all ${tab === t ? 'bg-[#1A7A4A] text-white shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}>
-                            {t}
-                            {t === 'notifications' && (
-                                <span className="ml-1.5 bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5">2</span>
-                            )}
+                    {[{ id: 'history', label: 'My History' }, { id: 'notifications', label: `Notifications${unreadCount > 0 ? ` (${unreadCount})` : ''}` }].map(t => (
+                        <button key={t.id} onClick={() => setTab(t.id as 'history' | 'notifications')} className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${tab === t.id ? 'bg-[#1A7A4A] text-white shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}>
+                            {t.label}
                         </button>
                     ))}
                 </div>
             </div>
 
             {tab === 'history' && (
-                <div className="grid lg:grid-cols-3 gap-6">
-                    <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                        <table className="w-full text-sm">
-                            <thead className="bg-gray-50 text-xs font-bold text-gray-400 uppercase tracking-wider">
-                                <tr>
-                                    <th className="px-5 py-3 text-left">Company</th>
-                                    <th className="px-5 py-3 text-left">Period</th>
-                                    <th className="px-5 py-3 text-left">CO₂e</th>
-                                    <th className="px-5 py-3 text-left">Decision</th>
-                                    <th className="px-5 py-3 text-left">Date</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-50">
-                                {history.map((h, i) => (
-                                    <tr key={i} onClick={() => setSelectedHistory(h)} className={`cursor-pointer hover:bg-gray-50 transition-colors ${selectedHistory?.id === h.id ? 'bg-green-50 border-l-4 border-l-[#1A7A4A]' : ''}`}>
-                                        <td className="px-5 py-4 font-bold text-gray-900">{h.company}</td>
-                                        <td className="px-5 py-4 text-gray-600">{h.period}</td>
-                                        <td className="px-5 py-4 font-mono text-gray-700">{h.co2}</td>
-                                        <td className="px-5 py-4">
-                                            <span className={`text-xs font-black px-2 py-1 rounded-lg ${h.decision === 'Approved' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{h.decision}</span>
-                                        </td>
-                                        <td className="px-5 py-4 text-xs text-gray-400">{h.date}</td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                <div className="space-y-5">
+                    {/* Performance Stats */}
+                    <div className="grid grid-cols-3 md:grid-cols-6 gap-4">
+                        {performanceStats.map(s => (
+                            <div key={s.label} className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm text-center">
+                                <span className={`material-symbols-outlined text-2xl block mb-1 ${s.color}`}>{s.icon}</span>
+                                <p className="font-black text-gray-900 text-lg">{s.value}</p>
+                                <p className="text-xs text-gray-400 leading-tight">{s.label}</p>
+                            </div>
+                        ))}
                     </div>
 
-                    {selectedHistory ? (
-                        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-                            <div className="flex items-center justify-between mb-4">
-                                <h3 className="font-black text-gray-900">Audit Detail</h3>
-                                <button onClick={() => setSelectedHistory(null)} className="text-gray-400 hover:text-gray-700">
-                                    <span className="material-symbols-outlined text-sm">close</span>
-                                </button>
+                    {/* History Table */}
+                    <div className="grid lg:grid-cols-5 gap-5">
+                        <div className="lg:col-span-3 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                            <div className="p-5 border-b border-gray-100">
+                                <h2 className="font-black text-gray-900">Past Audits</h2>
                             </div>
-                            <div className="space-y-4">
-                                <div>
-                                    <p className="text-xs text-gray-400 uppercase tracking-wider font-bold">Company</p>
-                                    <p className="font-black text-gray-900 mt-1">{selectedHistory.company}</p>
-                                </div>
-                                <div>
-                                    <p className="text-xs text-gray-400 uppercase tracking-wider font-bold">Report ID</p>
-                                    <p className="font-mono text-sm text-gray-700 mt-1">{selectedHistory.id}</p>
-                                </div>
-                                <div>
-                                    <p className="text-xs text-gray-400 uppercase tracking-wider font-bold">Reporting Period</p>
-                                    <p className="text-gray-900 mt-1">{selectedHistory.period}</p>
-                                </div>
-                                <div>
-                                    <p className="text-xs text-gray-400 uppercase tracking-wider font-bold">Total CO₂e</p>
-                                    <p className="font-black text-gray-900 mt-1">{selectedHistory.co2}</p>
-                                </div>
-                                <div>
-                                    <p className="text-xs text-gray-400 uppercase tracking-wider font-bold">Compliance Score</p>
-                                    <div className={`inline-flex items-center gap-1 mt-1 font-black text-lg ${selectedHistory.score >= 90 ? 'text-green-600' : selectedHistory.score >= 70 ? 'text-amber-600' : 'text-red-600'}`}>
-                                        {selectedHistory.score > 0 ? `${selectedHistory.score}%` : 'N/A'}
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-sm">
+                                    <thead className="bg-gray-50 text-xs font-bold text-gray-400 uppercase">
+                                        <tr>
+                                            <th className="px-4 py-3 text-left">Company</th>
+                                            <th className="px-4 py-3 text-left">Period</th>
+                                            <th className="px-4 py-3 text-left">Decision</th>
+                                            <th className="px-4 py-3 text-left">Date</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-50">
+                                        {historyData.map((r, i) => (
+                                            <tr key={i} onClick={() => setSelectedRecord(r)} className={`hover:bg-gray-50 transition-colors cursor-pointer ${selectedRecord?.id === r.id ? 'bg-green-50' : ''}`}>
+                                                <td className="px-4 py-3.5">
+                                                    <div className="flex items-center gap-2">
+                                                        <span>{flagEmoji(r.riskFlag)}</span>
+                                                        <div>
+                                                            <p className="font-bold text-gray-900 text-sm">{r.company}</p>
+                                                            <p className="text-xs text-gray-400">{r.co2}</p>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td className="px-4 py-3.5 text-xs text-gray-600">{r.period}</td>
+                                                <td className="px-4 py-3.5">
+                                                    <span className={`text-xs font-black px-2 py-0.5 rounded-lg capitalize ${decisionColor(r.decision)}`}>{r.decision}</span>
+                                                </td>
+                                                <td className="px-4 py-3.5 text-xs text-gray-400 font-mono">{r.submittedDate}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        {/* Detail Panel */}
+                        <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+                            {selectedRecord ? (
+                                <div className="space-y-4">
+                                    <div className="flex items-center justify-between">
+                                        <h3 className="font-black text-gray-900">{selectedRecord.company}</h3>
+                                        <button onClick={() => setSelectedRecord(null)} className="text-gray-400 hover:text-gray-700">
+                                            <span className="material-symbols-outlined text-sm">close</span>
+                                        </button>
+                                    </div>
+                                    <div className="text-xs text-gray-400 font-mono">{selectedRecord.id}</div>
+
+                                    <div className="grid grid-cols-2 gap-2 text-sm">
+                                        <div className="bg-gray-50 rounded-xl p-3">
+                                            <p className="text-xs text-gray-400 mb-0.5">Period</p>
+                                            <p className="font-bold text-gray-900">{selectedRecord.period}</p>
+                                        </div>
+                                        <div className="bg-gray-50 rounded-xl p-3">
+                                            <p className="text-xs text-gray-400 mb-0.5">Audit Type</p>
+                                            <p className="font-bold text-gray-900 capitalize">{selectedRecord.auditType}</p>
+                                        </div>
+                                        <div className="bg-gray-50 rounded-xl p-3">
+                                            <p className="text-xs text-gray-400 mb-0.5">Total CO₂e</p>
+                                            <p className="font-bold text-gray-900">{selectedRecord.co2}</p>
+                                        </div>
+                                        <div className="bg-gray-50 rounded-xl p-3">
+                                            <p className="text-xs text-gray-400 mb-0.5">AI Risk</p>
+                                            <p className="font-bold text-gray-900">{flagEmoji(selectedRecord.riskFlag)} {selectedRecord.riskScore}/100</p>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <p className="text-xs text-gray-400 uppercase mb-2 font-bold">Decision</p>
+                                        <span className={`text-sm font-black px-3 py-1.5 rounded-xl capitalize ${decisionColor(selectedRecord.decision)}`}>{selectedRecord.decision}</span>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs text-gray-400 uppercase mb-2 font-bold">Auditor Remarks</p>
+                                        <p className="text-sm text-gray-700 bg-gray-50 rounded-xl p-3 leading-relaxed italic">"{selectedRecord.remarks}"</p>
+                                    </div>
+
+                                    <div className="flex gap-2 pt-2">
+                                        <button className="flex-1 border border-gray-200 rounded-xl py-2.5 text-xs font-bold text-gray-600 hover:bg-gray-50 transition-colors flex items-center justify-center gap-1.5">
+                                            <span className="material-symbols-outlined text-sm">download</span>
+                                            BRSR PDF
+                                        </button>
+                                        <button className="flex-1 border border-gray-200 rounded-xl py-2.5 text-xs font-bold text-[#1A7A4A] hover:bg-green-50 transition-colors flex items-center justify-center gap-1.5">
+                                            <span className="material-symbols-outlined text-sm">link</span>
+                                            View On-Chain
+                                        </button>
                                     </div>
                                 </div>
-                                <div>
-                                    <p className="text-xs text-gray-400 uppercase tracking-wider font-bold">Final Decision</p>
-                                    <span className={`inline-block mt-1 text-sm font-black px-3 py-1 rounded-xl ${selectedHistory.decision === 'Approved' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{selectedHistory.decision}</span>
+                            ) : (
+                                <div className="flex flex-col items-center justify-center h-full text-center py-12">
+                                    <span className="material-symbols-outlined text-5xl text-gray-200 mb-3">history</span>
+                                    <p className="font-bold text-gray-400">Select an audit record</p>
+                                    <p className="text-xs text-gray-300 mt-1">View full details, remarks, and blockchain reference</p>
                                 </div>
-                                <button className="w-full mt-2 flex items-center justify-center gap-2 py-2.5 border border-gray-200 rounded-xl text-sm font-bold text-gray-600 hover:bg-gray-50 transition-colors">
-                                    <span className="material-symbols-outlined text-sm">download</span>
-                                    Download Audit Report
-                                </button>
-                            </div>
+                            )}
                         </div>
-                    ) : (
-                        <div className="bg-gray-50 rounded-2xl border border-dashed border-gray-200 flex items-center justify-center text-center p-8">
-                            <div className="text-gray-300">
-                                <span className="material-symbols-outlined text-5xl">assignment</span>
-                                <p className="text-sm font-medium mt-2">Click a row to view details</p>
-                            </div>
-                        </div>
-                    )}
+                    </div>
                 </div>
             )}
 
             {tab === 'notifications' && (
-                <div className="space-y-3">
-                    {notifications.map(n => (
-                        <div key={n.id} className={`bg-white rounded-2xl border p-5 shadow-sm flex items-start gap-4 ${!n.read ? 'border-[#1A7A4A]/30' : 'border-gray-100'}`}>
-                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${notifColors[n.type]}`}>
-                                <span className="material-symbols-outlined text-sm">{notifIcons[n.type]}</span>
-                            </div>
-                            <div className="flex-1">
-                                <div className="flex items-center gap-2">
-                                    <p className="font-black text-gray-900 text-sm">{n.title}</p>
-                                    {!n.read && <span className="w-2 h-2 bg-[#1A7A4A] rounded-full" />}
+                <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                        <p className="text-sm font-bold text-gray-600">{unreadCount} unread notifications</p>
+                        {unreadCount > 0 && (
+                            <button onClick={markAllRead} className="text-xs font-bold text-[#1A7A4A] hover:underline flex items-center gap-1">
+                                <span className="material-symbols-outlined text-sm">mark_email_read</span>
+                                Mark all as read
+                            </button>
+                        )}
+                    </div>
+                    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm divide-y divide-gray-50">
+                        {notifList.map(n => (
+                            <div key={n.id} className={`flex items-start gap-4 p-5 transition-colors hover:bg-gray-50 ${!n.read ? 'bg-blue-50/40' : ''}`}>
+                                <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${!n.read ? 'bg-blue-100' : 'bg-gray-100'}`}>
+                                    <span className={`material-symbols-outlined text-sm ${notifColors[n.type]}`}>{notifIcons[n.type]}</span>
                                 </div>
-                                <p className="text-sm text-gray-500 mt-0.5">{n.body}</p>
+                                <div className="flex-1 min-w-0">
+                                    <p className={`text-sm leading-relaxed ${!n.read ? 'font-bold text-gray-900' : 'text-gray-600'}`}>{n.message}</p>
+                                    <p className="text-xs text-gray-400 mt-1">{n.time}</p>
+                                </div>
+                                <div className="flex items-center gap-2 flex-shrink-0">
+                                    {!n.read && (
+                                        <button onClick={() => markRead(n.id)} className="text-xs font-bold text-[#1A7A4A] hover:underline whitespace-nowrap">
+                                            Mark read
+                                        </button>
+                                    )}
+                                    {n.link && n.link !== '#' && (
+                                        <a href={n.link} className="text-xs font-bold text-gray-400 hover:text-gray-700 flex items-center gap-0.5">
+                                            <span className="material-symbols-outlined text-sm">arrow_forward</span>
+                                        </a>
+                                    )}
+                                    {!n.read && <div className="w-2 h-2 rounded-full bg-blue-500" />}
+                                </div>
                             </div>
-                            <span className="text-xs text-gray-400 flex-shrink-0">{n.time}</span>
-                        </div>
-                    ))}
+                        ))}
+                    </div>
                 </div>
             )}
         </div>

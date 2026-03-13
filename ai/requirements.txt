@@ -1,0 +1,14 @@
+fastapi==0.115.0
+uvicorn[standard]==0.34.0
+scikit-learn==1.6.1
+joblib==1.4.2
+numpy==1.26.4
+Pillow==11.1.0
+opencv-python-headless==4.10.0.84
+python-multipart==0.0.20
+pydantic==2.10.0
+
+# Note: TensorFlow requires Python <= 3.12
+# If you have Python 3.13+, install via: pip install tensorflow-cpu (may need a nightly build)
+# Alternatively, use Python 3.12 for full TF support.
+# tensorflow==2.19.0
