@@ -51,6 +51,9 @@ const statusConfig: Record<string, { label: string; color: string; dot: string }
     rejected: { label: 'Rejected', color: 'bg-red-100 text-red-700', dot: 'bg-red-500' },
     under_review: { label: 'Under Review', color: 'bg-amber-100 text-amber-700', dot: 'bg-amber-500' },
     pending: { label: 'Pending', color: 'bg-gray-100 text-gray-500', dot: 'bg-gray-400' },
+    correction_requested: { label: 'Correction Requested', color: 'bg-orange-100 text-orange-700', dot: 'bg-orange-500' },
+    awaiting_second_auditor: { label: 'Wait 2nd Auditor', color: 'bg-indigo-100 text-indigo-700', dot: 'bg-indigo-500' },
+    pending_govt_assignment: { label: 'Wait Govt Assgn', color: 'bg-purple-100 text-purple-700', dot: 'bg-purple-500' },
 };
 
 export default function SubmissionTracker() {

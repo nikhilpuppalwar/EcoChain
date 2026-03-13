@@ -31,6 +31,11 @@ export function useCarbonCredit() {
         isPending: isRetiring
     } = useWriteContract();
 
+    const {
+        writeContractAsync: transferTokensAsync,
+        isPending: isTransferring
+    } = useWriteContract();
+
     const issueCredits = async (to: string, amount: number) => {
         if (chain?.id !== SUPPORTED_CHAIN_ID) {
             throw new Error(`Please switch to Hardhat local network. Contracts are not deployed on ${chain?.name || 'this network'}.`);
@@ -58,6 +63,20 @@ export function useCarbonCredit() {
         return hash;
     };
 
+    const transferTokens = async (to: string, amount: number) => {
+        if (!address) throw new Error("Wallet not connected");
+        if (chain?.id !== SUPPORTED_CHAIN_ID) {
+            throw new Error(`Please switch to Hardhat local network.`);
+        }
+        const hash = await transferTokensAsync({
+            address: tokenAddress,
+            abi: CarbonCreditArtifact.abi,
+            functionName: 'transfer',
+            args: [to as `0x${string}`, BigInt(amount)],
+        });
+        return hash;
+    };
+
     return {
         balance: balance ? Number(balance) : 0,
         refetchBalance,
@@ -65,6 +84,8 @@ export function useCarbonCredit() {
         isIssuing,
         retireCredits,
         isRetiring,
+        transferTokens,
+        isTransferring,
         isWrongChain: !!chain && chain.id !== SUPPORTED_CHAIN_ID,
         supportedChainId: SUPPORTED_CHAIN_ID,
     };

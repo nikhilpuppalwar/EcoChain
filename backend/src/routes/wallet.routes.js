@@ -8,5 +8,6 @@ router.use(requireRole('industry')); // Wallet actions are industry specific
 
 router.get('/transactions', controller.getMyTransactions);
 router.post('/retire', controller.retireCredits);
+router.post('/transfer', controller.transferCredits);
 
 module.exports = router;

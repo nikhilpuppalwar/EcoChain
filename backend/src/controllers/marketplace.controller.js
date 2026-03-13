@@ -40,15 +40,19 @@ exports.createListing = async (req, res, next) => {
     try {
         const { creditsAvailable, pricePerCredit, durationDays, onChainTxHash } = req.body;
 
-        const company = await Company.findById(req.user.company);
-
-        if (company.creditBalance < creditsAvailable) {
-            return res.status(400).json({ success: false, message: 'Insufficient credit balance to list' });
+        if (!creditsAvailable || creditsAvailable <= 0) {
+            return res.status(400).json({ success: false, message: 'Invalid creditsAvailable amount' });
+        }
+        if (!pricePerCredit || pricePerCredit <= 0) {
+            return res.status(400).json({ success: false, message: 'Invalid pricePerCredit' });
+        }
+        if (!req.user.company) {
+            return res.status(400).json({ success: false, message: 'Your account is not linked to a company. Please complete onboarding.' });
         }
 
-        // Deduct from balance
-        company.creditBalance -= creditsAvailable;
-        await company.save();
+        // NOTE: The on-chain approve+listCredits tx already escrows the tokens in the
+        // marketplace smart contract before this endpoint is called. The blockchain is
+        // the source of truth for token custody — we just record the listing in the DB.
 
         const expiresAt = new Date();
         expiresAt.setDate(expiresAt.getDate() + (parseInt(durationDays) || 30));
@@ -58,7 +62,7 @@ exports.createListing = async (req, res, next) => {
             creditsAvailable,
             pricePerCredit,
             expiresAt,
-            txHash: onChainTxHash // From frontend web3 tx
+            txHash: onChainTxHash
         });
 
         res.status(201).json({ success: true, data: listing });

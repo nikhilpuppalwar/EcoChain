@@ -8,6 +8,8 @@ const upload = require('../middleware/upload');
 router.use(verifyToken);
 router.use(requireRole('industry'));
 
+router.post('/calculate', controller.calculateEmissions);
+
 router.route('/')
     .get(controller.getEmissions)
     .post(upload.single('evidenceDocument'), controller.createEmission);

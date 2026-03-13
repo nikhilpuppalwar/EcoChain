@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
 import { useAuthStore } from '../../store/authStore';
+import toast from 'react-hot-toast';
+import api from '../../lib/api';
 
 export default function ReportReview() {
     const { user } = useAuthStore();
     const [filter, setFilter] = useState('Pending');
     const [selectedReport, setSelectedReport] = useState<any>(null);
     const [reviewNotes, setReviewNotes] = useState('');
+    const [isExporting, setIsExporting] = useState(false);
 
     // Mock Data
     const [reports, setReports] = useState([
@@ -20,15 +23,47 @@ export default function ReportReview() {
         return r.status === filter;
     });
 
-    const handleAction = (id: string, action: 'Approve' | 'Reject' | 'Request Info') => {
+    const handleAction = (id: string, action: 'Approve' | 'Reject' | 'Request Info' | 'Acknowledge') => {
         setReports(reports.map(r => {
             if (r.id === id) {
+                if (action === 'Acknowledge') {
+                    return { ...r, riskScore: 'Acknowledged', aiConfidence: Math.max(r.aiConfidence, 85) };
+                }
                 return { ...r, status: action === 'Approve' ? 'Approved' : action === 'Reject' ? 'Rejected' : 'Needs Info' };
             }
             return r;
         }));
-        setSelectedReport(null);
-        setReviewNotes('');
+        if (action === 'Acknowledge') {
+            toast.success("Anomaly acknowledged. Risk status updated.");
+            setSelectedReport({ ...selectedReport, riskScore: 'Acknowledged', aiConfidence: Math.max(selectedReport.aiConfidence, 85) });
+        } else {
+            toast.success(`Report ${action}ed successfully`);
+            setSelectedReport(null);
+            setReviewNotes('');
+        }
+    };
+
+    const handleExportBRSR = async () => {
+        if (!selectedReport) return;
+        setIsExporting(true);
+        toast.loading("Generating BRSR Report...", { id: "brsr" });
+        try {
+            // Mocking the python microservice delay or integrating directly
+            await new Promise(r => setTimeout(r, 2000));
+            // In a real app we would do:
+            // const res = await api.get(`/brsr/generate/${selectedReport.id}`, { responseType: 'blob' });
+            // const url = window.URL.createObjectURL(new Blob([res.data]));
+            // const link = document.createElement('a');
+            // link.href = url;
+            // link.setAttribute('download', `BRSR_${selectedReport.company}.pdf`);
+            // document.body.appendChild(link);
+            // link.click();
+            toast.success("BRSR Report downloaded successfully!", { id: "brsr" });
+        } catch (error) {
+            toast.error("Failed to generate BRSR report", { id: "brsr" });
+        } finally {
+            setIsExporting(false);
+        }
     };
 
     return (
@@ -143,7 +178,17 @@ export default function ReportReview() {
                             <div className="p-6 border-b border-slate-100 bg-slate-50/50">
                                 <div className="flex justify-between items-start mb-2">
                                     <h2 className="text-xl font-bold font-syne text-slate-800 leading-tight">{selectedReport.company}</h2>
-                                    <span className="text-sm font-mono text-slate-400 bg-white px-2 py-1 border border-slate-200 rounded">{selectedReport.id}</span>
+                                    <div className="flex gap-2 items-center">
+                                        <button 
+                                            onClick={handleExportBRSR}
+                                            disabled={isExporting}
+                                            className="text-xs bg-indigo-50 text-indigo-700 hover:bg-indigo-100 font-bold px-3 py-1.5 rounded-lg border border-indigo-200 flex items-center gap-1 transition-colors disabled:opacity-50"
+                                        >
+                                            <span className="material-symbols-outlined text-[14px]">download</span>
+                                            {isExporting ? 'Exporting...' : 'BRSR'}
+                                        </button>
+                                        <span className="text-sm font-mono text-slate-400 bg-white px-2 py-1 border border-slate-200 rounded">{selectedReport.id}</span>
+                                    </div>
                                 </div>
                                 <p className="text-sm text-slate-500 flex items-center gap-2">
                                     <span className="material-symbols-outlined text-[16px]">factory</span>
@@ -174,9 +219,24 @@ export default function ReportReview() {
                                             <p className="text-lg font-bold text-slate-700">{selectedReport.riskScore}</p>
                                         </div>
                                     </div>
-                                    {selectedReport.aiConfidence < 80 && (
-                                        <div className="bg-white p-3 rounded-lg border border-red-100/50 text-sm text-slate-600 shadow-sm">
-                                            <span className="font-bold text-red-600">Flag:</span> Reported Scope 2 emissions are 34% lower than industry average for reported production volume. Manual documentation review recommended.
+                                    {selectedReport.aiConfidence < 80 && selectedReport.riskScore !== 'Acknowledged' && (
+                                        <div className="bg-white p-4 rounded-lg border border-red-100/50 text-sm shadow-sm flex flex-col gap-3">
+                                            <div className="text-slate-600">
+                                                <span className="font-bold text-red-600">Flag:</span> Reported Scope 2 emissions are 34% lower than industry average for reported production volume. Manual documentation review recommended.
+                                            </div>
+                                            <button 
+                                                onClick={() => handleAction(selectedReport.id, 'Acknowledge')}
+                                                className="bg-red-50 hover:bg-red-100 border border-red-200 text-red-700 font-bold text-xs py-2 px-3 rounded-lg flex items-center justify-center gap-1 transition-colors"
+                                            >
+                                                <span className="material-symbols-outlined text-[14px]">verified_user</span>
+                                                Acknowledge Anomaly
+                                            </button>
+                                        </div>
+                                    )}
+                                    {selectedReport.riskScore === 'Acknowledged' && (
+                                        <div className="bg-emerald-50 p-3 rounded-lg border border-emerald-200 text-sm text-emerald-800 shadow-sm flex items-center gap-2">
+                                            <span className="material-symbols-outlined text-emerald-600 text-[18px]">gpp_good</span>
+                                            <span className="font-bold">Anomaly Acknowledged by Government Agent.</span>
                                         </div>
                                     )}
                                 </div>

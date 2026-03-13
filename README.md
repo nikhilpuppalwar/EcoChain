@@ -166,21 +166,21 @@ EcoChain addresses three critical failures in existing carbon markets:
 ## Project Structure
 
 ```bash
-CHK-1772889891795-6236/
+Hackathon/
 ├── backend/                  # Node.js + Express API server
-│   ├── src/                  # Controllers, routes, and models (User, Emission, Report)
-│   └── package.json          
-├── contracts/                # Foundry-based Solidity smart contracts
-│   ├── src/                  # CarbonCredit, CarbonMarketplace, AuditRegistry, CreditRetirement 
-│   ├── scripts/              # Foundry deployment scripts
-│   ├── test/                 # Foundry test suites
-│   └── foundry.toml          
-├── Docs/                     # Project documentation, PRDs, and architecture blueprints
-├── Database/                 # Database schemas and models
-├── Reports/                  # Generated compliance and audit reports
-└── web/                      # React.js + Vite frontend application
-    ├── src/                  # React components, pages, context, and ABIs
-    └── package.json          
+│   ├── src/                  # Controllers, routes, middleware, models
+│   ├── .env.example
+│   └── package.json
+├── contracts/                # Solidity smart contracts + tooling
+│   ├── src/                  # CarbonCredit, CarbonMarketplace, etc.
+│   ├── scripts/              # Deployment / seeding scripts (Foundry-style)
+│   ├── test/                 # Tests
+│   ├── package.json
+│   └── foundry.toml
+└── web/                      # React + Vite frontend
+    ├── src/
+    ├── .env.example
+    └── package.json
 ```
 
 ---
@@ -207,11 +207,11 @@ forge test --gas-report
 # Start local testnet
 anvil
 
-# Deploy to Polygon Mumbai (testnet)
-forge script script/Deploy.s.sol --rpc-url $MUMBAI_RPC_URL --broadcast
+# Deploy to a testnet (Polygon Amoy recommended)
+forge script scripts/Deploy.s.sol --rpc-url $AMOY_RPC_URL --broadcast
 
 # Deploy to Polygon Mainnet
-forge script script/Deploy.s.sol --rpc-url $POLYGON_RPC_URL --broadcast --verify
+forge script scripts/Deploy.s.sol --rpc-url $POLYGON_RPC_URL --broadcast --verify
 
 # Interact with deployed contract
 cast send $CONTRACT_ADDR 'mint(address,uint256)' $TO $AMOUNT --rpc-url $RPC_URL
@@ -337,13 +337,13 @@ All API routes are prefixed with `/api`. Full interactive docs available at `/ap
 
 ## Environment Variables
 
-### `server/.env`
+### `backend/.env`
 
 ```env
 # Application
 NODE_ENV=development
 PORT=5000
-CLIENT_URL=http://localhost:3000
+CLIENT_URL=http://localhost:5173
 
 # MongoDB
 MONGODB_URI=mongodb+srv://<user>:<pass>@cluster.mongodb.net/ecochain
@@ -372,7 +372,7 @@ AI_SERVICE_URL=http://localhost:8000
 
 # Blockchain
 POLYGON_RPC_URL=https://polygon-mainnet.g.alchemy.com/v2/your_key
-MUMBAI_RPC_URL=https://polygon-mumbai.g.alchemy.com/v2/your_key
+AMOY_RPC_URL=https://polygon-amoy.g.alchemy.com/v2/your_key
 PRIVATE_KEY=your_deployer_wallet_private_key
 POLYGONSCAN_API_KEY=your_polygonscan_key
 
@@ -390,15 +390,7 @@ TOTP_SECRET=your_totp_secret
 ADMIN_IP_WHITELIST=192.168.1.1,10.0.0.1
 ```
 
-### `ai/.env`
-
-```env
-PORT=8000
-MODEL_DIR=./models
-LOG_LEVEL=info
-```
-
-### `client/.env`
+### `web/.env`
 
 ```env
 VITE_API_URL=http://localhost:5000/api
@@ -407,6 +399,8 @@ VITE_POLYGON_RPC=https://polygon-mainnet.g.alchemy.com/v2/your_key
 VITE_CARBON_CREDIT_ADDRESS=0x...
 VITE_MARKETPLACE_ADDRESS=0x...
 ```
+
+> Never commit real `.env` files — only `.env.example`.
 
 ---
 
@@ -422,8 +416,8 @@ VITE_MARKETPLACE_ADDRESS=0x...
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/nikhilpuppalwar/CHK-1772889891795-6236.git
-cd CHK-1772889891795-6236
+git clone <your-repo-url>
+cd Hackathon
 ```
 
 ### 2. Smart Contracts (Foundry)

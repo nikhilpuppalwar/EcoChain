@@ -51,6 +51,7 @@ app.use('/api/gov', require('./src/routes/government.routes'));
 app.use('/api/notifications', require('./src/routes/notifications.routes'));
 app.use('/api/wallet', require('./src/routes/wallet.routes'));
 app.use('/api/ai', require('./src/routes/ai.routes'));
+app.use('/api/audit', require('./src/routes/audit.routes'));
 
 // Basic Health Check
 app.get('/health', (req, res) => res.json({ status: 'ok', time: new Date() }));

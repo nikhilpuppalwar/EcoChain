@@ -9,14 +9,12 @@ router.use(requireRole('government'));
 router.get('/dashboard/stats', controller.getDashboardStats);
 router.get('/companies', controller.getCompanies);
 
-router.route('/reports')
-    .get(controller.getAllReports);
-
-router.route('/reports/:id')
-    .get(controller.getReportById);
-
+router.get('/reports', controller.getAllReports);
+router.get('/reports/:id', controller.getReportById);
 router.post('/reports/:id/review', controller.reviewReport);
+router.post('/anomalies/:id/review', controller.reviewAnomaly);
 
+// Credits Management
 router.post('/credits/issue', controller.issueCredits);
 
 module.exports = router;

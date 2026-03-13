@@ -3,10 +3,10 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { Link } from 'react-router-dom';
 
 const queue = [
-    { id: 'SUB-2024-0084', company: 'SteelMax Industries', sector: 'Manufacturing', period: 'Q4 2024', aiStatus: 'clean', deadline: 'Mar 10', priority: 'URGENT', co2: 4200 },
-    { id: 'SUB-2024-0081', company: 'AgroChem United', sector: 'Agriculture', period: 'Q4 2024', aiStatus: 'flagged', deadline: 'Mar 14', priority: 'HIGH', co2: 2800 },
-    { id: 'SUB-2024-0078', company: 'CoalTech Energy', sector: 'Energy', period: 'Q4 2024', aiStatus: 'clean', deadline: 'Mar 18', priority: 'NORMAL', co2: 8900 },
-    { id: 'SUB-2024-0075', company: 'GreenTransport Co.', sector: 'Transport', period: 'Annual 2024', aiStatus: 'clean', deadline: 'Mar 22', priority: 'NORMAL', co2: 1400 },
+    { id: 'SUB-2024-0084', company: 'SteelMax Industries', sector: 'Manufacturing', period: 'Q4 2024', aiStatus: 'clean', deadline: 'Mar 10', priority: 'URGENT', co2: 4200, auditType: 'dual', dualStatus: 'awaiting_second' },
+    { id: 'SUB-2024-0081', company: 'AgroChem United', sector: 'Agriculture', period: 'Q4 2024', aiStatus: 'flagged', deadline: 'Mar 14', priority: 'HIGH', co2: 2800, auditType: 'single' },
+    { id: 'SUB-2024-0078', company: 'CoalTech Energy', sector: 'Energy', period: 'Q4 2024', aiStatus: 'clean', deadline: 'Mar 18', priority: 'NORMAL', co2: 8900, auditType: 'dual', dualStatus: 'first_completed' },
+    { id: 'SUB-2024-0075', company: 'GreenTransport Co.', sector: 'Transport', period: 'Annual 2024', aiStatus: 'clean', deadline: 'Mar 22', priority: 'NORMAL', co2: 1400, auditType: 'single' },
 ];
 
 const baselineData = [
@@ -59,6 +59,9 @@ export default function AuditQueue() {
                                 <div className="flex items-center justify-between mt-2">
                                     <span className="text-xs font-mono text-gray-400">{item.id}</span>
                                     <div className="flex items-center gap-2">
+                                        {item.auditType === 'dual' && (
+                                            <span className="text-xs font-bold px-1.5 py-0.5 rounded-md bg-purple-100 text-purple-700 uppercase">Dual</span>
+                                        )}
                                         <span className={`text-xs font-bold px-1.5 py-0.5 rounded-md ${item.priority === 'URGENT' ? 'bg-red-100 text-red-600' : item.priority === 'HIGH' ? 'bg-orange-100 text-orange-600' : 'bg-gray-100 text-gray-400'}`}>{item.priority}</span>
                                         <span className="text-xs text-gray-400">Due {item.deadline}</span>
                                     </div>

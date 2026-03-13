@@ -1,8 +1,9 @@
 const EmissionEntry = require('../models/EmissionEntry');
 const Notification = require('../models/Notification');
 const User = require('../models/User');
-const pinataUtil = require('../utils/pinata');
+const cloudinaryUtil = require('../utils/cloudinary');
 const { broadcastToRole } = require('../utils/websocket');
+const { calculateCO2e } = require('../utils/co2Calculator');
 
 /* ===========================
  * GET ALL ENTRIES (FOR USER'S COMPANY)
@@ -48,16 +49,27 @@ exports.getEmissions = async (req, res, next) => {
  * =========================== */
 exports.createEmission = async (req, res, next) => {
     try {
-        const { periodMonth, periodYear, quantityTonnes, emissionSource, notes } = req.body;
-        let evidenceCID = null;
-        let evidenceFileName = null;
-        let evidenceUrl = null;
-
-        if (req.file) {
-            evidenceFileName = req.file.originalname;
-            evidenceCID = await pinataUtil.uploadFile(req.file.buffer, evidenceFileName, req.file.mimetype);
-            evidenceUrl = `https://gateway.pinata.cloud/ipfs/${evidenceCID}`;
+        const { 
+            periodMonth, periodYear, quantityTonnes, emissionSource, notes, location,
+            wasteGeneration, logisticsTransport, vehicleEmissions, productionOutput
+        } = req.body;
+        
+        if (!periodMonth || !periodYear || !quantityTonnes || !emissionSource || !notes) {
+            return res.status(400).json({ success: false, message: 'All fields are mandatory, including emissionSource and notes' });
         }
+
+        if (!req.file) {
+            return res.status(400).json({ success: false, message: 'Evidence document is mandatory' });
+        }
+
+        const evidenceFileName = req.file.originalname;
+        const evidenceUrl = await cloudinaryUtil.uploadFile(req.file.buffer, evidenceFileName, req.file.mimetype);
+
+        // Map frontend JSON strings back to objects (if they are passed as JSON strings via form-data)
+        const parsedWaste = wasteGeneration ? JSON.parse(wasteGeneration) : undefined;
+        const parsedLogistics = logisticsTransport ? JSON.parse(logisticsTransport) : undefined;
+        const parsedVehicles = vehicleEmissions ? JSON.parse(vehicleEmissions) : undefined;
+        const parsedProduction = productionOutput ? JSON.parse(productionOutput) : undefined;
 
         const emission = await EmissionEntry.create({
             company: req.user.company,
@@ -66,9 +78,14 @@ exports.createEmission = async (req, res, next) => {
             quantityTonnes,
             emissionSource,
             notes,
-            evidenceCID,
+            location,
+            wasteGeneration: parsedWaste,
+            logisticsTransport: parsedLogistics,
+            vehicleEmissions: parsedVehicles,
+            productionOutput: parsedProduction,
             evidenceFileName,
-            evidenceUrl
+            evidenceUrl,
+            status: 'submitted' // Starts at submitted, awaits AI check -> 'pending_govt_assignment'
         });
 
         // Notify government users
@@ -79,7 +96,7 @@ exports.createEmission = async (req, res, next) => {
             user: govUser._id,
             type: 'compliance_alert',
             title: 'New Emission Report',
-            message: `A new emission report of ${quantityTonnes} tCO2e was submitted and is pending review.`
+            message: `A new emission report of ${quantityTonnes} tCO2e was submitted and is pending AI check.`
         }));
         await Notification.insertMany(notifications);
 
@@ -131,12 +148,11 @@ exports.updateEmission = async (req, res, next) => {
 
         if (req.file) {
             emission.evidenceFileName = req.file.originalname;
-            emission.evidenceCID = await pinataUtil.uploadFile(
+            emission.evidenceUrl = await cloudinaryUtil.uploadFile(
                 req.file.buffer,
                 emission.evidenceFileName,
                 req.file.mimetype
             );
-            emission.evidenceUrl = `https://gateway.pinata.cloud/ipfs/${emission.evidenceCID}`;
         }
 
         await emission.save();
@@ -160,6 +176,21 @@ exports.deleteEmission = async (req, res, next) => {
 
         await emission.deleteOne();
         res.status(200).json({ success: true, message: 'Emission entry deleted successfully' });
+    } catch (error) {
+        next(error);
+    }
+};
+
+/* ===========================
+ * CALCULATE EMISSIONS
+ * =========================== */
+exports.calculateEmissions = async (req, res, next) => {
+    try {
+        const breakdown = await calculateCO2e(req.body);
+        res.status(200).json({
+            success: true,
+            data: breakdown
+        });
     } catch (error) {
         next(error);
     }

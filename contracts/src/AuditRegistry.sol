@@ -12,6 +12,7 @@ contract AuditRegistry is AccessControl {
         bytes32 reportHash;
         bytes auditorSignature;
         uint256 timestamp;
+        string verificationStatus;
     }
 
     Report[] public reports;
@@ -24,7 +25,8 @@ contract AuditRegistry is AccessControl {
     function storeReport(
         uint256 industryId,
         bytes32 reportHash,
-        bytes memory auditorSig
+        bytes memory auditorSig,
+        string memory verificationStatus
     )
         external
         onlyRole(AUDITOR_ROLE)
@@ -34,7 +36,8 @@ contract AuditRegistry is AccessControl {
                 industryId: industryId,
                 reportHash: reportHash,
                 auditorSignature: auditorSig,
-                timestamp: block.timestamp
+                timestamp: block.timestamp,
+                verificationStatus: verificationStatus
             })
         );
     }

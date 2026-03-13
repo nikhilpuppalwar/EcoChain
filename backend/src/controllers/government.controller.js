@@ -130,6 +130,74 @@ exports.reviewReport = async (req, res, next) => {
 };
 
 /* ===========================
+ * REVIEW AI ANOMALY
+ * =========================== */
+exports.reviewAnomaly = async (req, res, next) => {
+    try {
+        const { action, reason } = req.body;
+        
+        if (!['override', 'reject'].includes(action)) {
+            return res.status(400).json({ success: false, message: 'Invalid action. Must be override or reject.' });
+        }
+
+        if (action === 'reject' && !reason) {
+            return res.status(400).json({ success: false, message: 'Reason is required for rejecting a flagged report' });
+        }
+
+        const report = await EmissionEntry.findById(req.params.id).populate('company');
+        if (!report) return res.status(404).json({ success: false, message: 'Report not found' });
+
+        if (report.status !== 'ai_flagged') {
+            return res.status(400).json({ success: false, message: `Cannot review anomaly. Report is currently ${report.status}` });
+        }
+
+        if (action === 'override') {
+            // Government determines the AI was overly cautious; proceed to manual auditor assignment flow
+            report.status = 'pending_govt_assignment';
+            report.notes += `\n[Govt Anomaly Override]: Approved for auditor assignment by ${req.user._id}`;
+            await report.save();
+
+            // Log activity
+            await ReportReview.create({
+                report: report._id,
+                reviewedBy: req.user._id,
+                action: 'approved', // Internal status for the override action
+                reason: 'Anomaly Overridden - Sent to Assignment Queue'
+            });
+
+            res.status(200).json({ success: true, message: 'Anomaly overridden. Report moved to assignment queue.', data: report });
+        } else {
+            // Government agrees with AI; reject the report back to the industry
+            report.status = 'rejected';
+            report.rejectionReason = `AI Anomaly Confirmed: ${reason}`;
+            report.reviewedBy = req.user._id;
+            report.reviewedAt = Date.now();
+            await report.save();
+
+            // Log activity
+            await ReportReview.create({
+                report: report._id,
+                reviewedBy: req.user._id,
+                action: 'rejected',
+                reason: `AI Anomaly Confirmed: ${reason}`
+            });
+
+            // Notify
+            await Notification.create({
+                user: report.company.adminUser,
+                type: 'report_rejected',
+                title: 'Submission Rejected (Anomaly)',
+                message: `Your emission report was rejected due to confirmed data anomalies: ${reason}`
+            });
+
+            res.status(200).json({ success: true, message: 'Report rejected due to anomalies.', data: report });
+        }
+    } catch (error) {
+        next(error);
+    }
+};
+
+/* ===========================
  * ISSUE CREDITS
  * =========================== */
 exports.issueCredits = async (req, res, next) => {

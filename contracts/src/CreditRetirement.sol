@@ -17,6 +17,10 @@ contract CreditRetirement {
 
     RetirementRecord[] public records;
 
+    // To prevent a user retiring credits for the same period twice:
+    // mapping of user => (period => bool)
+    mapping(address => mapping(uint256 => bool)) public isRetired;
+
     event Retired(address user, uint256 amount);
 
     constructor(address tokenAddress) {
@@ -28,6 +32,8 @@ contract CreditRetirement {
         string memory reason,
         uint256 period
     ) external {
+        require(!isRetired[msg.sender][period], "Credits already retired for this period");
+        isRetired[msg.sender][period] = true;
 
         bool success = token.transferFrom(msg.sender, address(this), amount);
         require(success, "Transfer failed");

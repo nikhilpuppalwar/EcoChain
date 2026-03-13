@@ -5,7 +5,20 @@ const notificationSchema = new mongoose.Schema({
 
     type: {
         type: String,
-        enum: ['report_approved', 'report_rejected', 'credits_issued', 'trade_completed', 'compliance_alert']
+        enum: [
+            'report_approved', 
+            'report_rejected', 
+            'credits_issued', 
+            'trade_completed', 
+            'compliance_alert',
+            'pending_govt_assignment',
+            'auditor_assigned',
+            'correction_requested',
+            'awaiting_second_auditor',
+            'credit_transferred',
+            'brsr_report_ready',
+            'govt_anomaly_reviewed'
+        ]
     },
     title: String,
     message: String,

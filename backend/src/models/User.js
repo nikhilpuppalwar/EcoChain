@@ -31,6 +31,12 @@ const userSchema = new mongoose.Schema({
         specialization: [String],
         yearsExperience: Number,
         status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
+        currentAssignments: [{
+            submissionId: { type: mongoose.Schema.Types.ObjectId, ref: 'EmissionEntry' },
+            industryId: { type: mongoose.Schema.Types.ObjectId, ref: 'Company' },
+            role: { type: String, enum: ['primary', 'secondary'] },
+            assignedAt: { type: Date, default: Date.now }
+        }]
     },
 
     // Admin-specific fields

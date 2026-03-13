@@ -11,16 +11,21 @@ const sources = [
 
 export default function VerifySubmit() {
     const navigate = useNavigate();
-    const [decision, setDecision] = useState<'approved' | 'rejected' | null>(null);
+    const [decision, setDecision] = useState<'approved' | 'rejected' | 'correction' | null>(null);
     const [remarks, setRemarks] = useState('');
     const [signature, setSignature] = useState('');
     const [complianceNotes, setComplianceNotes] = useState<Record<string, 'compliant' | 'non_compliant'>>({});
+    const [docVerified, setDocVerified] = useState(false);
     const [submitted, setSubmitted] = useState(false);
     const [txHash] = useState('0x' + Math.random().toString(16).slice(2, 18) + Math.random().toString(16).slice(2, 18));
 
+    // Mock dual audit state for demonstration
+    const isSecondAuditor = true;
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!decision) { toast.error('Please select Approve or Reject'); return; }
+        if (!docVerified) { toast.error('You must verify all supporting documents first'); return; }
+        if (!decision) { toast.error('Please select Approve, Reject, or Request Correction'); return; }
         if (remarks.length < 20) { toast.error('Remarks must be at least 20 characters'); return; }
         if (!signature) { toast.error('Digital signature is required'); return; }
         setSubmitted(true);
@@ -86,25 +91,62 @@ export default function VerifySubmit() {
                 {/* Decision toggle */}
                 <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
                     <h2 className="font-black text-gray-900 mb-4">Audit Decision *</h2>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <button
                             type="button"
                             onClick={() => setDecision('approved')}
-                            className={`flex items-center justify-center gap-3 py-5 rounded-2xl border-2 font-black text-lg transition-all ${decision === 'approved' ? 'border-green-500 bg-green-50 text-green-700 shadow-lg shadow-green-100' : 'border-gray-200 text-gray-400 hover:border-green-300'}`}
+                            className={`flex flex-col items-center justify-center gap-2 py-4 rounded-2xl border-2 font-black transition-all ${decision === 'approved' ? 'border-green-500 bg-green-50 text-green-700 shadow-lg shadow-green-100' : 'border-gray-200 text-gray-400 hover:border-green-300'}`}
                         >
-                            <span className="material-symbols-outlined text-2xl">check_circle</span>
+                            <span className="material-symbols-outlined text-3xl">check_circle</span>
                             Approve
                         </button>
                         <button
                             type="button"
-                            onClick={() => setDecision('rejected')}
-                            className={`flex items-center justify-center gap-3 py-5 rounded-2xl border-2 font-black text-lg transition-all ${decision === 'rejected' ? 'border-red-500 bg-red-50 text-red-700 shadow-lg shadow-red-100' : 'border-gray-200 text-gray-400 hover:border-red-300'}`}
+                            onClick={() => setDecision('correction')}
+                            className={`flex flex-col items-center justify-center gap-2 py-4 rounded-2xl border-2 font-black transition-all ${decision === 'correction' ? 'border-orange-500 bg-orange-50 text-orange-700 shadow-lg shadow-orange-100' : 'border-gray-200 text-gray-400 hover:border-orange-300'}`}
                         >
-                            <span className="material-symbols-outlined text-2xl">cancel</span>
+                            <span className="material-symbols-outlined text-3xl">assignment_return</span>
+                            Request Correction
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setDecision('rejected')}
+                            className={`flex flex-col items-center justify-center gap-2 py-4 rounded-2xl border-2 font-black transition-all ${decision === 'rejected' ? 'border-red-500 bg-red-50 text-red-700 shadow-lg shadow-red-100' : 'border-gray-200 text-gray-400 hover:border-red-300'}`}
+                        >
+                            <span className="material-symbols-outlined text-3xl">cancel</span>
                             Reject
                         </button>
                     </div>
                 </div>
+
+                {/* Document Checklist */}
+                <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
+                    <h2 className="font-black text-gray-900 mb-4">Document Verification *</h2>
+                    <label className="flex items-center gap-3 cursor-pointer group">
+                        <div className={`w-6 h-6 rounded flex items-center justify-center border-2 transition-all ${docVerified ? 'bg-green-500 border-green-500' : 'border-gray-300 bg-white group-hover:border-gray-400'}`}>
+                            {docVerified && <span className="material-symbols-outlined text-white text-[16px]">check</span>}
+                        </div>
+                        <input type="checkbox" className="hidden" checked={docVerified} onChange={e => setDocVerified(e.target.checked)} />
+                        <div>
+                            <span className="font-bold text-gray-900 text-sm">I have reviewed all supporting documents</span>
+                            <p className="text-xs text-gray-500">Invoices, meter readings, and production logs match the reported data.</p>
+                        </div>
+                    </label>
+                </div>
+
+                {isSecondAuditor && (
+                    <div className="bg-purple-50 rounded-2xl border border-purple-100 p-6 shadow-sm">
+                        <div className="flex items-center gap-2 mb-2">
+                            <span className="material-symbols-outlined text-purple-600">group</span>
+                            <h2 className="font-black text-purple-900">1st Auditor Notes (Dual Audit)</h2>
+                        </div>
+                        <p className="text-sm text-purple-800">
+                            <strong>Decision:</strong> <span className="text-green-600 font-bold px-2 bg-green-100 rounded-md">Approved</span><br/><br/>
+                            "Documents check out successfully. Minor discrepancy in Scope 2 natural gas usage but within 2% margin of error. Verified overall operations using AI insights."<br/><br/>
+                            <span className="text-xs text-purple-500">— Dr. Sarah Jenkins</span>
+                        </p>
+                    </div>
+                )}
 
                 {/* Remarks */}
                 <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
@@ -172,10 +214,10 @@ export default function VerifySubmit() {
                 {/* Submit */}
                 <button
                     type="submit"
-                    className={`w-full font-black py-4 rounded-2xl flex items-center justify-center gap-2 shadow-lg transition-all text-white ${decision === 'approved' ? 'bg-[#1A7A4A] hover:bg-[#15613b] shadow-green-200' : decision === 'rejected' ? 'bg-red-600 hover:bg-red-700 shadow-red-200' : 'bg-gray-300 cursor-not-allowed'}`}
+                    className={`w-full font-black py-4 rounded-2xl flex items-center justify-center gap-2 shadow-lg transition-all text-white ${decision === 'approved' ? 'bg-[#1A7A4A] hover:bg-[#15613b] shadow-green-200' : decision === 'correction' ? 'bg-orange-600 hover:bg-orange-700 shadow-orange-200' : decision === 'rejected' ? 'bg-red-600 hover:bg-red-700 shadow-red-200' : 'bg-gray-300 cursor-not-allowed'}`}
                 >
                     <span className="material-symbols-outlined text-sm">send</span>
-                    {decision === 'approved' ? 'Sign & Submit to Blockchain' : decision === 'rejected' ? 'Reject & Notify Industry' : 'Select a Decision First'}
+                    {decision === 'approved' ? 'Sign & Submit to Blockchain' : decision === 'correction' ? 'Send Back for Correction' : decision === 'rejected' ? 'Reject & Notify Industry' : 'Select a Decision First'}
                 </button>
             </form>
         </div>
