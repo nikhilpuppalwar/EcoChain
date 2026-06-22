@@ -80,7 +80,7 @@ export default function DashboardLayout() {
         navigate('/login');
     };
 
-    const SidebarContent = () => (
+    const renderSidebarContent = () => (
         <>
             <div className="p-6">
                 <Link to="/" className="flex items-center gap-2" onClick={() => setSidebarOpen(false)}>
@@ -157,7 +157,7 @@ export default function DashboardLayout() {
 
             {/* Desktop Sidebar */}
             <aside className="w-64 bg-white border-r border-slate-200 flex flex-col hidden md:flex sticky top-0 h-screen">
-                <SidebarContent />
+                {renderSidebarContent()}
             </aside>
 
             {/* Mobile Sidebar (drawer) */}
@@ -165,7 +165,7 @@ export default function DashboardLayout() {
                 className={`fixed inset-y-0 left-0 w-72 bg-white border-r border-slate-200 flex flex-col z-50 md:hidden transform transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}
                 aria-label="Mobile navigation"
             >
-                <SidebarContent />
+                {renderSidebarContent()}
             </aside>
 
             {/* Main Content */}
