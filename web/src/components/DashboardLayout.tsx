@@ -2,9 +2,12 @@ import { useState } from 'react';
 import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
+import toast from 'react-hot-toast';
+import ecochainIconWhite from '@/assets/ecochain_icon_white.png';
+
 
 export default function DashboardLayout() {
-    const { user, logout } = useAuthStore();
+    const { user, logout, login } = useAuthStore();
     const navigate = useNavigate();
     const location = useLocation();
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -30,20 +33,24 @@ export default function DashboardLayout() {
         { name: 'Marketplace', href: '/industry/marketplace', icon: 'shopping_cart' },
         { name: 'Web3 Wallet', href: '/industry/wallet', icon: 'account_balance_wallet' },
         { name: 'Reports', href: '/industry/reports', icon: 'description' },
+        { name: 'My Compliance', href: '/industry/compliance', icon: 'shield_check' },
         { name: 'Notifications', href: '/industry/notifications', icon: 'notifications' },
+        { name: 'My Profile', href: '/industry/profile', icon: 'manage_accounts' },
     ];
 
     const govLinks: NavLink[] = [
         { name: 'Dashboard', href: '/gov/dashboard', icon: 'bar_chart' },
+        { name: 'Verifications', href: '/gov/verification', icon: 'domain_verification' },
         { name: 'AI Verifier', href: '/gov/ai-verifier', icon: 'psychology' },
         { name: 'Assign Auditors', href: '/gov/assignment', icon: 'assignment_ind' },
         { name: 'Report Review', href: '/gov/reports', icon: 'description' },
         { name: 'Issue Credits', href: '/gov/issue-credits', icon: 'verified_user' },
+        { name: 'Carbon Registry', href: '/gov/registry', icon: 'receipt_long' },
         { name: 'Compliance Monitor', href: '/gov/compliance', icon: 'admin_panel_settings' },
-        { name: 'Monitor Industries', href: '/gov/monitoring', icon: 'factory' },
-        { name: 'Sector Analytics', href: '/gov/analytics', icon: 'analytics' },
+        { name: 'Industry Monitor', href: '/gov/monitoring', icon: 'factory' },
         { name: 'Blockchain Records', href: '/gov/blockchain', icon: 'link' },
         { name: 'Send Notifications', href: '/gov/notifications', icon: 'campaign' },
+        { name: 'My Profile', href: '/gov/profile', icon: 'manage_accounts' },
     ];
 
 
@@ -53,6 +60,7 @@ export default function DashboardLayout() {
         { name: 'Verify & Submit', href: '/auditor/verify/new', icon: 'fact_check' },
         { name: 'Blockchain Records', href: '/auditor/blockchain', icon: 'link' },
         { name: 'History & Alerts', href: '/auditor/history', icon: 'history' },
+        { name: 'My Profile', href: '/auditor/profile', icon: 'manage_accounts' },
     ];
 
     const adminLinks: NavLink[] = [
@@ -62,6 +70,7 @@ export default function DashboardLayout() {
         { name: 'Activity Logs', href: '/admin/logs', icon: 'receipt_long' },
         { name: 'Content Manager', href: '/admin/content', icon: 'article' },
         { name: 'Platform Settings', href: '/admin/settings', icon: 'tune' },
+        { name: 'My Profile', href: '/admin/profile', icon: 'manage_accounts' },
     ];
 
     const navLinks = isIndustry ? industryLinks : isAuditor ? auditorLinks : isAdmin ? adminLinks : govLinks;
@@ -75,7 +84,9 @@ export default function DashboardLayout() {
         <>
             <div className="p-6">
                 <Link to="/" className="flex items-center gap-2" onClick={() => setSidebarOpen(false)}>
-                    <span className="material-symbols-outlined text-[#1A7A4A] text-3xl">eco</span>
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white shadow-sm overflow-hidden">
+                        <img src={ecochainIconWhite} alt="EcoChain Logo" className="w-full h-full rounded-xl object-contain" />
+                    </div>
                     <span className="text-xl font-bold font-['Syne',sans-serif] text-slate-900 tracking-tight">EcoChain</span>
                 </Link>
                 <div className="mt-2 inline-block px-2 py-1 bg-[#1A7A4A]/10 text-[#1A7A4A] text-[10px] font-bold uppercase tracking-wider rounded-md border border-[#1A7A4A]/20">
@@ -105,17 +116,22 @@ export default function DashboardLayout() {
             </nav>
 
             <div className="p-4 border-t border-slate-100">
-                <div className="flex items-center gap-3 mb-4 px-2">
-                    <div className="w-8 h-8 rounded-full bg-[#1A7A4A] text-white flex items-center justify-center font-bold text-sm shadow-sm" aria-hidden="true">
+                <Link
+                    to={isIndustry ? '/industry/profile' : isAuditor ? '/auditor/profile' : isAdmin ? '/admin/profile' : '/gov/profile'}
+                    onClick={() => setSidebarOpen(false)}
+                    className="flex items-center gap-3 mb-4 px-2 rounded-xl hover:bg-slate-50 py-2 transition-colors group"
+                >
+                    <div className="w-8 h-8 rounded-full bg-[#1A7A4A] text-white flex items-center justify-center font-bold text-sm shadow-sm flex-shrink-0" aria-hidden="true">
                         {user?.email?.[0].toUpperCase() || 'U'}
                     </div>
-                    <div className="text-sm truncate">
+                    <div className="text-sm truncate flex-1 min-w-0">
                         <p className="font-bold text-slate-900 truncate font-['Syne',sans-serif]">
-                            {isIndustry ? user?.company?.name : user?.governmentProfile?.officerName || user?.email}
+                            {isIndustry ? user?.company?.name : user?.governmentProfile?.officerName || user?.auditorProfile?.name || user?.adminProfile?.name || user?.email}
                         </p>
                         <p className="text-slate-500 text-xs truncate">{user?.email}</p>
                     </div>
-                </div>
+                    <span className="material-symbols-outlined text-slate-300 text-sm group-hover:text-[#1A7A4A] transition-colors flex-shrink-0">chevron_right</span>
+                </Link>
                 <button
                     className="w-full flex items-center justify-center gap-2 py-2 text-sm font-bold text-red-600 hover:bg-red-50 hover:text-red-700 bg-white border border-slate-200 rounded-xl transition-colors focus:outline-none focus:ring-2 focus:ring-red-200"
                     onClick={handleLogout}
@@ -174,6 +190,37 @@ export default function DashboardLayout() {
                     <div className="md:hidden w-8" /> {/* spacer */}
 
                     <div className="flex items-center gap-4 ml-auto">
+
+                        {/* DEV HOT-SWAP BUTTONS */}
+                        <div className="hidden lg:flex items-center bg-slate-100 rounded-lg p-1 gap-1 border border-slate-200">
+                            <span className="text-[10px] font-bold text-slate-400 px-2 uppercase tracking-wide">Flow Switch</span>
+                            <button
+                                onClick={async () => { try { await login({ email: 'dev@industry', password: 'devpass', role: 'industry' }); navigate('/industry/dashboard'); } catch (e) { toast.error('Login failed'); } }}
+                                className="px-2 py-1 text-xs font-bold bg-emerald-100 text-emerald-700 hover:bg-emerald-200 rounded transition-colors"
+                            >
+                                Ind
+                            </button>
+                            <button
+                                onClick={async () => { try { await login({ email: 'dev@gov', password: 'devpass', role: 'government' }); navigate('/gov/dashboard'); } catch (e) { toast.error('Login failed'); } }}
+                                className="px-2 py-1 text-xs font-bold bg-violet-100 text-violet-700 hover:bg-violet-200 rounded transition-colors"
+                            >
+                                Gov
+                            </button>
+                            <button
+                                onClick={async () => { try { await login({ email: 'auditor@ecochain.dev', password: 'devpass', role: 'auditor' }); navigate('/auditor/dashboard'); } catch (e) { toast.error('Login failed'); } }}
+                                className="px-2 py-1 text-xs font-bold bg-blue-100 text-blue-700 hover:bg-blue-200 rounded transition-colors"
+                            >
+                                Aud
+                            </button>
+                            <button
+                                onClick={async () => { try { await login({ email: 'secondary@auditor', password: 'devpass', role: 'auditor' }); navigate('/auditor/dashboard'); } catch (e) { toast.error('Login failed'); } }}
+                                className="px-2 py-1 text-xs font-bold bg-purple-100 text-purple-700 hover:bg-purple-200 rounded transition-colors"
+                                title="Secondary Auditor"
+                            >
+                                Aud2
+                            </button>
+                        </div>
+
                         <Link
                             to={isIndustry ? '/industry/notifications' : '/gov/notifications'}
                             className="p-2 relative text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-50 transition-colors focus:outline-none focus:ring-2 focus:ring-[#1A7A4A]/30"

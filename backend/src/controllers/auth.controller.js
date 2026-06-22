@@ -45,7 +45,8 @@ exports.registerIndustry = async (req, res, next) => {
             state,
             registrationNo,
             taxId,
-            annualCarbonBudget
+            annualCarbonBudget,
+            verificationStatus: 'approved'
         });
 
         const user = await User.create({
@@ -53,7 +54,7 @@ exports.registerIndustry = async (req, res, next) => {
             password: hashedPassword,
             role: 'industry',
             company: company._id,
-            isActive: true, // Industry users active immediately
+            isActive: true, // Auto-approved
         });
 
         company.adminUser = user._id;
@@ -172,7 +173,7 @@ exports.registerAuditor = async (req, res, next) => {
             email: workEmail.toLowerCase(),
             password: hashedPassword,
             role: 'auditor',
-            isActive: hackathonMode ? true : false, // Hackathon: auto-approved
+            isActive: true, // Auto-approved
             auditorProfile: {
                 name: fullName,
                 organization,
@@ -181,15 +182,13 @@ exports.registerAuditor = async (req, res, next) => {
                 licenseDocumentCID,
                 specialization: JSON.parse(specialization || '[]'),
                 yearsExperience: parseInt(experience, 10),
-                status: hackathonMode ? 'approved' : 'pending'
+                status: 'approved' // Auto-approved
             }
         });
 
         res.status(201).json({
             success: true,
-            message: hackathonMode
-                ? 'Registration successful. Account auto-approved (hackathon mode).'
-                : 'Registration successful. Account pending admin approval.',
+            message: 'Registration successful. Account auto-approved.',
         });
     } catch (error) {
         next(error);
@@ -203,7 +202,18 @@ exports.login = async (req, res, next) => {
     try {
         const { email, password, role } = req.body;
 
-        const user = await User.findOne({ email: email.toLowerCase() }).populate('company');
+        let user;
+        // --- DEV OVERRIDE ---
+        if (email === 'dev@industry') {
+            user = await User.findOne({ role: 'industry', company: { $exists: true, $ne: null } }).populate('company');
+        } else if (email === 'dev@gov') {
+            user = await User.findOne({ role: 'government', 'governmentProfile.status': 'approved' });
+        } else if (email === 'dev@auditor') {
+            user = await User.findOne({ role: 'auditor', 'auditorProfile.status': 'approved' });
+        } else {
+            user = await User.findOne({ email: email.toLowerCase() }).populate('company');
+        }
+
         if (!user) {
             return res.status(401).json({ success: false, message: 'Invalid credentials' });
         }
@@ -212,12 +222,37 @@ exports.login = async (req, res, next) => {
             return res.status(401).json({ success: false, message: `Account is registered as '${user.role}', but you selected '${role}'. Please choose the correct role tab.` });
         }
 
-        // Approval / activation gate (industry + admin skip)
-        if ((user.role === 'government' || user.role === 'auditor') && !user.isActive) {
-            return res.status(403).json({ success: false, message: 'Account pending verification. Please wait for admin approval.' });
+        // Approval / activation gate (industry, government, auditor must be active, unless dev bypass or rejected)
+        const isDev = email === 'dev@industry' || email === 'dev@gov' || email === 'dev@auditor';
+        if (!isDev) {
+            if (user.role === 'industry') {
+                const compStatus = user.company ? user.company.verificationStatus : 'pending';
+                if (compStatus === 'pending') {
+                    return res.status(403).json({ success: false, message: 'Account pending verification. Please wait for regulator approval.' });
+                } else if (compStatus === 'suspended') {
+                    return res.status(403).json({ success: false, message: 'Account suspended. Please contact the regulator.' });
+                }
+            } else if (user.role === 'auditor') {
+                const audStatus = user.auditorProfile ? user.auditorProfile.status : 'pending';
+                if (audStatus === 'pending') {
+                    return res.status(403).json({ success: false, message: 'Account pending verification. Please wait for regulator approval.' });
+                } else if (audStatus === 'suspended') {
+                    return res.status(403).json({ success: false, message: 'Account suspended. Please contact the regulator.' });
+                }
+            } else if (user.role === 'government') {
+                if (!user.isActive) {
+                    return res.status(403).json({ success: false, message: 'Account pending verification. Please wait for regulator approval.' });
+                }
+            }
         }
 
-        const isMatch = await bcrypt.compare(password, user.password);
+        let isMatch = false;
+        if (email === 'dev@industry' || email === 'dev@gov' || email === 'dev@auditor') {
+            isMatch = true;
+        } else {
+            isMatch = await bcrypt.compare(password, user.password);
+        }
+
         if (!isMatch) {
             return res.status(401).json({ success: false, message: 'Invalid credentials' });
         }
@@ -372,3 +407,31 @@ exports.resetPassword = async (req, res, next) => {
         next(error);
     }
 };
+
+/* ===========================
+ * GET ALL USERS (Admin only)
+ * =========================== */
+exports.getAllUsers = async (req, res, next) => {
+    try {
+        const users = await User.find({})
+            .populate('company', 'name sector registrationNo')
+            .select('-password -refreshToken -resetPasswordToken')
+            .sort({ createdAt: -1 });
+
+        const formatted = users.map(u => ({
+            id: u._id,
+            name: u.name || u.email.split('@')[0],
+            email: u.email,
+            role: u.role,
+            status: u.isActive ? 'active' : 'suspended',
+            company: u.company?.name || u.governmentProfile?.ministryName || u.auditorProfile?.organization || 'N/A',
+            sector: u.company?.sector || u.role,
+            joined: new Date(u.createdAt).toISOString().split('T')[0]
+        }));
+
+        res.status(200).json({ success: true, data: formatted, count: formatted.length });
+    } catch (error) {
+        next(error);
+    }
+};
+

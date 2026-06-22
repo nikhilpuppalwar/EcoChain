@@ -1,10 +1,10 @@
 import { useReadContract, useWriteContract, useWaitForTransactionReceipt, useAccount } from 'wagmi';
-import { hardhat } from 'wagmi/chains';
+import { hardhat, sepolia } from 'wagmi/chains';
 import CarbonCreditArtifact from '../contracts/CarbonCredit.json';
 import Addresses from '../contracts/addresses.json';
 import { parseEther } from 'viem';
 
-export const SUPPORTED_CHAIN_ID = hardhat.id; // Contracts are deployed on Hardhat local
+export const SUPPORTED_CHAIN_ID = hardhat.id; // Contracts are deployed on Sepolia Testnet
 
 export function useCarbonCredit() {
     const { address, chain } = useAccount();
@@ -38,7 +38,7 @@ export function useCarbonCredit() {
 
     const issueCredits = async (to: string, amount: number) => {
         if (chain?.id !== SUPPORTED_CHAIN_ID) {
-            throw new Error(`Please switch to Hardhat local network. Contracts are not deployed on ${chain?.name || 'this network'}.`);
+            throw new Error(`Please switch to Hardhat/Anvil local network. Contracts are not deployed on ${chain?.name || 'this network'}.`);
         }
         const hash = await issueCreditsAsync({
             address: tokenAddress,
@@ -52,7 +52,7 @@ export function useCarbonCredit() {
     const retireCredits = async (amount: number) => {
         if (!address) throw new Error("Wallet not connected");
         if (chain?.id !== SUPPORTED_CHAIN_ID) {
-            throw new Error(`Please switch to Hardhat local network. Contracts are not deployed on ${chain?.name || 'this network'}.`);
+            throw new Error(`Please switch to Hardhat/Anvil local network. Contracts are not deployed on ${chain?.name || 'this network'}.`);
         }
         const hash = await retireCreditsAsync({
             address: tokenAddress,
@@ -66,7 +66,7 @@ export function useCarbonCredit() {
     const transferTokens = async (to: string, amount: number) => {
         if (!address) throw new Error("Wallet not connected");
         if (chain?.id !== SUPPORTED_CHAIN_ID) {
-            throw new Error(`Please switch to Hardhat local network.`);
+            throw new Error(`Please switch to Hardhat/Anvil local network.`);
         }
         const hash = await transferTokensAsync({
             address: tokenAddress,

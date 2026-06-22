@@ -15,7 +15,7 @@ contract CarbonCreditTest is Test {
         credit = new CarbonCredit();
     }
 
-    function testNameAndSymbol() public {
+    function testNameAndSymbol() public view {
         assertEq(credit.name(), "EcoChain Carbon Credit");
         assertEq(credit.symbol(), "CCR");
     }

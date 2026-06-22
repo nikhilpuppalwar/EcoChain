@@ -8,6 +8,7 @@ const marketplaceListingSchema = new mongoose.Schema({
     expiresAt: Date,
     status: { type: String, enum: ['active', 'sold', 'cancelled'], default: 'active' },
     txHash: String, // Blockchain transaction hash once phase 2 is integrated
+    onChainId: Number, // Links to Solidity mapping
 
     createdAt: { type: Date, default: Date.now }
 });

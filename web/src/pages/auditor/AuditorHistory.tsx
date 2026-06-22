@@ -1,32 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
-
-const historyData = [
-    { id: 'AUD-2024-0084', company: 'SteelMax Industries', period: 'Q4 2024', decision: 'approved', submittedDate: '2026-03-07', co2: '3,198.7 tCO₂e', riskFlag: 'red', riskScore: 72, auditType: 'dual', remarks: 'Emissions significantly higher than prior period. Fuel documentation cross-checked. Despite anomaly flags, supporting documentation was verified as plausible given reported equipment upgrades.' },
-    { id: 'AUD-2024-0081', company: 'AgroChem United', period: 'Q4 2024', decision: 'correction', submittedDate: '2026-02-28', co2: '2,650 tCO₂e', riskFlag: 'yellow', riskScore: 45, auditType: 'single', remarks: 'Scope 3 transport data incomplete. Vehicle mileage logs missing for Nov–Dec. Requested correction on logistics documentation.' },
-    { id: 'AUD-2024-0078', company: 'CoalTech Energy', period: 'Q4 2024', decision: 'approved', submittedDate: '2026-02-14', co2: '8,850 tCO₂e', riskFlag: 'green', riskScore: 18, auditType: 'dual', remarks: 'All documents verified. Emission levels consistent with production scale and industry benchmarks.' },
-    { id: 'AUD-2024-0075', company: 'GreenTransport Co.', period: 'Q3 2024', decision: 'approved', submittedDate: '2026-01-21', co2: '1,400 tCO₂e', riskFlag: 'green', riskScore: 12, auditType: 'single', remarks: 'Clean submission. Fuel and transport data consistent. Scope 2 within expected range.' },
-    { id: 'AUD-2024-0071', company: 'SolarEdge Industries', period: 'Q3 2024', decision: 'rejected', submittedDate: '2025-12-15', co2: '4,200 tCO₂e', riskFlag: 'red', riskScore: 88, auditType: 'dual', remarks: 'Severe inconsistency in electricity usage data. Grid unit mismatched (kVAh vs kWh). Production logs do not align with claimed Scope 1 emissions. Rejected pending complete re-submission.' },
-    { id: 'AUD-2024-0068', company: 'TechParts Ltd.', period: 'Q2 2024', decision: 'approved', submittedDate: '2025-11-09', co2: '980 tCO₂e', riskFlag: 'green', riskScore: 9, auditType: 'single', remarks: 'Straightforward, well-documented submission. Emission intensity well within sector benchmarks.' },
-];
-
-const notifications = [
-    { id: 1, type: 'assignment', message: 'New audit assigned: SteelMax Industries Q4 2024', time: '2 hrs ago', read: false, link: '/auditor/queue' },
-    { id: 2, type: 'deadline', message: 'Deadline reminder: AgroChem United submission due in 3 days', time: '5 hrs ago', read: false, link: '/auditor/queue' },
-    { id: 3, type: 'dual_audit', message: 'Dual audit update: Your co-auditor Dr. Sarah Jenkins has submitted for SteelMax Industries', time: '1 day ago', read: false, link: '/auditor/verify/1' },
-    { id: 4, type: 'correction', message: 'Industry response received: AgroChem United submitted corrections', time: '2 days ago', read: true, link: '/auditor/queue' },
-    { id: 5, type: 'blockchain', message: 'Blockchain confirmed: SteelMax Q3 audit (TX: 0x8a7c2f9d1b4e3c) — 12 confirmations', time: '3 days ago', read: true, link: '/auditor/blockchain' },
-    { id: 6, type: 'system', message: 'System: Your ISO 14064 certification expires in 28 days. Renew now.', time: '3 days ago', read: true, link: '#' },
-];
-
-const performanceStats = [
-    { label: 'Total Audits Completed', value: '28', icon: 'check_circle', color: 'text-green-600' },
-    { label: 'Approval Rate', value: '91%', icon: 'thumb_up', color: 'text-emerald-600' },
-    { label: 'Avg Turnaround', value: '2.4 days', icon: 'timer', color: 'text-purple-600' },
-    { label: 'RED Flag Reviews', value: '6', icon: 'warning', color: 'text-red-600' },
-    { label: 'Dual Audits Handled', value: '11', icon: 'group', color: 'text-indigo-600' },
-    { label: 'Rejections Issued', value: '3', icon: 'cancel', color: 'text-orange-600' },
-];
+import api from '../../lib/api';
 
 const notifIcons: Record<string, string> = {
     assignment: 'assignment',
@@ -35,7 +9,12 @@ const notifIcons: Record<string, string> = {
     correction: 'assignment_return',
     blockchain: 'link',
     system: 'notification_important',
+    report_approved_by_auditor: 'check_circle',
+    report_rejected: 'cancel',
+    awaiting_second_auditor: 'hourglass_top',
+    compliance_alert: 'warning'
 };
+
 const notifColors: Record<string, string> = {
     assignment: 'text-blue-600',
     deadline: 'text-orange-600',
@@ -43,22 +22,92 @@ const notifColors: Record<string, string> = {
     correction: 'text-amber-600',
     blockchain: 'text-green-600',
     system: 'text-gray-500',
+    report_approved_by_auditor: 'text-green-600',
+    report_rejected: 'text-red-600',
+    awaiting_second_auditor: 'text-purple-600',
+    compliance_alert: 'text-red-600'
 };
 
 export default function AuditorHistory() {
-    const [selectedRecord, setSelectedRecord] = useState<typeof historyData[0] | null>(null);
-    const [notifList, setNotifList] = useState(notifications);
+    const [historyData, setHistoryData] = useState<any[]>([]);
+    const [performanceStats, setPerformanceStats] = useState<any[]>([]);
+    const [notifList, setNotifList] = useState<any[]>([]);
+    const [selectedRecord, setSelectedRecord] = useState<any | null>(null);
     const [tab, setTab] = useState<'history' | 'notifications'>('history');
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const [histRes, notifRes, statsRes] = await Promise.all([
+                    api.get('/audit/history'),
+                    api.get('/notifications'),
+                    api.get('/audit/dashboard-stats') // for performance header
+                ]);
+                
+                // Map the backend structure to the frontend expectations
+                const formattedHistory = histRes.data.data.map((h: any) => ({
+                    id: h.reportId,
+                    company: h.company,
+                    period: h.period,
+                    decision: h.decision === 'correction_requested' ? 'correction' : h.decision,
+                    submittedDate: h.submittedAt,
+                    co2: `${h.totalEmissions?.toLocaleString() || 0} tCO₂e`,
+                    riskFlag: h.riskFlag || 'green',
+                    riskScore: h.riskScore || 0,
+                    auditType: h.auditType || 'single',
+                    remarks: h.remarks || 'No remarks provided.'
+                }));
+                setHistoryData(formattedHistory);
+                
+                const formattedNotifs = notifRes.data.data.map((n: any) => ({
+                    id: n._id,
+                    type: n.type,
+                    message: n.message,
+                    time: new Date(n.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+                    read: n.isRead,
+                    link: n.link || '#'
+                }));
+                setNotifList(formattedNotifs);
+
+                // Build performance stats from dashboard api
+                const dbStats = statsRes.data.data.stats;
+                setPerformanceStats([
+                    { label: 'Total Audits Completed', value: dbStats.completedThisPeriod, icon: 'check_circle', color: 'text-green-600' },
+                    { label: 'Approval Rate', value: dbStats.approvalRate, icon: 'thumb_up', color: 'text-emerald-600' },
+                    { label: 'Pending Audits', value: dbStats.pendingAudits, icon: 'schedule', color: 'text-purple-600' },
+                    { label: 'Dual Audits', value: dbStats.dualAuditsActive, icon: 'group', color: 'text-indigo-600' },
+                ]);
+                
+            } catch (err) {
+                console.error(err);
+                toast.error('Failed to load history data');
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchData();
+    }, []);
 
     const unreadCount = notifList.filter(n => !n.read).length;
 
-    const markRead = (id: number) => {
+    const markRead = async (id: string) => {
         setNotifList(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+        try {
+            await api.patch(`/notifications/${id}/read`);
+        } catch (e) {
+            console.error('Failed to mark notification read', e);
+        }
     };
 
-    const markAllRead = () => {
+    const markAllRead = async () => {
         setNotifList(prev => prev.map(n => ({ ...n, read: true })));
         toast.success('All notifications marked as read');
+        try {
+            await api.patch(`/notifications/read-all`);
+        } catch (e) {
+            console.error('Failed to mark all read', e);
+        }
     };
 
     const decisionColor = (d: string) => d === 'approved' ? 'bg-green-100 text-green-700' : d === 'correction' ? 'bg-orange-100 text-orange-700' : 'bg-red-100 text-red-700';
@@ -110,7 +159,7 @@ export default function AuditorHistory() {
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-50">
-                                        {historyData.map((r, i) => (
+                                        {historyData.length > 0 ? historyData.map((r, i) => (
                                             <tr key={i} onClick={() => setSelectedRecord(r)} className={`hover:bg-gray-50 transition-colors cursor-pointer ${selectedRecord?.id === r.id ? 'bg-green-50' : ''}`}>
                                                 <td className="px-4 py-3.5">
                                                     <div className="flex items-center gap-2">
@@ -123,11 +172,15 @@ export default function AuditorHistory() {
                                                 </td>
                                                 <td className="px-4 py-3.5 text-xs text-gray-600">{r.period}</td>
                                                 <td className="px-4 py-3.5">
-                                                    <span className={`text-xs font-black px-2 py-0.5 rounded-lg capitalize ${decisionColor(r.decision)}`}>{r.decision}</span>
+                                                    <span className={`text-xs font-black px-2 py-0.5 rounded-lg capitalize whitespace-nowrap ${decisionColor(r.decision)}`}>{r.decision.replace('_', ' ')}</span>
                                                 </td>
-                                                <td className="px-4 py-3.5 text-xs text-gray-400 font-mono">{r.submittedDate}</td>
+                                                <td className="px-4 py-3.5 text-xs text-gray-400 font-mono whitespace-nowrap">{r.submittedDate}</td>
                                             </tr>
-                                        ))}
+                                        )) : (
+                                            <tr>
+                                                <td colSpan={4} className="px-4 py-8 text-center text-gray-500">No past audits found.</td>
+                                            </tr>
+                                        )}
                                     </tbody>
                                 </table>
                             </div>
@@ -208,10 +261,10 @@ export default function AuditorHistory() {
                         )}
                     </div>
                     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm divide-y divide-gray-50">
-                        {notifList.map(n => (
+                        {notifList.length > 0 ? notifList.map(n => (
                             <div key={n.id} className={`flex items-start gap-4 p-5 transition-colors hover:bg-gray-50 ${!n.read ? 'bg-blue-50/40' : ''}`}>
                                 <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${!n.read ? 'bg-blue-100' : 'bg-gray-100'}`}>
-                                    <span className={`material-symbols-outlined text-sm ${notifColors[n.type]}`}>{notifIcons[n.type]}</span>
+                                    <span className={`material-symbols-outlined text-sm ${notifColors[n.type] || 'text-gray-500'}`}>{notifIcons[n.type] || 'info'}</span>
                                 </div>
                                 <div className="flex-1 min-w-0">
                                     <p className={`text-sm leading-relaxed ${!n.read ? 'font-bold text-gray-900' : 'text-gray-600'}`}>{n.message}</p>
@@ -231,7 +284,9 @@ export default function AuditorHistory() {
                                     {!n.read && <div className="w-2 h-2 rounded-full bg-blue-500" />}
                                 </div>
                             </div>
-                        ))}
+                        )) : (
+                            <div className="p-8 text-center text-gray-500">No notifications</div>
+                        )}
                     </div>
                 </div>
             )}

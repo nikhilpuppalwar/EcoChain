@@ -1,5 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom';
-
+import ecochainIconDark from '../assets/ecochain_icon_dark.png';
+import ecochainIconWhite from '../assets/ecochain_icon_white.png';
 type Role = 'industry' | 'auditor' | 'government';
 
 export default function Register() {
@@ -17,7 +18,9 @@ export default function Register() {
             <nav className="fixed top-0 w-full z-50 bg-white/90 backdrop-blur border-b border-gray-100 shadow-sm">
                 <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
                     <Link to="/" className="flex items-center gap-2">
-                        <span className="material-symbols-outlined text-[#1A7A4A] text-2xl">eco</span>
+                        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white shadow-sm border border-gray-100 overflow-hidden">
+                            <img src={ecochainIconWhite} alt="EcoChain Logo" className="w-full h-full rounded-xl object-contain" />
+                        </div>
                         <span className="text-lg font-black tracking-wide text-gray-900">ECOCHAIN</span>
                     </Link>
                     <Link to="/login" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">Already have an account? <span className="text-[#1A7A4A] font-bold">Login</span></Link>

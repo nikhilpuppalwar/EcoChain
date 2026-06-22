@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useAuthStore } from '../store/authStore';
+import { useAuthStore } from '../../store/authStore';
 import { useAccount } from 'wagmi';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
-import { useCarbonCredit } from '../hooks/useCarbonCredit';
+import { useCarbonCredit } from '../../hooks/useCarbonCredit';
 import toast from 'react-hot-toast';
 import { useWaitForTransactionReceipt } from 'wagmi';
 
@@ -135,7 +135,7 @@ export default function Wallet() {
                                 <div className="bg-black/30 p-3 rounded-lg flex items-center justify-between">
                                     <span className="font-mono text-sm text-white/80">0xe7f1...0512</span>
                                     <button className="text-white/40 hover:text-white transition-colors" title="Copy Address" onClick={() => {
-                                        navigator.clipboard.writeText("0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512");
+                                        navigator.clipboard.writeText("0x39f47f7739a90afc907f47c84d171e90ef43545b");
                                         toast.success("Contract address copied!");
                                     }}>
                                         <span className="material-symbols-outlined text-[16px]">content_copy</span>
@@ -162,8 +162,8 @@ export default function Wallet() {
                                     <input
                                         type="number"
                                         required
-                                        min="1"
-                                        max={balance}
+                                        min={balance > 0 ? "1" : "0"}
+                                        max={balance > 0 ? balance : 0}
                                         value={retireAmount}
                                         onChange={(e) => setRetireAmount(e.target.value)}
                                         className="w-full border border-slate-300 rounded-lg py-2 pl-3 pr-12 focus:outline-none focus:border-[#1A7A4A] focus:ring-1 focus:ring-[#1A7A4A]"

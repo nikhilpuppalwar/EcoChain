@@ -1,11 +1,42 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import api from '../lib/api';
+import { useAuthStore } from '../store/authStore';
 
 export default function TransparencyDashboard() {
+    const { user } = useAuthStore();
     const [searchQuery, setSearchQuery] = useState('');
+    const [recentPublicLedger, setRecentPublicLedger] = useState<any[]>([]);
+    const [topPerformers, setTopPerformers] = useState<any[]>([]);
+    const [macroStats, setMacroStats] = useState({ totalVerifiedEmissions: 0, participatingEntities: 0 });
+    const [isLoading, setIsLoading] = useState(true);
 
-    // Mock Data
+    useEffect(() => {
+        const fetchLedger = async () => {
+            try {
+                let url = '/public/ledger';
+                if (user?.role === 'industry' && user?.company) {
+                    url += `?industryId=${user.company}`;
+                }
+                const res = await api.get(url);
+                if (res.data.success) {
+                    setRecentPublicLedger(res.data.data.recentPublicLedger || []);
+                    setTopPerformers(res.data.data.topPerformers || []);
+                    if (res.data.data.macroStats) {
+                        setMacroStats(res.data.data.macroStats);
+                    }
+                }
+            } catch (error) {
+                console.error("Failed to fetch public ledger", error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchLedger();
+    }, []);
+
+    // Mock Data for the chart since historical national baseline data is complex
     const nationalEmissionsData = [
         { name: '2019', value: 950000, target: 1000000 },
         { name: '2020', value: 890000, target: 980000 },
@@ -13,19 +44,6 @@ export default function TransparencyDashboard() {
         { name: '2022', value: 870000, target: 900000 },
         { name: '2023', value: 820000, target: 850000 },
         { name: '2024', value: 780000, target: 800000 },
-    ];
-
-    const topPerformers = [
-        { name: 'SolarFarm India Ltd', sector: 'Renewable Energy', reduction: '45%', credits: 15400 },
-        { name: 'GreenAgri Solutions', sector: 'Agriculture', reduction: '32%', credits: 8200 },
-        { name: 'EcoTech Innovations', sector: 'Technology', reduction: '28%', credits: 5100 },
-    ];
-
-    const recentPublicLedger = [
-        { txId: '0x8f2...1a9', date: '2024-03-22', type: 'Retirement', company: 'Global Logistics Corp', amount: 500 },
-        { txId: '0x3b1...7c4', date: '2024-03-21', type: 'Issuance', company: 'SolarFarm India Ltd', amount: 5000, project: 'Rajasthan 100MW Solar' },
-        { txId: '0x9d4...2e8', date: '2024-03-20', type: 'Retirement', company: 'TechFusion Inc', amount: 150 },
-        { txId: '0x5a6...9f3', date: '2024-03-19', type: 'Transfer', company: 'AgriCorp Co.', amount: 1000, to: 'Marketplace' },
     ];
 
     return (
@@ -75,7 +93,9 @@ export default function TransparencyDashboard() {
                         <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
                             <span className="material-symbols-outlined text-2xl">verified</span>
                         </div>
-                        <h3 className="text-4xl font-bold font-syne text-slate-800 mb-2">1.2M</h3>
+                        <h3 className="text-4xl font-bold font-syne text-slate-800 mb-2">
+                            {macroStats.totalVerifiedEmissions > 0 ? `${(macroStats.totalVerifiedEmissions).toLocaleString()}t` : '0'}
+                        </h3>
                         <p className="text-sm font-bold text-slate-400 uppercase tracking-wider">Credits Retired (YTD)</p>
                         <p className="text-xs text-slate-500 mt-2">Verified offsets this year</p>
                     </div>
@@ -83,7 +103,7 @@ export default function TransparencyDashboard() {
                         <div className="w-12 h-12 bg-purple-50 text-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
                             <span className="material-symbols-outlined text-2xl">corporate_fare</span>
                         </div>
-                        <h3 className="text-4xl font-bold font-syne text-slate-800 mb-2">842</h3>
+                        <h3 className="text-4xl font-bold font-syne text-slate-800 mb-2">{macroStats.participatingEntities}</h3>
                         <p className="text-sm font-bold text-slate-400 uppercase tracking-wider">Participating Entities</p>
                         <p className="text-xs text-slate-500 mt-2">Active reporting organizations</p>
                     </div>
@@ -150,23 +170,21 @@ export default function TransparencyDashboard() {
                             <p className="text-xs text-slate-500">Based on verified 2023 YoY reduction data.</p>
                         </div>
                     </div>
-                </div>
-
-                {/* Public Ledger */}
+                </div>                {/* Public Ledger */}
                 <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
                     <div className="p-6 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-50/50">
                         <div>
                             <h3 className="font-bold text-xl font-syne text-slate-800 flex items-center gap-2">
-                                <span className="material-symbols-outlined text-blue-600">view_list</span>
-                                Public Ledger Activity
+                                <span className="material-symbols-outlined text-blue-600">account_tree</span>
+                                Blockchain Decentralized Ledger
                             </h3>
-                            <p className="text-sm text-slate-500 mt-1">Real-time view of immutable blockchain events (Issuances & Retirements).</p>
+                            <p className="text-sm text-slate-500 mt-1">Every workflow step is immutably recorded. SUBMISSION → ASSIGNED → AUDIT → MINT.</p>
                         </div>
                         <div className="relative w-full sm:w-64">
                             <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">search</span>
                             <input
                                 type="text"
-                                placeholder="Search TxID or Org..."
+                                placeholder="Search TX hash or company..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 className="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:border-[#1A7A4A] focus:ring-1 focus:ring-[#1A7A4A]"
@@ -174,55 +192,77 @@ export default function TransparencyDashboard() {
                         </div>
                     </div>
                     <div className="overflow-x-auto">
+                        {isLoading ? (
+                            <div className="py-16 text-center text-slate-400">
+                                <span className="material-symbols-outlined text-4xl animate-spin block mb-3">progress_activity</span>
+                                Loading blockchain events...
+                            </div>
+                        ) : recentPublicLedger.length === 0 ? (
+                            <div className="py-16 text-center text-slate-400">
+                                <span className="material-symbols-outlined text-5xl block mb-3 text-slate-200">link_off</span>
+                                <p className="font-medium text-slate-600">No blockchain events recorded yet.</p>
+                                <p className="text-sm mt-1">Blockchain events will appear here once Industry submits an emission report.</p>
+                            </div>
+                        ) : (
                         <table className="w-full text-left border-collapse">
                             <thead className="bg-white border-b border-slate-200">
                                 <tr className="text-xs uppercase tracking-wider text-slate-500 font-bold">
-                                    <th className="px-6 py-4">Transaction hash</th>
                                     <th className="px-6 py-4">Event Type</th>
-                                    <th className="px-6 py-4">Organization</th>
-                                    <th className="px-6 py-4">Amount (CCR)</th>
-                                    <th className="px-6 py-4">Date</th>
+                                    <th className="px-6 py-4">Company</th>
+                                    <th className="px-6 py-4">Period</th>
+                                    <th className="px-6 py-4">Details</th>
+                                    <th className="px-6 py-4">TX Hash</th>
+                                    <th className="px-6 py-4">Timestamp</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
-                                {recentPublicLedger.map((tx, index) => (
-                                    <tr key={index} className="hover:bg-slate-50 transition-colors group">
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-2">
-                                                <a href="#" className="font-mono text-sm text-blue-600 hover:text-blue-800 hover:underline">{tx.txId}</a>
-                                                <span className="material-symbols-outlined text-[14px] text-slate-300 group-hover:text-slate-500 transition-colors opacity-0 group-hover:opacity-100 cursor-pointer" title="View on Block Explorer">open_in_new</span>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider
-                                                ${tx.type === 'Issuance' ? 'bg-green-50 text-green-700 border border-green-200' :
-                                                    tx.type === 'Retirement' ? 'bg-red-50 text-red-700 border border-red-200' :
-                                                        'bg-slate-100 text-slate-700 border border-slate-200'}
-                                            `}>
-                                                <span className="material-symbols-outlined text-[14px]">
-                                                    {tx.type === 'Issuance' ? 'generating_tokens' : tx.type === 'Retirement' ? 'local_fire_department' : 'swap_horiz'}
+                                {(recentPublicLedger as any[])
+                                    .filter((ev: any) => {
+                                        if (!searchQuery) return true;
+                                        const q = searchQuery.toLowerCase();
+                                        return (ev.txHash || '').toLowerCase().includes(q) ||
+                                               (ev.companyName || '').toLowerCase().includes(q);
+                                    })
+                                    .map((ev: any, index: number) => {
+                                    const eventConfig: Record<string, { color: string; icon: string; label: string }> = {
+                                        SUBMISSION: { color: 'bg-blue-50 text-blue-700 border-blue-200', icon: 'upload', label: 'Submission' },
+                                        ASSIGNED: { color: 'bg-amber-50 text-amber-700 border-amber-200', icon: 'assignment_ind', label: 'Assigned' },
+                                        AUDIT: { color: 'bg-purple-50 text-purple-700 border-purple-200', icon: 'fact_check', label: 'Audit' },
+                                        MINT: { color: 'bg-green-50 text-green-700 border-green-200', icon: 'generating_tokens', label: 'Mint' }
+                                    };
+                                    const cfg = eventConfig[ev.eventType] || eventConfig.SUBMISSION;
+                                    const txShort = ev.txHash ? `${ev.txHash.slice(0, 12)}...${ev.txHash.slice(-6)}` : 'N/A';
+                                    return (
+                                        <tr key={index} className="hover:bg-slate-50 transition-colors group">
+                                            <td className="px-6 py-4">
+                                                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider border ${cfg.color}`}>
+                                                    <span className="material-symbols-outlined text-[14px]">{cfg.icon}</span>
+                                                    {cfg.label}
                                                 </span>
-                                                {tx.type}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <span className="text-sm font-bold text-slate-800">{tx.company}</span>
-                                            {tx.project && <div className="text-[10px] text-slate-500 uppercase tracking-wider mt-0.5">{tx.project}</div>}
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <span className="font-bold font-syne text-slate-800 text-base">{tx.amount.toLocaleString()}</span>
-                                        </td>
-                                        <td className="px-6 py-4 text-sm text-slate-500">
-                                            {tx.date}
-                                        </td>
-                                    </tr>
-                                ))}
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <span className="text-sm font-bold text-slate-800">{ev.companyName}</span>
+                                            </td>
+                                            <td className="px-6 py-4 text-sm text-slate-600">{ev.period || '—'}</td>
+                                            <td className="px-6 py-4">
+                                                <p className="text-xs text-slate-500 max-w-[220px] truncate" title={ev.details}>{ev.details}</p>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <span className="font-mono text-xs text-blue-600 break-all">{txShort}</span>
+                                            </td>
+                                            <td className="px-6 py-4 text-sm text-slate-500">
+                                                {new Date(ev.createdAt).toLocaleString()}
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
                             </tbody>
                         </table>
+                        )}
                     </div>
                     <div className="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between text-sm text-slate-600">
-                        <p>Showing recent public events</p>
-                        <button className="font-bold text-[#1A7A4A] hover:underline">View All Records</button>
+                        <p>{recentPublicLedger.length} blockchain event{recentPublicLedger.length !== 1 ? 's' : ''} on record</p>
+                        <span className="text-xs text-slate-400">Data hash anchored to chain for tamper-proof verification</span>
                     </div>
                 </div>
 

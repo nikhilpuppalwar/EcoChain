@@ -1,21 +1,48 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuthStore } from '../../store/authStore';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import api from '../../lib/api';
+import toast from 'react-hot-toast';
 
 export default function ComplianceMonitor() {
     const { user } = useAuthStore();
     const [filter, setFilter] = useState('All');
     const [searchQuery, setSearchQuery] = useState('');
+    const [companies, setCompanies] = useState<any[]>([]);
+    const [sectorData, setSectorData] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
 
-    // Mock Data
-    const [companies, setCompanies] = useState([
-        { id: 'C-001', name: 'Global Logistics Corp', sector: 'Transportation', status: 'Compliant', emissions: 14500, cap: 15000, creditsPurchased: 0, penalty: 0 },
-        { id: 'C-002', name: 'TechFusion Inc', sector: 'Technology', status: 'At Risk', emissions: 8200, cap: 8000, creditsPurchased: 150, penalty: 0 },
-        { id: 'C-003', name: 'Nexus Manufacturing', sector: 'Manufacturing', status: 'Non-compliant', emissions: 55000, cap: 50000, creditsPurchased: 2000, penalty: 150000 },
-        { id: 'C-004', name: 'GreenAgri Solutions', sector: 'Agriculture', status: 'Compliant', emissions: 3100, cap: 4000, creditsPurchased: 0, penalty: 0 },
-        { id: 'C-005', name: 'Titan Steelworks', sector: 'Manufacturing', status: 'Non-compliant', emissions: 120000, cap: 100000, creditsPurchased: 5000, penalty: 750000 },
-        { id: 'C-006', name: 'SkyHigh Airlines', sector: 'Transportation', status: 'At Risk', emissions: 85000, cap: 82000, creditsPurchased: 2500, penalty: 0 },
-    ]);
+    const [showPenaltyModal, setShowPenaltyModal] = useState(false);
+    const [selectedCompany, setSelectedCompany] = useState<any>(null);
+    const [penaltyAmount, setPenaltyAmount] = useState('');
+    const [penaltyReason, setPenaltyReason] = useState('');
+    const [issuing, setIssuing] = useState(false);
+
+    // Modify/Waive penalty states
+    const [showModifyModal, setShowModifyModal] = useState(false);
+    const [modifyAmount, setModifyAmount] = useState('');
+    const [modifyReason, setModifyReason] = useState('');
+    const [modifying, setModifying] = useState(false);
+    const [waiving, setWaiving] = useState(false);
+
+    const fetchCompliance = async () => {
+        try {
+            const res = await api.get('/gov/compliance/data');
+            if (res.data.success) {
+                setCompanies(res.data.data.companies || []);
+                setSectorData(res.data.data.sectorData || []);
+            }
+        } catch (err) {
+            console.error(err);
+            toast.error('Failed to load compliance data');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchCompliance();
+    }, []);
 
     const filteredCompanies = companies.filter(c => {
         const matchesFilter = filter === 'All' || c.status === filter;
@@ -23,18 +50,157 @@ export default function ComplianceMonitor() {
         return matchesFilter && matchesSearch;
     });
 
-    const sectorData = [
-        { name: 'Manufacturing', emissions: 175000, target: 150000 },
-        { name: 'Transportation', emissions: 99500, target: 105000 },
-        { name: 'Technology', emissions: 8200, target: 10000 },
-        { name: 'Agriculture', emissions: 3100, target: 5000 },
-    ];
-
-    const issueNotice = (id: string, name: string) => {
-        // Implement notice logic
-        console.log(`Issuing official warning/penalty notice to ${name} (${id})`);
-        alert(`Official legal notice initiated for ${name}.`);
+    const openPenaltyModal = (company: any) => {
+        setSelectedCompany(company);
+        setShowPenaltyModal(true);
     };
+
+    const openModifyModal = (company: any) => {
+        setSelectedCompany(company);
+        setModifyAmount(String(company.penalty || 0));
+        setModifyReason('');
+        setShowModifyModal(true);
+    };
+
+    const handleIssuePenalty = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!selectedCompany) return;
+        setIssuing(true);
+        try {
+            const res = await api.post('/gov/compliance/penalty', {
+                companyId: selectedCompany.id,
+                penaltyAmount: Number(penaltyAmount),
+                reason: penaltyReason,
+            });
+            if (res.data.success) {
+                toast.success(`Penalty of ₹${Number(penaltyAmount).toLocaleString()} issued to ${selectedCompany.name}!`);
+                setShowPenaltyModal(false);
+                setPenaltyAmount('');
+                setPenaltyReason('');
+                setSelectedCompany(null);
+                fetchCompliance();
+            }
+        } catch (err: any) {
+            console.error(err);
+            toast.error(err.response?.data?.message || 'Failed to issue penalty');
+        } finally {
+            setIssuing(false);
+        }
+    };
+
+    const handleModifyPenalty = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!selectedCompany) return;
+        setModifying(true);
+        try {
+            const res = await api.patch('/gov/compliance/penalty', {
+                companyId: selectedCompany.id,
+                penaltyAmount: Number(modifyAmount),
+                reason: modifyReason,
+            });
+            if (res.data.success) {
+                toast.success(`Penalty adjusted to ₹${Number(modifyAmount).toLocaleString()} for ${selectedCompany.name}`);
+                setShowModifyModal(false);
+                setModifyAmount('');
+                setModifyReason('');
+                setSelectedCompany(null);
+                fetchCompliance();
+            }
+        } catch (err: any) {
+            console.error(err);
+            toast.error(err.response?.data?.message || 'Failed to modify penalty');
+        } finally {
+            setModifying(false);
+        }
+    };
+
+    const handleWaivePenalty = async () => {
+        if (!selectedCompany) return;
+        if (!window.confirm(`Are you sure you want to waive and clear the entire penalty for ${selectedCompany.name}?`)) return;
+        setWaiving(true);
+        try {
+            const res = await api.delete(`/gov/compliance/penalty/${selectedCompany.id}`);
+            if (res.data.success) {
+                toast.success(`Penalty successfully cleared for ${selectedCompany.name}`);
+                setShowModifyModal(false);
+                setSelectedCompany(null);
+                fetchCompliance();
+            }
+        } catch (err: any) {
+            console.error(err);
+            toast.error(err.response?.data?.message || 'Failed to clear penalty');
+        } finally {
+            setWaiving(false);
+        }
+    };
+
+    const [showBatchModal, setShowBatchModal] = useState(false);
+    const [batchPenaltyAmount, setBatchPenaltyAmount] = useState('');
+    const [batchReason, setBatchReason] = useState('');
+    const [batchIssuing, setBatchIssuing] = useState(false);
+
+    const handleBatchIssuePenalties = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setBatchIssuing(true);
+        try {
+            const res = await api.post('/gov/compliance/penalty/batch', {
+                penaltyAmount: Number(batchPenaltyAmount),
+                reason: batchReason,
+            });
+            if (res.data.success) {
+                toast.success(res.data.message || 'Batch penalties successfully assessed!');
+                setShowBatchModal(false);
+                setBatchPenaltyAmount('');
+                setBatchReason('');
+                fetchCompliance();
+            }
+        } catch (err: any) {
+            console.error(err);
+            toast.error(err.response?.data?.message || 'Failed to issue batch penalties');
+        } finally {
+            setBatchIssuing(false);
+        }
+    };
+
+    const handleExportCSV = () => {
+        if (companies.length === 0) {
+            toast.error('No compliance records to export');
+            return;
+        }
+
+        const headers = ['Company ID', 'Name', 'Sector', 'Status', 'Total Emissions (tCO2e)', 'Carbon Cap (tCO2e)', 'Credits Purchased', 'Assessed Penalties (INR)'];
+        const rows = companies.map(c => [
+            c.id,
+            `"${c.name.replace(/"/g, '""')}"`,
+            c.sector,
+            c.status,
+            c.emissions,
+            c.cap,
+            c.creditsPurchased,
+            c.penalty
+        ]);
+
+        const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.setAttribute('href', url);
+        link.setAttribute('download', `ecochain_compliance_report_${new Date().getFullYear()}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        toast.success('Compliance roster exported successfully!');
+    };
+
+    if (loading) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[400px]">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                <span className="ml-3 mt-3 text-slate-500 font-medium text-sm">Loading compliance data...</span>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-6">
@@ -45,11 +211,17 @@ export default function ComplianceMonitor() {
                 </div>
 
                 <div className="flex gap-3">
-                    <button className="px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-lg text-sm font-bold shadow-sm hover:bg-slate-50 transition-colors flex items-center gap-2">
+                    <button 
+                        onClick={handleExportCSV}
+                        className="px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-lg text-sm font-bold shadow-sm hover:bg-slate-50 transition-colors flex items-center gap-2"
+                    >
                         <span className="material-symbols-outlined text-[18px]">download</span>
                         Export Full Roster
                     </button>
-                    <button className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-bold shadow-sm hover:bg-red-700 transition-colors flex items-center gap-2">
+                    <button 
+                        onClick={() => setShowBatchModal(true)}
+                        className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-bold shadow-sm hover:bg-red-700 transition-colors flex items-center gap-2"
+                    >
                         <span className="material-symbols-outlined text-[18px]">gavel</span>
                         Batch Issue Penalties
                     </button>
@@ -182,17 +354,27 @@ export default function ComplianceMonitor() {
                                                     <span className="text-slate-400 text-sm">-</span>
                                                 )}
                                             </td>
-                                            <td className="px-6 py-4 text-right">
-                                                {company.status === 'Non-compliant' ? (
+                                            <td className="px-6 py-4 text-right flex justify-end gap-2">
+                                                {company.penalty > 0 ? (
                                                     <button
-                                                        onClick={() => issueNotice(company.id, company.name)}
+                                                        onClick={() => openModifyModal(company)}
+                                                        className="text-white bg-amber-600 hover:bg-amber-700 px-3 py-1.5 rounded text-xs font-bold transition-colors shadow-sm"
+                                                    >
+                                                        Modify Notice
+                                                    </button>
+                                                ) : company.status === 'Non-compliant' ? (
+                                                    <button
+                                                        onClick={() => openPenaltyModal(company)}
                                                         className="text-white bg-red-600 hover:bg-red-700 px-3 py-1.5 rounded text-xs font-bold transition-colors shadow-sm"
                                                     >
                                                         Issue Notice
                                                     </button>
                                                 ) : (
-                                                    <button className="text-blue-600 hover:text-blue-800 text-xs font-bold transition-colors">
-                                                        View Profile
+                                                    <button
+                                                        onClick={() => openPenaltyModal(company)}
+                                                        className="text-slate-600 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded text-xs font-bold transition-colors"
+                                                    >
+                                                        Custom Notice
                                                     </button>
                                                 )}
                                             </td>
@@ -246,6 +428,240 @@ export default function ComplianceMonitor() {
                     </div>
                 </div>
             </div>
+
+            {/* Penalty Modal */}
+            {showPenaltyModal && selectedCompany && (
+                <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-md w-full overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+                        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-red-50/50">
+                            <h3 className="font-bold text-red-950 font-syne text-lg flex items-center gap-2">
+                                <span className="material-symbols-outlined text-red-600">gavel</span>
+                                Issue Compliance Penalty
+                            </h3>
+                            <button 
+                                onClick={() => {
+                                    setShowPenaltyModal(false);
+                                    setSelectedCompany(null);
+                                }}
+                                className="text-slate-400 hover:text-slate-600 transition-colors"
+                            >
+                                <span className="material-symbols-outlined text-lg">close</span>
+                            </button>
+                        </div>
+                        <form onSubmit={handleIssuePenalty} className="p-6 space-y-4">
+                            <div>
+                                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Company</label>
+                                <div className="px-4 py-2 bg-slate-50 border border-slate-150 rounded-xl text-sm font-semibold text-slate-800">
+                                    {selectedCompany.name}
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Penalty Amount (INR / ₹)</label>
+                                <input
+                                    type="number"
+                                    required
+                                    value={penaltyAmount}
+                                    onChange={(e) => setPenaltyAmount(e.target.value)}
+                                    placeholder="e.g. 150000"
+                                    className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-red-500 focus:outline-none"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Warning Notice Message / Reason</label>
+                                <textarea
+                                    required
+                                    rows={4}
+                                    value={penaltyReason}
+                                    onChange={(e) => setPenaltyReason(e.target.value)}
+                                    placeholder="Provide detailed reasons for this carbon cap enforcement action..."
+                                    className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-red-500 focus:outline-none resize-none"
+                                />
+                            </div>
+
+                            <div className="flex gap-3 pt-4 border-t border-slate-100">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setShowPenaltyModal(false);
+                                        setSelectedCompany(null);
+                                    }}
+                                    className="px-4 py-2.5 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-xl text-sm font-bold transition-colors border border-slate-200"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={issuing}
+                                    className="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-sm font-bold transition-colors shadow-sm disabled:opacity-50"
+                                >
+                                    {issuing ? 'Issuing Penalty...' : 'Assess & Issue Penalty'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Modify / Waive Penalty Modal */}
+            {showModifyModal && selectedCompany && (
+                <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-md w-full overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+                        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-amber-50/50">
+                            <h3 className="font-bold text-amber-950 font-syne text-lg flex items-center gap-2">
+                                <span className="material-symbols-outlined text-amber-600">edit_document</span>
+                                Review & Modify Penalty
+                            </h3>
+                            <button 
+                                onClick={() => {
+                                    setShowModifyModal(false);
+                                    setSelectedCompany(null);
+                                }}
+                                className="text-slate-400 hover:text-slate-600 transition-colors"
+                            >
+                                <span className="material-symbols-outlined text-lg">close</span>
+                            </button>
+                        </div>
+                        <form onSubmit={handleModifyPenalty} className="p-6 space-y-4">
+                            <div>
+                                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Company</label>
+                                <div className="px-4 py-2 bg-slate-50 border border-slate-150 rounded-xl text-sm font-semibold text-slate-800">
+                                    {selectedCompany.name}
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Current Penalty</label>
+                                    <div className="px-4 py-2 bg-red-50 border border-red-100 rounded-xl text-sm font-bold text-red-700">
+                                        ₹{(selectedCompany.penalty || 0).toLocaleString()}
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">New Penalty (₹)</label>
+                                    <input
+                                        type="number"
+                                        required
+                                        value={modifyAmount}
+                                        onChange={(e) => setModifyAmount(e.target.value)}
+                                        placeholder="e.g. 100000"
+                                        className="w-full px-4 py-2 border border-slate-200 rounded-xl text-sm font-bold text-slate-800 focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                                    />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Adjustment Reason / Notes</label>
+                                <textarea
+                                    required
+                                    rows={3}
+                                    value={modifyReason}
+                                    onChange={(e) => setModifyReason(e.target.value)}
+                                    placeholder="Provide a reason for adjusting or waiving this penalty..."
+                                    className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none resize-none"
+                                />
+                            </div>
+
+                            <div className="flex flex-col gap-2 pt-4 border-t border-slate-100">
+                                <div className="flex gap-3">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setShowModifyModal(false);
+                                            setSelectedCompany(null);
+                                        }}
+                                        className="px-4 py-2.5 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-xl text-sm font-bold transition-colors border border-slate-200"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={modifying}
+                                        className="flex-1 py-2.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-sm font-bold transition-colors shadow-sm disabled:opacity-50"
+                                    >
+                                        {modifying ? 'Updating...' : 'Update Penalty'}
+                                    </button>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={handleWaivePenalty}
+                                    disabled={waiving}
+                                    className="w-full py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl text-xs font-bold transition-colors border border-red-200 mt-1"
+                                >
+                                    {waiving ? 'Clearing Penalty...' : 'Waive & Clear Entire Penalty'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Batch Penalty Modal */}
+            {showBatchModal && (
+                <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-md w-full overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+                        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-red-50/50">
+                            <h3 className="font-bold text-red-950 font-syne text-lg flex items-center gap-2">
+                                <span className="material-symbols-outlined text-red-600">gavel</span>
+                                Batch Issue Penalties
+                            </h3>
+                            <button 
+                                onClick={() => setShowBatchModal(false)}
+                                className="text-slate-400 hover:text-slate-600 transition-colors"
+                            >
+                                <span className="material-symbols-outlined text-lg">close</span>
+                            </button>
+                        </div>
+                        <form onSubmit={handleBatchIssuePenalties} className="p-6 space-y-4">
+                            <div className="p-3 bg-amber-50 rounded-xl border border-amber-200 text-xs text-amber-800 font-medium leading-relaxed">
+                                <strong className="font-bold">Attention:</strong> This action will assess the specified penalty amount against ALL organizations currently flagged as <strong className="font-bold">Non-compliant</strong>.
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Flat Penalty Amount (INR / ₹)</label>
+                                <input
+                                    type="number"
+                                    required
+                                    value={batchPenaltyAmount}
+                                    onChange={(e) => setBatchPenaltyAmount(e.target.value)}
+                                    placeholder="e.g. 150000"
+                                    className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-red-500 focus:outline-none"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Reason / Notice Message</label>
+                                <textarea
+                                    required
+                                    rows={4}
+                                    value={batchReason}
+                                    onChange={(e) => setBatchReason(e.target.value)}
+                                    placeholder="Provide detailed reasons for this batch enforcement action..."
+                                    className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-red-500 focus:outline-none resize-none"
+                                />
+                            </div>
+
+                            <div className="flex gap-3 pt-4 border-t border-slate-100">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowBatchModal(false)}
+                                    className="px-4 py-2.5 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-xl text-sm font-bold transition-colors border border-slate-200"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={batchIssuing}
+                                    className="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-sm font-bold transition-colors shadow-sm disabled:opacity-50"
+                                >
+                                    {batchIssuing ? 'Issuing Penalties...' : 'Run Batch Enforcement'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

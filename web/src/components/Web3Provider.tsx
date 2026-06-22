@@ -5,11 +5,14 @@ import { hardhat, sepolia } from 'wagmi/chains';
 import { QueryClientProvider, QueryClient } from '@tanstack/react-query';
 import React from 'react';
 
-const projectId = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID || '';
+const rawProjectId = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID || '';
+const isHex32 = /^[0-9a-fA-F]{32}$/.test(rawProjectId);
+const projectId = isHex32 ? rawProjectId : '989cf8fa281b95f1c990264103193e96';
+
 const config = getDefaultConfig({
     appName: 'EcoChain',
     appUrl: typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5173',
-    projectId: projectId || 'ecochain-demo', // Get a free ID at https://cloud.walletconnect.com to fix "undefined.localhost"
+    projectId: projectId,
     chains: [hardhat, sepolia],
 });
 

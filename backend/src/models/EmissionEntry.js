@@ -78,6 +78,7 @@ const emissionEntrySchema = new mongoose.Schema({
             'pending_audit',
             'awaiting_second_auditor',
             'under_review',
+            'pending_issuance',
             'approved',
             'rejected',
             'correction_requested'

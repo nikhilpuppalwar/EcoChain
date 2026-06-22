@@ -1,11 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
-
-const blockchainRecords = [
-    { id: 'AUD-2024-0084', company: 'SteelMax Industries', period: 'Q4 2024', hash: '0x8a7c2f9d...', ts: '2026-03-07 14:23', auditor: 'Jane Doe', status: 'VERIFIED' },
-    { id: 'AUD-2024-0081', company: 'GreenTransport Co.', period: 'Q3 2024', hash: '0x3c1d9f2e...', ts: '2026-02-28 09:15', auditor: 'Jane Doe', status: 'VERIFIED' },
-    { id: 'AUD-2024-0078', company: 'SolarEdge Industries', period: 'Q2 2024', hash: '0x1f4ab8e3...', ts: '2026-01-15 16:42', auditor: 'Kenji Tanaka', status: 'VERIFIED' },
-];
+import api from '../../lib/api';
 
 export default function GovBlockchain() {
     const [tab, setTab] = useState<'blockchain' | 'reports'>('blockchain');
@@ -13,6 +8,34 @@ export default function GovBlockchain() {
     const [reportType, setReportType] = useState('national');
     const [fromDate, setFromDate] = useState('2024-01-01');
     const [toDate, setToDate] = useState('2024-12-31');
+    
+    const [records, setRecords] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchLedger = async () => {
+            try {
+                const res = await api.get('/public/ledger');
+                // Backend returns: data.recentPublicLedger array
+                const formatted = (res.data.data.recentPublicLedger || []).map((item: any) => ({
+                    id: item._id.slice(-6).toUpperCase(),
+                    company: item.companyName,
+                    action: item.eventType,
+                    hash: item.dataHash,
+                    txHash: item.txHash,
+                    timestamp: new Date(item.createdAt).toLocaleString(),
+                    status: 'VERIFIED'
+                }));
+                // Only showing the most recent events
+                setRecords(formatted);
+            } catch (error) {
+                toast.error('Failed to load blockchain ledger');
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchLedger();
+    }, []);
 
     return (
         <div className="space-y-6">
@@ -44,25 +67,25 @@ export default function GovBlockchain() {
                             <table className="w-full text-sm">
                                 <thead className="bg-gray-50 text-xs font-bold text-gray-400 uppercase tracking-wider">
                                     <tr>
-                                        <th className="px-5 py-3 text-left">Report ID</th>
+                                        <th className="px-5 py-3 text-left">Event ID</th>
                                         <th className="px-5 py-3 text-left">Company</th>
-                                        <th className="px-5 py-3 text-left">Period</th>
-                                        <th className="px-5 py-3 text-left">Auditor</th>
-                                        <th className="px-5 py-3 text-left">Block Hash</th>
+                                        <th className="px-5 py-3 text-left">Action</th>
+                                        <th className="px-5 py-3 text-left">Local Hash</th>
                                         <th className="px-5 py-3 text-left">Integrity</th>
                                         <th className="px-5 py-3 text-left">Time</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-50">
-                                    {blockchainRecords.filter(r => !search || r.company.toLowerCase().includes(search.toLowerCase()) || r.hash.includes(search)).map((r, i) => (
+                                    {records.filter(r => !search || r.company.toLowerCase().includes(search.toLowerCase()) || r.hash.includes(search)).map((r, i) => (
                                         <tr key={i} className="hover:bg-gray-50 transition-colors">
                                             <td className="px-5 py-4 font-mono text-xs font-bold text-gray-700">{r.id}</td>
                                             <td className="px-5 py-4 font-bold text-gray-900">{r.company}</td>
-                                            <td className="px-5 py-4 text-gray-500">{r.period}</td>
-                                            <td className="px-5 py-4 text-gray-500 text-xs">{r.auditor}</td>
                                             <td className="px-5 py-4">
-                                                <div className="flex items-center gap-1">
-                                                    <span className="font-mono text-xs text-[#1A7A4A]">{r.hash}</span>
+                                                <span className={`text-xs font-black px-2 py-0.5 rounded-lg ${r.action === 'SUBMISSION' ? 'bg-blue-100 text-blue-700' : r.action === 'ASSIGNED' ? 'bg-purple-100 text-purple-700' : 'bg-green-100 text-green-700'}`}>{r.action}</span>
+                                            </td>
+                                            <td className="px-5 py-4">
+                                                <div className="flex items-center gap-1 group relative">
+                                                    <span className="font-mono text-xs text-[#1A7A4A]">{r.hash ? r.hash.slice(0, 16) + '...' : 'N/A'}</span>
                                                     <button onClick={() => { navigator.clipboard.writeText(r.hash); toast.success('Hash copied!'); }} className="text-gray-300 hover:text-gray-600">
                                                         <span className="material-symbols-outlined text-xs">content_copy</span>
                                                     </button>
@@ -73,7 +96,7 @@ export default function GovBlockchain() {
                                                     <span className="material-symbols-outlined text-sm">verified</span>INTACT
                                                 </span>
                                             </td>
-                                            <td className="px-5 py-4 text-xs text-gray-400 font-mono">{r.ts}</td>
+                                            <td className="px-5 py-4 text-xs text-gray-400 font-mono">{r.timestamp}</td>
                                         </tr>
                                     ))}
                                 </tbody>

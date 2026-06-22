@@ -36,16 +36,16 @@ class ModelRegistry:
                 print("Loading smoke detection model (MobileNetV2)...")
                 cls._smoke_model = tf.keras.models.load_model(smoke_path)
                 cls._tf_available = True
-                print("✅ Smoke model loaded (TensorFlow available).")
+                print("[OK] Smoke model loaded (TensorFlow available).")
             except ImportError:
-                print("⚠️  TensorFlow not installed (Python 3.13+ not supported yet).")
+                print("[WARN] TensorFlow not installed (Python 3.13+ not supported yet).")
                 print("    Smoke detection endpoint will return satellite_risk_score=5 (no smoke assumed).")
             except Exception as e:
-                print(f"⚠️  Could not load smoke model: {e}")
+                print(f"[WARN] Could not load smoke model: {e}")
         else:
-            print(f"⚠️  Smoke model not found at {smoke_path}. Smoke detection disabled.")
+            print(f"[WARN] Smoke model not found at {smoke_path}. Smoke detection disabled.")
 
-        print("✅ Core models loaded. Service is ready.")
+        print("[OK] Core models loaded. Service is ready.")
 
     @classmethod
     def smoke_model(cls):

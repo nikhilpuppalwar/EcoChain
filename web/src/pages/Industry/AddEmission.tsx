@@ -108,6 +108,8 @@ export default function AddEmission() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isSubmitted, setIsSubmitted] = useState(false);
     const [aiEstimate, setAiEstimate] = useState<number | null>(null);
+    const [calculationMethodology, setCalculationMethodology] = useState<string>('');
+    const [estimateSource, setEstimateSource] = useState<string>('');
     const [isEstimating, setIsEstimating] = useState(false);
 
     const activeStepInfo = STEPS.find(s => s.id === currentStep) || STEPS[0];
@@ -127,47 +129,41 @@ export default function AddEmission() {
     };
 
     const handleGenerateAiEstimate = async () => {
-        const val = getCalculatedAmount();
-        if (!currentFormData.category || !val) {
-            toast.error("Please fill out the primary quantity fields first.");
+        if (!currentFormData.category) {
+            toast.error("Please select an emission category first.");
             return;
         }
 
         setIsEstimating(true);
         try {
-            // Build the payload that matches what the new calculator expects
-            const payload: any = {};
-            if (currentFormData.category === 'Waste Management') {
-                payload.wasteGeneration = [{ ...currentFormData.dynamicFields, quantity: parseFloat(val) }];
-            } else if (currentFormData.category === 'Transportation & Logistics') {
-                payload.logisticsTransport = [{ ...currentFormData.dynamicFields, cargoWeightTons: parseFloat(val) }];
-            } else if (currentFormData.category === 'Company-Owned Vehicles') {
-                payload.vehicleEmissions = [{ ...currentFormData.dynamicFields, fuelQuantity: parseFloat(val) }];
-            } else if (currentFormData.category === 'Electricity Consumption') {
-                payload.electricityUsage = parseFloat(val);
-            } else {
-                // Fallback simulation for process emissions etc.
-                const baseAmount = parseFloat(val) || 100;
-                setAiEstimate(Math.round(baseAmount * activeStepInfo.factor * 1.05));
-                setIsEstimating(false);
-                toast.success("AI estimate generated based on industry averages.");
-                return;
-            }
+            const payload = {
+                scope: currentStep,
+                category: currentFormData.category,
+                dynamicFields: currentFormData.dynamicFields,
+                description: currentFormData.description,
+                location: currentFormData.location
+            };
 
             const { default: api } = await import('../../lib/api');
-            const response = await api.post('/emissions/calculate', payload);
+            const response = await api.post('/emissions/ai-estimate', payload);
+            
             if (response.data?.success && response.data?.data) {
-                const breakdown = response.data.data;
-                const total = breakdown.totalCO2e || (parseFloat(val) * activeStepInfo.factor);
-                setAiEstimate(Math.round(total * 10) / 10);
-                toast.success("Calculated emissions using standard factors.");
+                const { totalCO2e, calculationMethodology, source } = response.data.data;
+                setAiEstimate(totalCO2e);
+                setCalculationMethodology(calculationMethodology);
+                setEstimateSource(source);
+                toast.success(`Estimate generated successfully via ${source.includes('Model') ? 'AI Model' : 'Formula'}.`);
+            } else {
+                throw new Error("Invalid response format");
             }
         } catch (error) {
             console.error("Calculation Error:", error);
-            // Fallback simulation
-            const baseAmount = parseFloat(val) || 100;
-            setAiEstimate(Math.round(baseAmount * activeStepInfo.factor * 1.05));
-            toast.success("AI estimate generated as fallback.");
+            toast.error("Failed to generate AI estimate. Using baseline average.");
+            // Dynamic fallback
+            const val = parseFloat(getCalculatedAmount()) || 100;
+            setAiEstimate(Math.round(val * activeStepInfo.factor * 10) / 10);
+            setCalculationMethodology("Standard GHG Protocol average factor applied as offline fallback.");
+            setEstimateSource("Rule-based GHG Formula");
         } finally {
             setIsEstimating(false);
         }
@@ -226,11 +222,11 @@ export default function AddEmission() {
             return;
         }
 
-        // Ensure Evidence Document is provided as it was made mandatory in backend
-        if (!currentFormData.evidenceDocument) {
-            toast.error("Evidence Documentation is mandatory for verification.");
-            return;
-        }
+        // Optional: Ensure Evidence Document is provided as it was made mandatory in backend
+        // if (!currentFormData.evidenceDocument) {
+        //     toast.error("Evidence Documentation is mandatory for verification.");
+        //     return;
+        // }
 
         saveCurrentStepData(false);
 
@@ -311,52 +307,88 @@ export default function AddEmission() {
                 [`scope${currentStep}` as keyof WizardData]: { ...currentFormData, amount: currentAmount }
             };
 
-            const promises = Object.entries(finalWizardData).map(async ([scopeKey, data]) => {
-                if (!data || data.skipped) return null;
+            const combinedData = {
+                periodYear: '',
+                periodMonth: '',
+                quantityTonnes: 0,
+                emissionSource: 'Combined Scopes (1, 2, 3)',
+                notes: '',
+                location: '',
+                wasteGeneration: [] as any[],
+                logisticsTransport: [] as any[],
+                vehicleEmissions: [] as any[],
+                productionOutput: null as any,
+                evidenceDocument: null as File | null
+            };
 
-                const formData = new FormData();
-                const [year, month] = data.date.split('-');
-                formData.append('periodYear', year);
-                formData.append('periodMonth', month);
-                formData.append('quantityTonnes', data.amount || '0');
-                formData.append('emissionSource', data.category);
-                
-                // Combine stringified dynamic fields and general description into notes
-                let combinedNotes = `[Category: ${data.category}]\n`;
+            Object.entries(finalWizardData).forEach(([scopeKey, data]) => {
+                if (!data || data.skipped) return;
+
+                if (!combinedData.periodYear) {
+                    const [year, month] = data.date.split('-');
+                    combinedData.periodYear = year;
+                    combinedData.periodMonth = month;
+                    combinedData.location = data.location;
+                }
+
+                combinedData.quantityTonnes += parseFloat(data.amount) || 0;
+
+                let combinedNotes = `[${scopeKey.toUpperCase()} - ${data.category}]\n`;
                 Object.entries(data.dynamicFields).forEach(([k, v]) => {
                     combinedNotes += `${k}: ${v}\n`;
                 });
                 if (data.description) {
-                    combinedNotes += `\nDescription Guidelines: ${data.description}`;
+                    combinedNotes += `Description: ${data.description}\n`;
                 }
-                formData.append('notes', combinedNotes);
-                if (data.location) formData.append('location', data.location);
+                combinedData.notes += combinedNotes + '\n';
 
-                // Map specific categories to the new array structures
                 if (data.category === 'Waste Management') {
-                    formData.append('wasteGeneration', JSON.stringify([{ ...data.dynamicFields, quantity: data.dynamicFields.wasteQuantity }]));
+                    combinedData.wasteGeneration.push({ ...data.dynamicFields, quantity: data.dynamicFields.wasteQuantity });
                 } else if (data.category === 'Transportation & Logistics') {
-                    formData.append('logisticsTransport', JSON.stringify([{ ...data.dynamicFields, cargoWeightTons: data.dynamicFields.cargoWeight, distanceKm: data.dynamicFields.transportDistance }]));
+                    combinedData.logisticsTransport.push({ ...data.dynamicFields, cargoWeightTons: data.dynamicFields.cargoWeight, distanceKm: data.dynamicFields.transportDistance });
                 } else if (data.category === 'Company-Owned Vehicles') {
-                    formData.append('vehicleEmissions', JSON.stringify([{ ...data.dynamicFields, fuelQuantity: data.dynamicFields.fuelQuantity, distanceTraveled: data.dynamicFields.distanceTraveled }]));
-                } else if (data.category === 'Industrial Process Emissions') {
-                    formData.append('productionOutput', JSON.stringify({ productType: data.dynamicFields.processType, quantity: data.dynamicFields.outputQuantity, unit: data.dynamicFields.unit }));
+                    combinedData.vehicleEmissions.push({ ...data.dynamicFields, fuelQuantity: data.dynamicFields.fuelQuantity, distanceTraveled: data.dynamicFields.distanceTraveled });
+                } else if (data.category === 'Industrial Process Emissions' && !combinedData.productionOutput) {
+                    combinedData.productionOutput = { productType: data.dynamicFields.processType, quantity: data.dynamicFields.outputQuantity, unit: data.dynamicFields.unit };
                 }
 
-                if (data.evidenceDocument) {
-                    formData.append('evidenceDocument', data.evidenceDocument);
+                if (data.evidenceDocument && !combinedData.evidenceDocument) {
+                    combinedData.evidenceDocument = data.evidenceDocument;
                 }
-
-                const { default: api } = await import('../../lib/api');
-                const response = await api.post('/emissions', formData, {
-                    headers: { 'Content-Type': 'multipart/form-data' }
-                });
-                
-                return response.data;
             });
 
-            await Promise.all(promises.filter(p => p !== null));
-            toast.success("Emission records successfully logged and pending verification.");
+            if (combinedData.quantityTonnes <= 0) {
+                toast.error("No valid emissions data to submit.");
+                setIsSubmitting(false);
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('periodYear', combinedData.periodYear);
+            formData.append('periodMonth', combinedData.periodMonth);
+            formData.append('quantityTonnes', combinedData.quantityTonnes.toString());
+            formData.append('emissionSource', combinedData.emissionSource);
+            formData.append('notes', combinedData.notes);
+            if (combinedData.location) formData.append('location', combinedData.location);
+
+            if (combinedData.wasteGeneration.length) formData.append('wasteGeneration', JSON.stringify(combinedData.wasteGeneration));
+            if (combinedData.logisticsTransport.length) formData.append('logisticsTransport', JSON.stringify(combinedData.logisticsTransport));
+            if (combinedData.vehicleEmissions.length) formData.append('vehicleEmissions', JSON.stringify(combinedData.vehicleEmissions));
+            if (combinedData.productionOutput) formData.append('productionOutput', JSON.stringify(combinedData.productionOutput));
+
+            if (combinedData.evidenceDocument) {
+                formData.append('evidenceDocument', combinedData.evidenceDocument);
+            }
+
+            const { default: api } = await import('../../lib/api');
+            await api.post('/emissions', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+
+            // Need to still update wizardData so the success screen looks right
+            setWizardData(finalWizardData as WizardData);
+            
+            toast.success("Emission records successfully combined and logged.");
             setIsSubmitted(true);
         } catch (error) {
             toast.error("Failed to log emissions. Please try again.");
@@ -761,15 +793,33 @@ export default function AddEmission() {
                             </button>
 
                             {aiEstimate !== null && (
-                                <div className="mt-6 pt-6 border-t border-blue-200/50 animate-in fade-in slide-in-from-bottom-2">
-                                    <p className="text-xs font-bold text-blue-800 uppercase tracking-widest mb-2">Calculated Result (Scope {currentStep})</p>
-                                    <div className="flex items-baseline gap-2 mb-4">
-                                        <span className="text-3xl font-black font-syne text-blue-900">{aiEstimate.toLocaleString()}</span>
-                                        <span className="font-bold text-blue-700">tCO₂e</span>
+                                <div className="mt-6 pt-6 border-t border-blue-200/50 animate-in fade-in slide-in-from-bottom-2 space-y-4">
+                                    <div>
+                                        <p className="text-xs font-bold text-blue-800 uppercase tracking-widest mb-2">Calculated Result (Scope {currentStep})</p>
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-baseline gap-2">
+                                                <span className="text-3xl font-black font-syne text-blue-900">{aiEstimate.toLocaleString()}</span>
+                                                <span className="font-bold text-blue-700">tCO₂e</span>
+                                            </div>
+                                            <span className="text-[10px] bg-blue-100 text-blue-700 font-bold px-2 py-1 rounded-md uppercase border border-blue-200">
+                                                {estimateSource}
+                                            </span>
+                                        </div>
                                     </div>
+
+                                    {calculationMethodology && (
+                                        <div className="bg-white/60 rounded-lg p-3 border border-blue-100 text-xs text-blue-900/90 space-y-1">
+                                            <p className="font-bold text-blue-950 flex items-center gap-1">
+                                                <span className="material-symbols-outlined text-[14px]">info</span>
+                                                Calculation Methodology
+                                            </p>
+                                            <p className="leading-relaxed">{calculationMethodology}</p>
+                                        </div>
+                                    )}
+
                                     <button
                                         onClick={applyAiEstimate}
-                                        className="w-full py-2 bg-white text-blue-700 border border-blue-200 font-bold rounded-lg hover:bg-blue-50 transition-colors text-sm"
+                                        className="w-full py-2.5 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition-colors text-sm shadow-sm"
                                     >
                                         Apply to Form
                                     </button>

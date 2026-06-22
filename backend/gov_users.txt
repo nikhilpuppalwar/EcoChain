@@ -1,2 +1,0 @@
-nikhilpuppalwar16@gsami.gov.in | isActive:true | status:pending
-jane.doe@moef.gov.in | isActive:true | status:approved

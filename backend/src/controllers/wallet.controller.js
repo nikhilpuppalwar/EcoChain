@@ -134,3 +134,23 @@ exports.transferCredits = async (req, res, next) => {
         next(error);
     }
 };
+
+/* ===========================
+ * GET MY WALLET BALANCE
+ * =========================== */
+exports.getMyBalance = async (req, res, next) => {
+    try {
+        const company = await Company.findById(req.user.company);
+        if (!company) {
+            return res.status(404).json({ success: false, message: 'Company not found' });
+        }
+        res.status(200).json({
+            success: true,
+            data: {
+                balance: company.creditBalance || 0
+            }
+        });
+    } catch (error) {
+        next(error);
+    }
+};

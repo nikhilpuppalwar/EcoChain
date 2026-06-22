@@ -7,6 +7,7 @@ router.use(verifyToken);
 router.use(requireRole('industry')); // Wallet actions are industry specific
 
 router.get('/transactions', controller.getMyTransactions);
+router.get('/balance', controller.getMyBalance);
 router.post('/retire', controller.retireCredits);
 router.post('/transfer', controller.transferCredits);
 

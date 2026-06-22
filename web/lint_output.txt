@@ -1,0 +1,344 @@
+
+> web@0.0.0 lint
+> eslint .
+
+
+C:\Users\nihar\OneDrive\Desktop\major_project\Hackathon\web\src\components\DashboardLayout.tsx
+  145:18   error  Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+C:\Users\nihar\OneDrive\Desktop\major_project\Hackathon\web\src\components\DashboardLayout.tsx:145:18
+  143 |             {/* Desktop Sidebar */}
+  144 |             <aside className="w-64 bg-white border-r border-slate-200 flex flex-col hidden md:flex sticky top-0 h-screen">
+> 145 |                 <SidebarContent />
+      |                  ^^^^^^^^^^^^^^ This component is created during render
+  146 |             </aside>
+  147 |
+  148 |             {/* Mobile Sidebar (drawer) */}
+
+C:\Users\nihar\OneDrive\Desktop\major_project\Hackathon\web\src\components\DashboardLayout.tsx:75:28
+   73 |     };
+   74 |
+>  75 |     const SidebarContent = () => (
+      |                            ^^^^^^^
+>  76 |         <>
+      | ^^^^^^^^^^
+>  77 |             <div className="p-6">
+      …
+      | ^^^^^^^^^^
+> 129 |         </>
+      | ^^^^^^^^^^
+> 130 |     );
+      | ^^^^^^ The component is created during render here
+  131 |
+  132 |     return (
+  133 |         <div className="flex bg-slate-50 min-h-screen font-['DM_Sans',sans-serif]">  react-hooks/static-components
+  153:18   error  Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+C:\Users\nihar\OneDrive\Desktop\major_project\Hackathon\web\src\components\DashboardLayout.tsx:153:18
+  151 |                 aria-label="Mobile navigation"
+  152 |             >
+> 153 |                 <SidebarContent />
+      |                  ^^^^^^^^^^^^^^ This component is created during render
+  154 |             </aside>
+  155 |
+  156 |             {/* Main Content */}
+
+C:\Users\nihar\OneDrive\Desktop\major_project\Hackathon\web\src\components\DashboardLayout.tsx:75:28
+   73 |     };
+   74 |
+>  75 |     const SidebarContent = () => (
+      |                            ^^^^^^^
+>  76 |         <>
+      | ^^^^^^^^^^
+>  77 |             <div className="p-6">
+      …
+      | ^^^^^^^^^^
+> 129 |         </>
+      | ^^^^^^^^^^
+> 130 |     );
+      | ^^^^^^ The component is created during render here
+  131 |
+  132 |     return (
+  133 |         <div className="flex bg-slate-50 min-h-screen font-['DM_Sans',sans-serif]">                                                                                                               react-hooks/static-components
+  183:183  error  'e' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               @typescript-eslint/no-unused-vars
+  189:175  error  'e' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               @typescript-eslint/no-unused-vars
+  195:189  error  'e' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               @typescript-eslint/no-unused-vars
+  201:186  error  'e' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               @typescript-eslint/no-unused-vars
+
+C:\Users\nihar\OneDrive\Desktop\major_project\Hackathon\web\src\hooks\useCarbonCredit.ts
+  1:45  error  'useWaitForTransactionReceipt' is defined but never used  @typescript-eslint/no-unused-vars
+  5:10  error  'parseEther' is defined but never used                    @typescript-eslint/no-unused-vars
+
+C:\Users\nihar\OneDrive\Desktop\major_project\Hackathon\web\src\pages\Industry\AddEmission.tsx
+   89:13  error  'user' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  139:28  error  Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+  321:40  error  Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+  322:43  error  Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+  323:41  error  Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+  324:43  error  Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+
+C:\Users\nihar\OneDrive\Desktop\major_project\Hackathon\web\src\pages\Industry\AiForecast.tsx
+  1:27  error  'useEffect' is defined but never used      @typescript-eslint/no-unused-vars
+  6:13  error  'user' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\nihar\OneDrive\Desktop\major_project\Hackathon\web\src\pages\Industry\ComplianceMonitor.tsx
+   3:84  error  'ReferenceLine' is defined but never used          @typescript-eslint/no-unused-vars
+   6:13  error  'user' is assigned a value but never used          @typescript-eslint/no-unused-vars
+  11:23  error  'setCompanies' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\nihar\OneDrive\Desktop\major_project\Hackathon\web\src\pages\Industry\EmissionHistory.tsx
+  59:23  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\nihar\OneDrive\Desktop\major_project\Hackathon\web\src\pages\Industry\IndustryReports.tsx
+  199:23  error  Unexpected any. Specify a different type                         @typescript-eslint/no-explicit-any
+  339:14  error  Definition for rule 'jsx-a11y/anchor-has-content' was not found  jsx-a11y/anchor-has-content
+
+C:\Users\nihar\OneDrive\Desktop\major_project\Hackathon\web\src\pages\Industry\Marketplace.tsx
+   29:13  error  'user' is assigned a value but never used         @typescript-eslint/no-unused-vars
+  109:25  error  Unexpected any. Specify a different type          @typescript-eslint/no-explicit-any
+  124:25  error  Unexpected any. Specify a different type          @typescript-eslint/no-explicit-any
+  131:11  error  'getSellerId' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\nihar\OneDrive\Desktop\major_project\Hackathon\web\src\pages\Industry\SubmissionTracker.tsx
+  2:34  error  'YAxis' is defined but never used          @typescript-eslint/no-unused-vars
+  2:41  error  'CartesianGrid' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\nihar\OneDrive\Desktop\major_project\Hackathon\web\src\pages\Industry\Wallet.tsx
+   11:13  error  'user' is assigned a value but never used  @typescript-eslint/no-unused-vars
+   87:25  error  Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+  130:25  error  Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+  183:25  error  Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+
+C:\Users\nihar\OneDrive\Desktop\major_project\Hackathon\web\src\pages\LoginPage.tsx
+   15:31  error  'storeLoading' is assigned a value but never used  @typescript-eslint/no-unused-vars
+   58:23  error  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+   80:23  error  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+  276:58  error  'err' is defined but never used                    @typescript-eslint/no-unused-vars
+  291:58  error  'err' is defined but never used                    @typescript-eslint/no-unused-vars
+  306:58  error  'err' is defined but never used                    @typescript-eslint/no-unused-vars
+  321:58  error  'err' is defined but never used                    @typescript-eslint/no-unused-vars
+
+C:\Users\nihar\OneDrive\Desktop\major_project\Hackathon\web\src\pages\Notifications.tsx
+  5:13  error  'user' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\nihar\OneDrive\Desktop\major_project\Hackathon\web\src\pages\ResetPassword.tsx
+  42:23  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\nihar\OneDrive\Desktop\major_project\Hackathon\web\src\pages\TransparencyDashboard.tsx
+   37:8   warning  React Hook useEffect has missing dependencies: 'user.company' and 'user?.role'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+  135:60  error    Unexpected any. Specify a different type                                                                                            @typescript-eslint/no-explicit-any
+  219:57  error    Unexpected any. Specify a different type                                                                                            @typescript-eslint/no-explicit-any
+  220:50  error    Unexpected any. Specify a different type                                                                                            @typescript-eslint/no-explicit-any
+  226:47  error    Unexpected any. Specify a different type                                                                                            @typescript-eslint/no-explicit-any
+
+C:\Users\nihar\OneDrive\Desktop\major_project\Hackathon\web\src\pages\admin\AdminConfig.tsx
+  171:91  error  Error: Cannot call impure function during render
+
+`Math.random` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+C:\Users\nihar\OneDrive\Desktop\major_project\Hackathon\web\src\pages\admin\AdminConfig.tsx:171:91
+  169 |                                 <div key={i} className="flex items-center justify-between bg-gray-50 rounded-xl px-4 py-3">
+  170 |                                     <span className="text-sm font-bold text-gray-700">{c}</span>
+> 171 |                                     <span className="font-mono text-xs text-[#1A7A4A]">0x{Math.random().toString(16).slice(2, 10)}...</span>
+      |                                                                                           ^^^^^^^^^^^^^ Cannot call impure function
+  172 |                                 </div>
+  173 |                             ))}
+  174 |                         </div>  react-hooks/purity
+
+C:\Users\nihar\OneDrive\Desktop\major_project\Hackathon\web\src\pages\auditor\AuditQueue.tsx
+    2:10  error  'LineChart' is defined but never used                     @typescript-eslint/no-unused-vars
+    2:21  error  'Line' is defined but never used                          @typescript-eslint/no-unused-vars
+    2:27  error  'XAxis' is defined but never used                         @typescript-eslint/no-unused-vars
+    2:34  error  'YAxis' is defined but never used                         @typescript-eslint/no-unused-vars
+    2:41  error  'CartesianGrid' is defined but never used                 @typescript-eslint/no-unused-vars
+    2:56  error  'Tooltip' is defined but never used                       @typescript-eslint/no-unused-vars
+    2:65  error  'ResponsiveContainer' is defined but never used           @typescript-eslint/no-unused-vars
+   15:7   error  'emissionData' is assigned a value but never used         @typescript-eslint/no-unused-vars
+   43:7   error  'baselineData' is assigned a value but never used         @typescript-eslint/no-unused-vars
+   52:7   error  'aiResult' is assigned a value but never used             @typescript-eslint/no-unused-vars
+   87:40  error  Unexpected any. Specify a different type                  @typescript-eslint/no-explicit-any
+   89:46  error  Unexpected any. Specify a different type                  @typescript-eslint/no-explicit-any
+   91:12  error  'expandedAnomaly' is assigned a value but never used      @typescript-eslint/no-unused-vars
+   91:29  error  'setExpandedAnomaly' is assigned a value but never used   @typescript-eslint/no-unused-vars
+  106:61  error  Unexpected any. Specify a different type                  @typescript-eslint/no-explicit-any
+  112:25  error  'displayStatus' is never reassigned. Use 'const' instead  prefer-const
+  156:11  error  'badge' is assigned a value but never used                @typescript-eslint/no-unused-vars
+  158:11  error  'docCategories' is assigned a value but never used        @typescript-eslint/no-unused-vars
+  351:95  error  Unexpected any. Specify a different type                  @typescript-eslint/no-explicit-any
+
+C:\Users\nihar\OneDrive\Desktop\major_project\Hackathon\web\src\pages\auditor\AuditorBlockchain.tsx
+  15:44  error  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  16:58  error  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  21:12  error  'loading' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  27:87  error  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  38:22  error  'error' is defined but never used             @typescript-eslint/no-unused-vars
+
+C:\Users\nihar\OneDrive\Desktop\major_project\Hackathon\web\src\pages\auditor\VerifySubmit.tsx
+  62:12  error  'isSubmitting' is assigned a value but never used                      @typescript-eslint/no-unused-vars
+  72:9   error  Expected an assignment or function call and instead saw an expression  @typescript-eslint/no-unused-expressions
+
+C:\Users\nihar\OneDrive\Desktop\major_project\Hackathon\web\src\pages\goverment\ComplianceMonitor.tsx
+   3:84  error  'ReferenceLine' is defined but never used          @typescript-eslint/no-unused-vars
+   6:13  error  'user' is assigned a value but never used          @typescript-eslint/no-unused-vars
+  11:23  error  'setCompanies' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\nihar\OneDrive\Desktop\major_project\Hackathon\web\src\pages\goverment\GovAIVerifier.tsx
+  166:60  error  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+  554:7   error  'MOCK_REPORTS' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\nihar\OneDrive\Desktop\major_project\Hackathon\web\src\pages\goverment\GovAuditorAssignment.tsx
+   17:26  error  Unexpected any. Specify a different type                  @typescript-eslint/no-explicit-any
+   38:7   error  'diffDays' is assigned a value but never used             @typescript-eslint/no-unused-vars
+   86:25  error  Unexpected any. Specify a different type                  @typescript-eslint/no-explicit-any
+  117:17  error  'secondaryPool' is never reassigned. Use 'const' instead  prefer-const
+  272:18  error  'error' is defined but never used                         @typescript-eslint/no-unused-vars
+  292:18  error  'error' is defined but never used                         @typescript-eslint/no-unused-vars
+  434:7   error  'MOCK_AUDITORS' is assigned a value but never used        @typescript-eslint/no-unused-vars
+
+C:\Users\nihar\OneDrive\Desktop\major_project\Hackathon\web\src\pages\goverment\GovBlockchain.tsx
+  12:44  error  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  13:12  error  'loading' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  20:87  error  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  31:22  error  'error' is defined but never used             @typescript-eslint/no-unused-vars
+
+C:\Users\nihar\OneDrive\Desktop\major_project\Hackathon\web\src\pages\goverment\GovDashboard.tsx
+  44:13  error  'user' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\nihar\OneDrive\Desktop\major_project\Hackathon\web\src\pages\goverment\IssueCredits.tsx
+    9:13  error  'user' is assigned a value but never used       @typescript-eslint/no-unused-vars
+   13:46  error  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+   14:12  error  'isLoading' is assigned a value but never used  @typescript-eslint/no-unused-vars
+   15:60  error  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+   26:56  error  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+   87:32  error  'id' is defined but never used                  @typescript-eslint/no-unused-vars
+   94:25  error  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  110:22  error  'backendError' is defined but never used        @typescript-eslint/no-unused-vars
+
+C:\Users\nihar\OneDrive\Desktop\major_project\Hackathon\web\src\pages\goverment\ReportReview.tsx
+   4:8   error  'api' is defined but never used            @typescript-eslint/no-unused-vars
+   7:13  error  'user' is assigned a value but never used  @typescript-eslint/no-unused-vars
+   9:58  error  Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+  62:18  error  'error' is defined but never used          @typescript-eslint/no-unused-vars
+
+C:\Users\nihar\OneDrive\Desktop\major_project\Hackathon\web\src\pages\onboarding\AuditorStep1.tsx
+  33:37  warning  Compilation Skipped: Use of incompatible library
+
+This API returns functions which cannot be memoized without leading to stale UI. To prevent this, by default React Compiler will skip memoizing this component/hook. However, you may see issues if values from this API are passed to other components/hooks that are memoized.
+
+C:\Users\nihar\OneDrive\Desktop\major_project\Hackathon\web\src\pages\onboarding\AuditorStep1.tsx:33:37
+  31 |     });
+  32 |
+> 33 |     const selectedSpecializations = watch('specialization') || [];
+     |                                     ^^^^^ React Hook Form's `useForm()` API returns a `watch()` function which cannot be memoized safely.
+  34 |
+  35 |     const toggleSpecialization = (spec: string) => {
+  36 |         const newSpecs = selectedSpecializations.includes(spec)  react-hooks/incompatible-library
+
+C:\Users\nihar\OneDrive\Desktop\major_project\Hackathon\web\src\pages\onboarding\AuditorStep2.tsx
+  51:25  warning  Compilation Skipped: Use of incompatible library
+
+This API returns functions which cannot be memoized without leading to stale UI. To prevent this, by default React Compiler will skip memoizing this component/hook. However, you may see issues if values from this API are passed to other components/hooks that are memoized.
+
+C:\Users\nihar\OneDrive\Desktop\major_project\Hackathon\web\src\pages\onboarding\AuditorStep2.tsx:51:25
+  49 |     });
+  50 |
+> 51 |     const passwordVal = watch('password') || '';
+     |                         ^^^^^ React Hook Form's `useForm()` API returns a `watch()` function which cannot be memoized safely.
+  52 |
+  53 |     const getPasswordStrength = (pass: string) => {
+  54 |         let score = 0;  react-hooks/incompatible-library
+
+C:\Users\nihar\OneDrive\Desktop\major_project\Hackathon\web\src\pages\onboarding\GovStep1.tsx
+  41:26  warning  Compilation Skipped: Use of incompatible library
+
+This API returns functions which cannot be memoized without leading to stale UI. To prevent this, by default React Compiler will skip memoizing this component/hook. However, you may see issues if values from this API are passed to other components/hooks that are memoized.
+
+C:\Users\nihar\OneDrive\Desktop\major_project\Hackathon\web\src\pages\onboarding\GovStep1.tsx:41:26
+  39 | });
+  40 |
+> 41 |     const selectedDept = watch('department');
+     |                          ^^^^^ React Hook Form's `useForm()` API returns a `watch()` function which cannot be memoized safely.
+  42 |
+  43 |     const onSubmit = (data: GovStep1FormValues) => {
+  44 |         setStep1(data);  react-hooks/incompatible-library
+
+C:\Users\nihar\OneDrive\Desktop\major_project\Hackathon\web\src\pages\onboarding\GovStep2.tsx
+  67:25  warning  Compilation Skipped: Use of incompatible library
+
+This API returns functions which cannot be memoized without leading to stale UI. To prevent this, by default React Compiler will skip memoizing this component/hook. However, you may see issues if values from this API are passed to other components/hooks that are memoized.
+
+C:\Users\nihar\OneDrive\Desktop\major_project\Hackathon\web\src\pages\onboarding\GovStep2.tsx:67:25
+  65 |     });
+  66 |
+> 67 |     const passwordVal = watch('password') || '';
+     |                         ^^^^^ React Hook Form's `useForm()` API returns a `watch()` function which cannot be memoized safely.
+  68 |     const emailVal = watch('email');
+  69 |
+  70 |     // Government Password Strength Logic (>= 12)  react-hooks/incompatible-library
+
+C:\Users\nihar\OneDrive\Desktop\major_project\Hackathon\web\src\pages\onboarding\IndustryStep1.tsx
+  35:28  warning  Compilation Skipped: Use of incompatible library
+
+This API returns functions which cannot be memoized without leading to stale UI. To prevent this, by default React Compiler will skip memoizing this component/hook. However, you may see issues if values from this API are passed to other components/hooks that are memoized.
+
+C:\Users\nihar\OneDrive\Desktop\major_project\Hackathon\web\src\pages\onboarding\IndustryStep1.tsx:35:28
+  33 |     });
+  34 |
+> 35 |     const selectedSector = watch('sector');
+     |                            ^^^^^ React Hook Form's `useForm()` API returns a `watch()` function which cannot be memoized safely.
+  36 |
+  37 |     const onSubmit = (data: Step1FormValues) => {
+  38 |         // eslint-disable-next-line @typescript-eslint/no-explicit-any  react-hooks/incompatible-library
+
+C:\Users\nihar\OneDrive\Desktop\major_project\Hackathon\web\src\pages\onboarding\IndustryStep2.tsx
+  57:25  warning  Compilation Skipped: Use of incompatible library
+
+This API returns functions which cannot be memoized without leading to stale UI. To prevent this, by default React Compiler will skip memoizing this component/hook. However, you may see issues if values from this API are passed to other components/hooks that are memoized.
+
+C:\Users\nihar\OneDrive\Desktop\major_project\Hackathon\web\src\pages\onboarding\IndustryStep2.tsx:57:25
+  55 |     });
+  56 |
+> 57 |     const passwordVal = watch('password') || '';
+     |                         ^^^^^ React Hook Form's `useForm()` API returns a `watch()` function which cannot be memoized safely.
+  58 |     const emailVal = watch('email');
+  59 |
+  60 |     const getPasswordStrength = (pass: string) => {  react-hooks/incompatible-library
+
+C:\Users\nihar\OneDrive\Desktop\major_project\Hackathon\web\src\pages\public\AddEmission.tsx
+   8:13  error  'user' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  56:18  error  'error' is defined but never used          @typescript-eslint/no-unused-vars
+
+C:\Users\nihar\OneDrive\Desktop\major_project\Hackathon\web\src\pages\public\AiForecast.tsx
+  1:27  error  'useEffect' is defined but never used      @typescript-eslint/no-unused-vars
+  6:13  error  'user' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\nihar\OneDrive\Desktop\major_project\Hackathon\web\src\pages\public\Wallet.tsx
+  10:13  error  'user' is assigned a value but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 @typescript-eslint/no-unused-vars
+  47:13  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\nihar\OneDrive\Desktop\major_project\Hackathon\web\src\pages\public\Wallet.tsx:47:13
+  45 |             );
+  46 |             refetchBalance();
+> 47 |             setRetireAmount('');
+     |             ^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  48 |             setRetireReason('');
+  49 |         }
+  50 |     }, [isTxSuccess, refetchBalance, txHash]);  react-hooks/set-state-in-effect
+  80:25  error  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  @typescript-eslint/no-explicit-any
+
+C:\Users\nihar\OneDrive\Desktop\major_project\Hackathon\web\tailwind.config.js
+  1:13  error  Parsing error: Unexpected token {
+
+✖ 116 problems (109 errors, 7 warnings)
+  2 errors and 0 warnings potentially fixable with the `--fix` option.
+

@@ -7,11 +7,7 @@ import { useOnboardingStore } from '../../store/onboardingStore';
 
 const step2Schema = z.object({
     fullName: z.string().min(2, 'Must be at least 2 characters').max(80, 'Must be less than 80 characters'),
-    designation: z.enum([
-        'officer',
-        'manager',
-        'director'
-    ], { errorMap: () => ({ message: 'Please select a designation' }) }).or(z.literal('')),
+    designation: z.enum(['officer', 'manager', 'director']).or(z.literal('')),
     email: z.string().email('Please enter a valid email address'),
     password: z.string()
         .min(8, 'Password must be at least 8 characters')
@@ -98,7 +94,7 @@ export default function IndustryStep2() {
             <div className="max-w-4xl mx-auto">
                 <header className="flex items-center justify-between mb-10">
                     <div className="flex items-center gap-2">
-                        <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center text-white">
+                        <div className="w-10 h-10 bg-[#1A7A4A] rounded-lg flex items-center justify-center text-white">
                             <span className="material-symbols-outlined">domain</span>
                         </div>
                         <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-slate-100">EcoChain</h1>
@@ -108,19 +104,19 @@ export default function IndustryStep2() {
                 <div className="mb-12">
                     <div className="flex items-center justify-between relative">
                         <div className="flex flex-col items-center gap-2 z-10 bg-[#f3f4f6] dark:bg-[#1a1625] pr-4">
-                            <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white ring-4 ring-blue-500/20">
+                            <div className="w-10 h-10 rounded-full bg-[#1A7A4A] flex items-center justify-center text-white ring-4 ring-[#1A7A4A]/20">
                                 <span className="material-symbols-outlined text-lg">check</span>
                             </div>
                             <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">Step 1</span>
                         </div>
                         <div className="absolute top-5 left-0 w-full h-0.5 bg-slate-200 dark:bg-slate-800 z-0">
-                            <div className="h-full bg-blue-600 w-1/2"></div>
+                            <div className="h-full bg-[#1A7A4A] w-1/2"></div>
                         </div>
                         <div className="flex flex-col items-center gap-2 z-10 bg-[#f3f4f6] dark:bg-[#1a1625] px-4">
-                            <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white ring-8 ring-blue-500/10">
+                            <div className="w-10 h-10 rounded-full bg-[#1A7A4A] flex items-center justify-center text-white ring-8 ring-[#1A7A4A]/10">
                                 <span className="text-sm font-bold">2</span>
                             </div>
-                            <span className="text-xs font-semibold uppercase tracking-wider text-blue-600">Step 2</span>
+                            <span className="text-xs font-semibold uppercase tracking-wider text-[#1A7A4A] dark:text-emerald-400">Step 2</span>
                         </div>
                         <div className="flex flex-col items-center gap-2 z-10 bg-[#f3f4f6] dark:bg-[#1a1625] pl-4">
                             <div className="w-10 h-10 rounded-full border-2 border-slate-300 dark:border-slate-700 flex items-center justify-center text-slate-400">
@@ -146,7 +142,7 @@ export default function IndustryStep2() {
                                 <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">person</span>
                                 <input
                                     {...register('fullName')}
-                                    className={`w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-800 border ${errors.fullName ? 'border-red-500' : 'border-slate-200 dark:border-slate-700'} rounded-xl focus:ring-2 focus:ring-blue-500 transition-all`}
+                                    className={`w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-800 border ${errors.fullName ? 'border-red-500' : 'border-slate-200 dark:border-slate-700'} rounded-xl focus:ring-2 focus:ring-[#1A7A4A] transition-all`}
                                     placeholder="e.g. Sarah Jenkins"
                                     type="text"
                                 />
@@ -160,7 +156,7 @@ export default function IndustryStep2() {
                                 <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">badge</span>
                                 <select
                                     {...register('designation')}
-                                    className={`w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-800 border ${errors.designation ? 'border-red-500' : 'border-slate-200 dark:border-slate-700'} rounded-xl focus:ring-2 focus:ring-blue-500 transition-all appearance-none`}
+                                    className={`w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-800 border ${errors.designation ? 'border-red-500' : 'border-slate-200 dark:border-slate-700'} rounded-xl focus:ring-2 focus:ring-[#1A7A4A] transition-all appearance-none`}
                                 >
                                     <option value="" disabled>Select Role</option>
                                     <option value="officer">Compliance Officer</option>
@@ -179,7 +175,7 @@ export default function IndustryStep2() {
                                 <input
                                     {...register('email')}
                                     onBlur={checkEmailUnique}
-                                    className={`w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-800 border ${errors.email || emailError ? 'border-red-500' : 'border-slate-200 dark:border-slate-700'} rounded-xl focus:ring-2 focus:ring-blue-500 transition-all`}
+                                    className={`w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-800 border ${errors.email || emailError ? 'border-red-500' : 'border-slate-200 dark:border-slate-700'} rounded-xl focus:ring-2 focus:ring-[#1A7A4A] transition-all`}
                                     placeholder="name@company.com"
                                     type="email"
                                 />
@@ -194,7 +190,7 @@ export default function IndustryStep2() {
                                 <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">id_card</span>
                                 <input
                                     {...register('employeeId')}
-                                    className={`w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-800 border ${errors.employeeId ? 'border-red-500' : 'border-slate-200 dark:border-slate-700'} rounded-xl focus:ring-2 focus:ring-blue-500 transition-all`}
+                                    className={`w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-800 border ${errors.employeeId ? 'border-red-500' : 'border-slate-200 dark:border-slate-700'} rounded-xl focus:ring-2 focus:ring-[#1A7A4A] transition-all`}
                                     placeholder="EMP-0000"
                                     type="text"
                                 />
@@ -208,7 +204,7 @@ export default function IndustryStep2() {
                                 <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">call</span>
                                 <input
                                     {...register('phone')}
-                                    className={`w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-800 border ${errors.phone ? 'border-red-500' : 'border-slate-200 dark:border-slate-700'} rounded-xl focus:ring-2 focus:ring-blue-500 transition-all`}
+                                    className={`w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-800 border ${errors.phone ? 'border-red-500' : 'border-slate-200 dark:border-slate-700'} rounded-xl focus:ring-2 focus:ring-[#1A7A4A] transition-all`}
                                     placeholder="+91 98765 43210"
                                     type="tel"
                                 />
@@ -222,16 +218,16 @@ export default function IndustryStep2() {
                                 <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">lock</span>
                                 <input
                                     {...register('password')}
-                                    className={`w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-800 border ${errors.password ? 'border-red-500' : 'border-slate-200 dark:border-slate-700'} rounded-xl focus:ring-2 focus:ring-blue-500 transition-all`}
+                                    className={`w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-800 border ${errors.password ? 'border-red-500' : 'border-slate-200 dark:border-slate-700'} rounded-xl focus:ring-2 focus:ring-[#1A7A4A] transition-all`}
                                     placeholder="••••••••"
                                     type="password"
                                 />
                             </div>
                             <div className="flex gap-1.5 mt-1 items-center">
-                                <div className={`h-1.5 flex-1 rounded-full ${strengthScore >= 1 ? 'bg-blue-400' : 'bg-slate-200 dark:bg-slate-700'}`}></div>
-                                <div className={`h-1.5 flex-1 rounded-full ${strengthScore >= 2 ? 'bg-blue-500' : 'bg-slate-200 dark:bg-slate-700'}`}></div>
-                                <div className={`h-1.5 flex-1 rounded-full ${strengthScore >= 3 ? 'bg-blue-600' : 'bg-slate-200 dark:bg-slate-700'}`}></div>
-                                <div className={`h-1.5 flex-1 rounded-full ${strengthScore >= 4 ? 'bg-blue-600' : 'bg-slate-200 dark:bg-slate-700'}`}></div>
+                                <div className={`h-1.5 flex-1 rounded-full ${strengthScore >= 1 ? 'bg-emerald-400' : 'bg-slate-200 dark:bg-slate-700'}`}></div>
+                                <div className={`h-1.5 flex-1 rounded-full ${strengthScore >= 2 ? 'bg-emerald-500' : 'bg-slate-200 dark:bg-slate-700'}`}></div>
+                                <div className={`h-1.5 flex-1 rounded-full ${strengthScore >= 3 ? 'bg-emerald-600' : 'bg-slate-200 dark:bg-slate-700'}`}></div>
+                                <div className={`h-1.5 flex-1 rounded-full ${strengthScore >= 4 ? 'bg-emerald-600' : 'bg-slate-200 dark:bg-slate-700'}`}></div>
                             </div>
                             {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password.message}</p>}
                         </div>
@@ -242,7 +238,7 @@ export default function IndustryStep2() {
                                 <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">lock_reset</span>
                                 <input
                                     {...register('confirmPassword')}
-                                    className={`w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-800 border ${errors.confirmPassword ? 'border-red-500' : 'border-slate-200 dark:border-slate-700'} rounded-xl focus:ring-2 focus:ring-blue-500 transition-all`}
+                                    className={`w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-800 border ${errors.confirmPassword ? 'border-red-500' : 'border-slate-200 dark:border-slate-700'} rounded-xl focus:ring-2 focus:ring-[#1A7A4A] transition-all`}
                                     placeholder="••••••••"
                                     type="password"
                                 />
@@ -252,11 +248,11 @@ export default function IndustryStep2() {
                     </div>
 
                     <div className="pt-6 flex items-center justify-between border-t border-slate-200 dark:border-slate-800">
-                        <button onClick={() => navigate('/register/industry/step1')} className="flex items-center gap-2 px-6 py-3 text-slate-600 dark:text-slate-400 font-bold hover:text-blue-600 transition-colors" type="button">
+                        <button onClick={() => navigate('/register/industry/step1')} className="flex items-center gap-2 px-6 py-3 text-slate-600 dark:text-slate-400 font-bold hover:text-[#1A7A4A] transition-colors" type="button">
                             <span className="material-symbols-outlined">arrow_back</span>
                             Back
                         </button>
-                        <button className="flex items-center gap-2 px-8 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 hover:scale-[1.02] active:scale-95 transition-all shadow-lg shadow-blue-600/25" type="submit">
+                        <button className="flex items-center gap-2 px-8 py-3 bg-[#1A7A4A] text-white rounded-xl font-bold hover:bg-[#2E9E68] hover:scale-[1.02] active:scale-95 transition-all shadow-lg shadow-[#1A7A4A]/25" type="submit">
                             Review Details
                             <span className="material-symbols-outlined">arrow_forward</span>
                         </button>

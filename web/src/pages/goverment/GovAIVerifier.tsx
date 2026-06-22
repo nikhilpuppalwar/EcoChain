@@ -165,15 +165,14 @@ export default function GovAIVerifier() {
     const [reviewFilter, setReviewFilter] = useState<'all' | 'pending' | 'reviewed' | 'escalated'>('all');
     const [repeatOffenders, setRepeatOffenders] = useState<any[]>([]);
 
-    // ── Fetch all AI results ─────────────────────────────────
     const fetchReports = useCallback(async () => {
         try {
             const res = await api.get('/ai/all');
             const data = res.data.data || [];
-            setReports(data.length > 0 ? data : MOCK_REPORTS);
-        } catch {
-            // Use mock data if server isn't ready
-            setReports(MOCK_REPORTS);
+            setReports(data);
+        } catch (err) {
+            console.error('Failed to fetch AI reports:', err);
+            // Ignore mock fallback, show empty or handle error gracefully
         } finally {
             setLoading(false);
         }

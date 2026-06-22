@@ -53,7 +53,7 @@ export default function IndustryStep1() {
         <div className="bg-[#f3f4f6] dark:bg-[#1a1625] font-['DM_Sans',sans-serif] text-slate-900 dark:text-slate-100 min-h-screen flex flex-col justify-center items-center py-12 px-4">
             <div className="w-full max-w-3xl flex flex-col gap-8">
                 <div className="flex flex-col items-center justify-center gap-3 text-center mb-2">
-                    <div className="w-12 h-12 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-600/20">
+                    <div className="w-12 h-12 rounded-xl bg-[#1A7A4A] flex items-center justify-center text-white shadow-lg shadow-[#1A7A4A]/20">
                         <span className="material-symbols-outlined text-3xl">domain</span>
                     </div>
                     <div>
@@ -64,9 +64,9 @@ export default function IndustryStep1() {
 
                 <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_20px_40px_-10px_rgba(0,0,0,0.05)] dark:shadow-none border border-slate-200 dark:border-slate-800 overflow-hidden w-full">
                     <div className="flex border-b border-slate-100 dark:border-slate-800">
-                        <div className="flex-1 py-5 text-center border-b-2 border-blue-600 bg-blue-50 dark:bg-blue-900/10 relative">
-                            <span className="text-xs font-bold font-['Syne',sans-serif] text-blue-600 dark:text-blue-400 flex items-center justify-center gap-2 tracking-wide">
-                                <span className="w-6 h-6 rounded-full bg-blue-600 text-white text-[11px] flex items-center justify-center shadow-sm">1</span>
+                        <div className="flex-1 py-5 text-center border-b-2 border-[#1A7A4A] bg-[#1A7A4A]/5 dark:bg-[#1A7A4A]/10 relative">
+                            <span className="text-xs font-bold font-['Syne',sans-serif] text-[#1A7A4A] dark:text-emerald-400 flex items-center justify-center gap-2 tracking-wide">
+                                <span className="w-6 h-6 rounded-full bg-[#1A7A4A] text-white text-[11px] flex items-center justify-center shadow-sm">1</span>
                                 COMPANY
                             </span>
                             <div className="absolute right-0 top-1/2 -translate-y-1/2 w-[1px] h-8 bg-slate-200 dark:bg-slate-700 hidden sm:block"></div>
@@ -88,7 +88,7 @@ export default function IndustryStep1() {
 
                     <div className="p-8 md:p-10">
                         <div className="mb-10 text-center">
-                            <span className="inline-flex items-center px-3 py-1 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-[10px] font-bold uppercase tracking-wider mb-4 border border-blue-200 dark:border-blue-800">
+                            <span className="inline-flex items-center px-3 py-1 rounded-full bg-[#1A7A4A]/10 dark:bg-[#1A7A4A]/20 text-[#1A7A4A] dark:text-emerald-400 text-[10px] font-bold uppercase tracking-wider mb-4 border border-[#1A7A4A]/20 dark:border-emerald-800">
                                 Step 1 of 3
                             </span>
                             <h2 className="text-2xl md:text-3xl font-['Syne',sans-serif] font-bold text-slate-900 dark:text-white mb-3">Company Information</h2>
@@ -102,10 +102,10 @@ export default function IndustryStep1() {
                                 <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide">Primary Sector <span className="text-red-500">*</span></label>
                                 <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
                                     {sectors.map((s) => (
-                                        <label key={s.id} className={`relative flex items-center p-3 rounded-xl border-2 cursor-pointer transition-all ${selectedSector === s.id ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/20 shadow-sm' : 'border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-800 hover:border-blue-200 dark:hover:border-blue-800'}`}>
+                                        <label key={s.id} className={`relative flex items-center p-3 rounded-xl border-2 cursor-pointer transition-all ${selectedSector === s.id ? 'border-[#1A7A4A] bg-[#1A7A4A]/5 dark:bg-[#1A7A4A]/20 shadow-sm' : 'border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-800 hover:border-[#1A7A4A]/40 dark:hover:border-emerald-800'}`}>
                                             <input {...register('sector')} value={s.id} className="hidden" type="radio" />
-                                            <span className={`material-symbols-outlined mr-3 ${selectedSector === s.id ? 'text-blue-600 dark:text-blue-400' : 'text-slate-400'}`}>{s.icon}</span>
-                                            <span className={`text-sm font-bold ${selectedSector === s.id ? 'text-blue-600 dark:text-blue-400' : 'text-slate-700 dark:text-slate-300'}`}>{s.name}</span>
+                                            <span className={`material-symbols-outlined mr-3 ${selectedSector === s.id ? 'text-[#1A7A4A] dark:text-emerald-400' : 'text-slate-400'}`}>{s.icon}</span>
+                                            <span className={`text-sm font-bold ${selectedSector === s.id ? 'text-[#1A7A4A] dark:text-emerald-400' : 'text-slate-700 dark:text-slate-300'}`}>{s.name}</span>
                                         </label>
                                     ))}
                                 </div>
@@ -119,7 +119,7 @@ export default function IndustryStep1() {
                                         <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">domain</span>
                                         <input
                                             {...register('companyName')}
-                                            className="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-xl text-sm py-3.5 pl-11 pr-4 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all placeholder-slate-400"
+                                            className="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-xl text-sm py-3.5 pl-11 pr-4 focus:ring-2 focus:ring-[#1A7A4A] focus:border-[#1A7A4A] transition-all placeholder-slate-400"
                                             placeholder="e.g. Acme Industries Ltd."
                                         />
                                     </div>
@@ -131,7 +131,7 @@ export default function IndustryStep1() {
                                     <div className="relative">
                                         <select
                                             {...register('state')}
-                                            className="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-xl text-sm py-3.5 px-4 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all appearance-none"
+                                            className="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-xl text-sm py-3.5 px-4 focus:ring-2 focus:ring-[#1A7A4A] focus:border-[#1A7A4A] transition-all appearance-none"
                                         >
                                             <option value="" disabled>Select State</option>
                                             <option value="Mumbai">Mumbai</option>
@@ -150,7 +150,7 @@ export default function IndustryStep1() {
                                     <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide">Registration No. <span className="text-red-500">*</span></label>
                                     <input
                                         {...register('registrationNo')}
-                                        className="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-xl text-sm py-3.5 px-4 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all placeholder-slate-400 uppercase"
+                                        className="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-xl text-sm py-3.5 px-4 focus:ring-2 focus:ring-[#1A7A4A] focus:border-[#1A7A4A] transition-all placeholder-slate-400 uppercase"
                                         placeholder="U12345MH2024PTC123456"
                                     />
                                     {errors.registrationNo && <p className="text-red-500 text-xs">{errors.registrationNo.message}</p>}
@@ -160,7 +160,7 @@ export default function IndustryStep1() {
                                     <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide">Tax ID / PAN <span className="text-red-500">*</span></label>
                                     <input
                                         {...register('panId')}
-                                        className="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-xl text-sm py-3.5 px-4 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all placeholder-slate-400 uppercase"
+                                        className="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-xl text-sm py-3.5 px-4 focus:ring-2 focus:ring-[#1A7A4A] focus:border-[#1A7A4A] transition-all placeholder-slate-400 uppercase"
                                         placeholder="ABCDE1234F"
                                     />
                                     {errors.panId && <p className="text-red-500 text-xs">{errors.panId.message}</p>}
@@ -169,11 +169,11 @@ export default function IndustryStep1() {
                                 <div className="space-y-2">
                                     <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide">Est. Carbon Budget <span className="text-red-500">*</span></label>
                                     <div className="relative">
-                                        <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-blue-500">eco</span>
+                                        <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-emerald-500">eco</span>
                                         <input
                                             {...register('carbonBudget', { valueAsNumber: true })}
                                             type="number"
-                                            className="w-full bg-blue-50/50 dark:bg-blue-900/10 border-blue-100 dark:border-blue-800 rounded-xl text-sm py-3.5 pl-11 pr-16 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all font-semibold"
+                                            className="w-full bg-[#1A7A4A]/5 dark:bg-[#1A7A4A]/10 border-[#1A7A4A]/10 dark:border-emerald-800 rounded-xl text-sm py-3.5 pl-11 pr-16 focus:ring-2 focus:ring-[#1A7A4A] focus:border-[#1A7A4A] transition-all font-semibold"
                                             placeholder="0.00"
                                         />
                                         <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-slate-500 font-medium font-mono">tCO2e/yr</span>
@@ -182,12 +182,12 @@ export default function IndustryStep1() {
                                 </div>
                             </div>
 
-                            <div className="flex gap-4 p-5 rounded-xl bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-800/30 mt-6">
-                                <div className="shrink-0 w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400">
+                            <div className="flex gap-4 p-5 rounded-xl bg-[#1A7A4A]/5 dark:bg-[#1A7A4A]/10 border border-[#1A7A4A]/10 dark:border-emerald-800/30 mt-6">
+                                <div className="shrink-0 w-8 h-8 rounded-full bg-[#1A7A4A]/10 dark:bg-[#1A7A4A]/20 flex items-center justify-center text-[#1A7A4A] dark:text-emerald-400">
                                     <span className="material-symbols-outlined text-[20px]">info</span>
                                 </div>
                                 <div className="pt-1">
-                                    <h4 className="font-bold text-blue-800 dark:text-blue-300 text-sm mb-1">Compliance Check</h4>
+                                    <h4 className="font-bold text-emerald-800 dark:text-emerald-300 text-sm mb-1">Compliance Check</h4>
                                     <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed font-medium">
                                         Ensure your Carbon Budget matches your Environmental Clearance filing. Discrepancies may trigger an automatic audit flag.
                                     </p>
@@ -195,7 +195,7 @@ export default function IndustryStep1() {
                             </div>
 
                             <div className="pt-2">
-                                <button type="submit" className="w-full py-4 px-6 bg-blue-600 hover:bg-blue-700 text-white font-bold font-['Syne',sans-serif] rounded-xl shadow-lg shadow-blue-600/20 active:scale-[0.99] transition-all flex items-center justify-center gap-3 group tracking-wide">
+                                <button type="submit" className="w-full py-4 px-6 bg-[#1A7A4A] hover:bg-[#2E9E68] text-white font-bold font-['Syne',sans-serif] rounded-xl shadow-lg shadow-[#1A7A4A]/20 active:scale-[0.99] transition-all flex items-center justify-center gap-3 group tracking-wide">
                                     Continue to Employee details
                                     <span className="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_forward</span>
                                 </button>
@@ -205,7 +205,7 @@ export default function IndustryStep1() {
                 </div>
 
                 <p className="text-center text-xs text-slate-400 font-medium">
-                    Already registered? <Link className="text-blue-600 dark:text-blue-400 font-bold hover:underline transition-all" to="/login">Sign In</Link>
+                    Already registered? <Link className="text-[#1A7A4A] dark:text-emerald-400 font-bold hover:underline transition-all" to="/login">Sign In</Link>
                 </p>
             </div>
         </div>

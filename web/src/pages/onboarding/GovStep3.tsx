@@ -71,8 +71,8 @@ export default function GovStep3() {
         <div className="bg-[#f3f4f6] dark:bg-[#1a1625] text-slate-900 dark:text-slate-100 min-h-screen font-['DM_Sans',sans-serif]">
             <header className="border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1a1625]/80 sticky top-0 z-50">
                 <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
-                    <div className="flex items-center gap-3 text-emerald-600 dark:text-emerald-400">
-                        <div className="w-8 h-8 flex items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-900/30">
+                    <div className="flex items-center gap-3 text-blue-600 dark:text-blue-400">
+                        <div className="w-8 h-8 flex items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900/30">
                             <span className="material-symbols-outlined font-bold">account_balance</span>
                         </div>
                         <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">EcoChain</h2>
@@ -84,35 +84,35 @@ export default function GovStep3() {
                 <div className="mb-10">
                     <div className="flex items-center justify-between mb-4">
                         <div className="flex flex-col items-center gap-2 group">
-                            <div className="w-10 h-10 rounded-full bg-emerald-600 text-white flex items-center justify-center shadow-lg shadow-emerald-600/20">
+                            <div className="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-lg shadow-blue-600/20">
                                 <span className="material-symbols-outlined text-sm font-bold">check</span>
                             </div>
-                            <span className="text-xs font-semibold text-emerald-600">Identity</span>
+                            <span className="text-xs font-semibold text-blue-600">Identity</span>
                         </div>
-                        <div className="flex-1 h-[2px] mx-4 bg-emerald-600 mb-6"></div>
+                        <div className="flex-1 h-[2px] mx-4 bg-blue-600 mb-6"></div>
                         <div className="flex flex-col items-center gap-2">
-                            <div className="w-10 h-10 rounded-full bg-emerald-600 text-white flex items-center justify-center shadow-lg shadow-emerald-600/20">
+                            <div className="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-lg shadow-blue-600/20">
                                 <span className="material-symbols-outlined text-sm font-bold">check</span>
                             </div>
-                            <span className="text-xs font-semibold text-emerald-600">Documents</span>
+                            <span className="text-xs font-semibold text-blue-600">Documents</span>
                         </div>
                         <div className="flex-1 h-[2px] mx-4 bg-slate-200 dark:bg-slate-700 mb-6"></div>
                         <div className="flex flex-col items-center gap-2">
-                            <div className="w-10 h-10 rounded-full bg-white dark:bg-slate-800 border-2 border-emerald-600 text-emerald-600 flex items-center justify-center ring-4 ring-emerald-600/10">
+                            <div className="w-10 h-10 rounded-full bg-white dark:bg-slate-800 border-2 border-blue-600 text-blue-600 flex items-center justify-center ring-4 ring-blue-600/10">
                                 <span className="text-sm font-bold">3</span>
                             </div>
-                            <span className="text-xs font-bold text-emerald-600">Review</span>
+                            <span className="text-xs font-bold text-blue-600">Review</span>
                         </div>
                     </div>
-                    <div className="flex justify-between items-center bg-emerald-50 dark:bg-emerald-900/10 p-3 rounded-xl border border-emerald-100 dark:border-emerald-800/30">
-                        <p className="text-emerald-600 dark:text-emerald-400 text-sm font-medium">Registration Progress</p>
-                        <p className="text-emerald-600 dark:text-emerald-400 text-sm font-bold">Step 3 of 3</p>
+                    <div className="flex justify-between items-center bg-blue-50 dark:bg-blue-900/10 p-3 rounded-xl border border-blue-100 dark:border-blue-800/30">
+                        <p className="text-blue-600 dark:text-blue-400 text-sm font-medium">Registration Progress</p>
+                        <p className="text-blue-600 dark:text-blue-400 text-sm font-bold">Step 3 of 3</p>
                     </div>
                 </div>
 
                 <div className="mb-8">
-                    <span className="inline-flex items-center px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 text-xs font-bold uppercase tracking-wider mb-4">
-                        Final Review
+                    <span className="inline-flex items-center px-3 py-1 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-xs font-bold uppercase tracking-wider mb-4">
+                         Final Review
                     </span>
                     <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tight mb-3">Review your application</h1>
                     <p className="text-slate-600 dark:text-slate-400 text-lg leading-relaxed">
@@ -122,12 +122,12 @@ export default function GovStep3() {
 
                 <div className="space-y-6">
                     <div className="bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-sm">
-                        <div className="bg-emerald-50/50 dark:bg-emerald-900/5 border-b border-slate-200 dark:border-slate-800 px-6 py-4 flex justify-between items-center">
-                            <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400">
+                        <div className="bg-blue-50/50 dark:bg-blue-900/5 border-b border-slate-200 dark:border-slate-800 px-6 py-4 flex justify-between items-center">
+                            <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400">
                                 <span className="material-symbols-outlined">account_balance</span>
                                 <h3 className="font-bold text-lg text-slate-900 dark:text-white">Ministry & Department</h3>
                             </div>
-                            <span className="px-3 py-1 bg-emerald-600 text-white text-[10px] font-bold rounded-full uppercase tracking-tighter shadow-sm">
+                            <span className="px-3 py-1 bg-blue-600 text-white text-[10px] font-bold rounded-full uppercase tracking-tighter shadow-sm">
                                 Pending Verification
                             </span>
                         </div>
@@ -146,23 +146,23 @@ export default function GovStep3() {
                             </div>
                             <div>
                                 <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">Authorization Code</p>
-                                <p className="font-mono text-emerald-600 dark:text-emerald-400 font-bold">****-{step1.authorizationCode ? step1.authorizationCode.slice(-4) : '****'}</p>
+                                <p className="font-mono text-blue-600 dark:text-blue-400 font-bold">****-{step1.authorizationCode ? step1.authorizationCode.slice(-4) : '****'}</p>
                             </div>
                         </div>
                         <div className="px-6 py-3 bg-slate-50 dark:bg-slate-800/30 flex justify-end">
-                            <button onClick={() => navigate('/register/government/step1')} className="text-emerald-600 dark:text-emerald-400 text-sm font-bold flex items-center gap-1 hover:underline">
+                            <button onClick={() => navigate('/register/government/step1')} className="text-blue-600 dark:text-blue-400 text-sm font-bold flex items-center gap-1 hover:underline">
                                 <span className="material-symbols-outlined text-sm">edit</span> Edit Details
                             </button>
                         </div>
                     </div>
 
                     <div className="bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-sm">
-                        <div className="bg-emerald-50/50 dark:bg-emerald-900/5 border-b border-slate-200 dark:border-slate-800 px-6 py-4 flex justify-between items-center">
-                            <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400">
+                        <div className="bg-blue-50/50 dark:bg-blue-900/5 border-b border-slate-200 dark:border-slate-800 px-6 py-4 flex justify-between items-center">
+                            <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400">
                                 <span className="material-symbols-outlined">badge</span>
                                 <h3 className="font-bold text-lg text-slate-900 dark:text-white">Regulatory Officer</h3>
                             </div>
-                            <span className="px-3 py-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold rounded-full uppercase tracking-tighter">
+                            <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-[10px] font-bold rounded-full uppercase tracking-tighter">
                                 Authorized Officer
                             </span>
                         </div>
@@ -186,7 +186,7 @@ export default function GovStep3() {
                                 </div>
                             </div>
                             <div className="flex items-center gap-3 p-4 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
-                                <span className="material-symbols-outlined text-emerald-600 dark:text-emerald-400">description</span>
+                                <span className="material-symbols-outlined text-blue-600 dark:text-blue-400">description</span>
                                 <div className="flex-1">
                                     <p className="text-sm font-bold text-slate-800 dark:text-slate-200">{step2.idDocumentFile?.name || 'Document Uploaded'}</p>
                                     <p className="text-xs text-slate-500">{step2.idDocumentFile ? (step2.idDocumentFile.size / 1024 / 1024).toFixed(1) : 'Unknown'} MB • Document</p>
@@ -195,7 +195,7 @@ export default function GovStep3() {
                             </div>
                         </div>
                         <div className="px-6 py-3 bg-slate-50 dark:bg-slate-800/30 flex justify-end">
-                            <button onClick={() => navigate('/register/government/step2')} className="text-emerald-600 dark:text-emerald-400 text-sm font-bold flex items-center gap-1 hover:underline">
+                            <button onClick={() => navigate('/register/government/step2')} className="text-blue-600 dark:text-blue-400 text-sm font-bold flex items-center gap-1 hover:underline">
                                 <span className="material-symbols-outlined text-sm">edit</span> Edit Officer Info
                             </button>
                         </div>
@@ -211,7 +211,7 @@ export default function GovStep3() {
                         <label className="flex items-start gap-4 cursor-pointer">
                             <div className="mt-1">
                                 <input
-                                    className="w-5 h-5 rounded border-slate-300 dark:border-slate-600 text-emerald-600 focus:ring-emerald-600 focus:ring-offset-0 dark:bg-slate-900"
+                                    className="w-5 h-5 rounded border-slate-300 dark:border-slate-600 text-blue-600 focus:ring-blue-600 focus:ring-offset-0 dark:bg-slate-900"
                                     required
                                     type="checkbox"
                                     checked={termsAccepted}
@@ -228,7 +228,7 @@ export default function GovStep3() {
                         <button
                             onClick={onSubmit}
                             disabled={!termsAccepted || isSubmitting}
-                            className={`w-full bg-gradient-to-r ${(!termsAccepted || isSubmitting) ? 'from-slate-400 to-slate-500 cursor-not-allowed opacity-70' : 'from-emerald-600 to-emerald-500 hover:from-emerald-700 hover:to-emerald-600 active:scale-[0.98]'} text-white py-4 px-8 rounded-xl font-bold text-lg shadow-xl shadow-emerald-600/20 transition-all flex items-center justify-center gap-2`}
+                            className={`w-full bg-gradient-to-r ${(!termsAccepted || isSubmitting) ? 'from-slate-400 to-slate-500 cursor-not-allowed opacity-70' : 'from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 active:scale-[0.98]'} text-white py-4 px-8 rounded-xl font-bold text-lg shadow-xl shadow-blue-600/20 transition-all flex items-center justify-center gap-2`}
                         >
                             {isSubmitting ? 'Submitting Application...' : 'Submit Government Registration'}
                             {!isSubmitting && <span className="material-symbols-outlined">send</span>}

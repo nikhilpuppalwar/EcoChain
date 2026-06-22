@@ -28,6 +28,9 @@ router.get('/:submissionId/co-auditor-decision', requireRole('auditor', 'admin')
 // A4 — Save document checklist state
 router.patch('/checklist/:submissionId', requireRole('auditor', 'admin'), auditController.updateChecklist);
 
+// A4.b — Get specific submission details for review
+router.get('/submission/:id', requireRole('auditor', 'admin'), auditController.getAssignedSubmission);
+
 // A5 — Verify submission (approve / reject / request correction)
 router.post('/verify', requireRole('auditor', 'admin'), auditController.verifySubmission);
 

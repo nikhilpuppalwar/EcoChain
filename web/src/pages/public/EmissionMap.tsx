@@ -44,16 +44,48 @@ const topPolluters = [
 
 const sectors = Object.keys(sectorData) as (keyof typeof sectorData)[];
 
+const regionPolygons = [
+    { id: 'north', name: 'North India', points: '200,20 230,50 215,100 240,130 280,180 200,200 160,180 150,140 140,90', labelX: 200, labelY: 110 },
+    { id: 'west', name: 'West India', points: '140,90 160,180 180,210 180,270 120,310 90,260 70,210 110,180 120,130', labelX: 125, labelY: 210 },
+    { id: 'central', name: 'Central India', points: '160,180 200,200 240,210 260,260 210,300 180,270', labelX: 210, labelY: 240 },
+    { id: 'east', name: 'East India', points: '280,180 310,190 370,170 380,200 330,220 300,220 270,250 260,260 240,210 200,200', labelX: 290, labelY: 210 },
+    { id: 'south', name: 'South India', points: '180,270 210,300 260,260 240,310 230,400 210,440 180,420 140,320 120,310', labelX: 190, labelY: 340 }
+];
+
 export default function EmissionMap() {
     const [tab, setTab] = useState<'map' | 'sector'>('map');
     const [hoveredRegion, setHoveredRegion] = useState<string | null>(null);
     const [selectedSector, setSelectedSector] = useState<keyof typeof sectorData>('Manufacturing');
     const [selectedRegion, setSelectedRegion] = useState<typeof regions[0] | null>(null);
 
-    const levelColor: Record<string, { bg: string; badge: string; dot: string }> = {
-        high: { bg: 'bg-red-400/70 hover:bg-red-500', badge: 'bg-red-100 text-red-700', dot: 'bg-red-500' },
-        medium: { bg: 'bg-amber-400/70 hover:bg-amber-500', badge: 'bg-amber-100 text-amber-700', dot: 'bg-amber-500' },
-        low: { bg: 'bg-green-400/70 hover:bg-green-500', badge: 'bg-green-100 text-green-700', dot: 'bg-green-500' },
+    const levelColor: Record<string, { bg: string; badge: string; dot: string; fill: string; stroke: string; activeFill: string; activeStroke: string }> = {
+        high: { 
+            bg: 'bg-red-400/70 hover:bg-red-500', 
+            badge: 'bg-red-100 text-red-700', 
+            dot: 'bg-red-500',
+            fill: 'fill-red-500/20 hover:fill-red-500/40',
+            stroke: 'stroke-red-500/80',
+            activeFill: 'fill-red-500/60',
+            activeStroke: 'stroke-red-400'
+        },
+        medium: { 
+            bg: 'bg-amber-400/70 hover:bg-amber-500', 
+            badge: 'bg-amber-100 text-amber-700', 
+            dot: 'bg-amber-500',
+            fill: 'fill-amber-500/20 hover:fill-amber-500/40',
+            stroke: 'stroke-amber-500/80',
+            activeFill: 'fill-amber-500/60',
+            activeStroke: 'stroke-amber-400'
+        },
+        low: { 
+            bg: 'bg-[#1A7A4A]/20 hover:bg-[#1A7A4A]/40', 
+            badge: 'bg-green-100 text-green-700', 
+            dot: 'bg-green-500',
+            fill: 'fill-emerald-500/20 hover:fill-emerald-500/40',
+            stroke: 'stroke-emerald-500/80',
+            activeFill: 'fill-emerald-500/60',
+            activeStroke: 'stroke-emerald-400'
+        },
     };
 
     return (
@@ -87,37 +119,63 @@ export default function EmissionMap() {
                                     <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-red-400 inline-block" />High</span>
                                 </div>
                             </div>
-                            {/* Simplified India-shaped visual map */}
-                            <div className="relative bg-gradient-to-br from-blue-50 to-emerald-50 rounded-xl h-96 border border-gray-100 overflow-hidden">
-                                <div className="absolute inset-0 flex items-center justify-center text-blue-100">
-                                    <span className="material-symbols-outlined text-9xl">map</span>
+                                <div className="relative bg-[#071022] rounded-xl h-[420px] border border-primary/20 overflow-hidden flex items-center justify-center p-4">
+                                    {/* Tech Grid Background */}
+                                    <svg className="absolute inset-0 w-full h-full opacity-10 pointer-events-none" xmlns="http://www.w3.org/2000/svg">
+                                        <defs>
+                                            <pattern id="map-grid" width="20" height="20" patternUnits="userSpaceOnUse">
+                                                <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#1A7A4A" strokeWidth="0.5" />
+                                            </pattern>
+                                        </defs>
+                                        <rect width="100%" height="100%" fill="url(#map-grid)" />
+                                    </svg>
+                                    <p className="absolute top-3 left-3 text-xs text-primary/60 font-bold uppercase tracking-widest font-mono select-none">INDIA — REGIONAL EMISSION MAP</p>
+                                    
+                                    {/* Interactive SVG Map */}
+                                    <svg viewBox="0 0 400 460" className="w-full h-full max-h-[380px] mx-auto select-none relative z-10">
+                                        {regionPolygons.map(p => {
+                                            const isSelected = selectedRegion?.id === p.id;
+                                            const isHovered = hoveredRegion === p.id;
+                                            const regData = regions.find(r => r.id === p.id)!;
+                                            const colors = levelColor[regData.level];
+                                            return (
+                                                <g key={p.id}>
+                                                    <polygon
+                                                        points={p.points}
+                                                        className={`transition-all duration-300 cursor-pointer stroke-[1.5] ${
+                                                            isSelected ? colors.activeFill + ' ' + colors.activeStroke : isHovered ? colors.fill.split(' ')[1] + ' ' + colors.stroke : colors.fill.split(' ')[0] + ' ' + colors.stroke
+                                                        }`}
+                                                        onMouseEnter={() => setHoveredRegion(p.id)}
+                                                        onMouseLeave={() => setHoveredRegion(null)}
+                                                        onClick={() => setSelectedRegion(regData)}
+                                                    />
+                                                    <text
+                                                        x={p.labelX}
+                                                        y={p.labelY}
+                                                        textAnchor="middle"
+                                                        className="fill-gray-400 text-[10px] font-bold tracking-widest pointer-events-none uppercase"
+                                                        style={{ fontFamily: 'JetBrains Mono, monospace' }}
+                                                    >
+                                                        {p.name.split(' ')[0]}
+                                                    </text>
+                                                </g>
+                                            );
+                                        })}
+                                    </svg>
+                                    
+                                    {selectedRegion && (
+                                        <div className="absolute bottom-4 right-4 bg-gray-950/90 backdrop-blur border border-primary/20 rounded-xl p-4 shadow-xl w-56 z-20">
+                                            <div className="flex items-center justify-between mb-2">
+                                                <span className="font-bold text-white text-sm" style={{ fontFamily: 'JetBrains Mono, monospace' }}>{selectedRegion.name}</span>
+                                                <button onClick={() => setSelectedRegion(null)} className="text-gray-500 hover:text-gray-300">
+                                                    <span className="material-symbols-outlined text-sm">close</span>
+                                                </button>
+                                            </div>
+                                            <p className="text-xs text-gray-400" style={{ fontFamily: 'JetBrains Mono, monospace' }}>CO₂e: <span className="font-bold text-white">{selectedRegion.co2}</span></p>
+                                            <span className={`inline-block mt-2 text-[10px] font-bold px-2 py-0.5 rounded border capitalize ${levelColor[selectedRegion.level].badge} bg-transparent`} style={{ fontFamily: 'JetBrains Mono, monospace' }}>{selectedRegion.level} intensity</span>
+                                        </div>
+                                    )}
                                 </div>
-                                <p className="absolute top-3 left-3 text-xs text-blue-300 font-bold">INDIA — Regional CO₂ Map</p>
-                                {regions.map(r => (
-                                    <button
-                                        key={r.id}
-                                        style={{ top: r.top, left: r.left }}
-                                        className="absolute transform -translate-x-1/2 -translate-y-1/2"
-                                        onMouseEnter={() => setHoveredRegion(r.id)}
-                                        onMouseLeave={() => setHoveredRegion(null)}
-                                        onClick={() => setSelectedRegion(r)}
-                                    >
-                                        <div className={`w-16 h-16 rounded-full ${levelColor[r.level].bg} backdrop-blur border-2 border-white flex flex-col items-center justify-center transition-all cursor-pointer ${hoveredRegion === r.id ? 'scale-125 shadow-lg' : ''}`}>
-                                            <span className="text-white text-xs font-black leading-tight text-center px-1">{r.name.split(' ')[0]}</span>
-                                        </div>
-                                    </button>
-                                ))}
-                                {selectedRegion && (
-                                    <div className="absolute bottom-4 right-4 bg-white rounded-xl border border-gray-200 p-4 shadow-lg w-52">
-                                        <div className="flex items-center justify-between mb-2">
-                                            <span className="font-black text-gray-900 text-sm">{selectedRegion.name}</span>
-                                            <button onClick={() => setSelectedRegion(null)} className="text-gray-400 hover:text-gray-700"><span className="material-symbols-outlined text-sm">close</span></button>
-                                        </div>
-                                        <p className="text-xs text-gray-500">Emissions: <span className="font-bold text-gray-900">{selectedRegion.co2}</span></p>
-                                        <span className={`inline-block mt-2 text-xs font-bold px-2 py-0.5 rounded-full capitalize ${levelColor[selectedRegion.level].badge}`}>{selectedRegion.level} intensity</span>
-                                    </div>
-                                )}
-                            </div>
                         </div>
 
                         {/* Region List */}

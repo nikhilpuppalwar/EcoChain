@@ -30,7 +30,8 @@ const userSchema = new mongoose.Schema({
         licenseNumber: String,
         specialization: [String],
         yearsExperience: Number,
-        status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
+        status: { type: String, enum: ['pending', 'approved', 'rejected', 'suspended'], default: 'pending' },
+        rejectionReason: String,
         currentAssignments: [{
             submissionId: { type: mongoose.Schema.Types.ObjectId, ref: 'EmissionEntry' },
             industryId: { type: mongoose.Schema.Types.ObjectId, ref: 'Company' },
@@ -44,6 +45,9 @@ const userSchema = new mongoose.Schema({
         name: String,
         superAdmin: { type: Boolean, default: false },
     },
+
+    // Blockchain wallet (for non-industry roles; industry uses Company.walletAddress)
+    walletAddress: { type: String, trim: true },
 
     // Password reset
     resetPasswordToken: String,

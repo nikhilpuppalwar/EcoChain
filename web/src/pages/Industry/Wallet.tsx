@@ -6,13 +6,15 @@ import { useCarbonCredit } from '../../hooks/useCarbonCredit';
 import { useMarketplace } from '../../hooks/useMarketplace';
 import toast from 'react-hot-toast';
 import api from '../../lib/api';
+import Addresses from '../../contracts/addresses.json';
 
 export default function Wallet() {
     const { user } = useAuthStore();
     const { address, isConnected, chain } = useAccount();
     const switchChain = useSwitchChain();
     const { balance, refetchBalance, retireCredits, isRetiring, transferTokens, isTransferring, isWrongChain, supportedChainId } = useCarbonCredit();
-    const { listCredits, isListing } = useMarketplace();
+    const { listCredits, isListing, nextListingId } = useMarketplace();
+    const tokenAddress = Addresses.CarbonCredit;
 
     // UI State
     const [activeAction, setActiveAction] = useState<'retire' | 'transfer' | 'sell'>('retire');
@@ -30,12 +32,43 @@ export default function Wallet() {
         hash: txHash,
     });
 
-    // Mock Transaction History
-    const [transactions, setTransactions] = useState([
-        { id: '0x1a2b...3c4d', date: '2024-03-15', type: 'Purchase', amount: 100, status: 'Confirmed', from: 'SolarFarm India Ltd', to: 'Your Wallet' },
-        { id: '0x5e6f...7g8h', date: '2024-02-28', type: 'Retirement', amount: 50, status: 'Confirmed', from: 'Your Wallet', to: 'Null Address' },
-        { id: '0x9i0j...1k2l', date: '2024-01-10', type: 'Purchase', amount: 450, status: 'Confirmed', from: 'AgriCorp Co.', to: 'Your Wallet' },
-    ]);
+    // Transaction History
+    const [transactions, setTransactions] = useState<any[]>([]);
+
+    useEffect(() => {
+        const fetchTransactions = async () => {
+            try {
+                const res = await api.get('/wallet/transactions');
+                const mappedTx = res.data.data.map((tx: any) => {
+                    const isSender = tx.fromCompany?._id === user?.company || tx.fromCompany === user?.company;
+                    const isReceiver = tx.toCompany?._id === user?.company || tx.toCompany === user?.company;
+                    
+                    let fakeType = 'Transfer';
+                    if (tx.type === 'purchase') fakeType = 'Purchase';
+                    if (tx.type === 'retirement') fakeType = 'Retirement';
+
+                    return {
+                        id: tx.txHash ? `${tx.txHash.slice(0, 10)}...${tx.txHash.slice(-4)}` : tx._id.slice(0, 8),
+                        fullHash: tx.txHash,
+                        date: new Date(tx.createdAt).toISOString().split('T')[0],
+                        type: fakeType,
+                        amount: tx.credits,
+                        status: 'Confirmed',
+                        from: tx.fromCompany?.name || 'Unknown',
+                        to: tx.toCompany?.name || (tx.type === 'retirement' ? 'Null Address' : 'Unknown'),
+                        isSender
+                    };
+                });
+                setTransactions(mappedTx);
+            } catch (error) {
+                console.error("Failed to load transactions", error);
+            }
+        };
+
+        if (isConnected) {
+            fetchTransactions();
+        }
+    }, [isConnected, user?.company, isTxSuccess]);
 
     useEffect(() => {
         if (isTxSuccess && txHash) {
@@ -71,6 +104,13 @@ export default function Wallet() {
             setTxHash(hash);
             toast.success("Transaction submitted. Waiting for confirmation...");
 
+            // Call backend API to record the retirement transaction and sync off-chain balance
+            await api.post('/credits/retire', {
+                amount: amountToRetire,
+                reason: retireReason,
+                onChainTxHash: hash
+            });
+
             setTransactions([
                 {
                     id: `${hash.slice(0, 6)}...${hash.slice(-4)}`,
@@ -86,7 +126,7 @@ export default function Wallet() {
 
         } catch (error: any) {
             console.error(error);
-            toast.error(error?.shortMessage || error?.message || "Transaction failed or rejected");
+            toast.error(error?.response?.data?.message || error?.shortMessage || error?.message || "Transaction failed or rejected");
         }
     };
 
@@ -159,7 +199,8 @@ export default function Wallet() {
                 creditsAvailable: amountToSell,
                 pricePerCredit: priceEth,
                 durationDays: parseInt(sellDuration),
-                onChainTxHash: hash
+                onChainTxHash: hash,
+                onChainId: nextListingId
             });
 
             toast.success(`Successfully listed ${amountToSell} CCR for ${priceEth} ETH/credit!`, { id: 'sell-toast', duration: 5000 });
@@ -218,7 +259,7 @@ export default function Wallet() {
                             <div>
                                 <h4 className="font-bold text-amber-900">Wrong network</h4>
                                 <p className="text-sm text-amber-800 mt-0.5">
-                                    Carbon contracts are on <strong>Hardhat local</strong>. Switch your wallet to avoid &quot;Simulation Failed&quot; and transaction errors.
+                                    Carbon contracts are on <strong>Sepolia Testnet</strong>. Switch your wallet to avoid &quot;Simulation Failed&quot; and transaction errors.
                                 </p>
                             </div>
                         </div>
@@ -228,19 +269,12 @@ export default function Wallet() {
                             disabled={switchChain.isPending}
                             className="px-4 py-2 bg-amber-600 hover:bg-amber-700 disabled:opacity-50 text-white font-bold rounded-lg text-sm transition-colors"
                         >
-                            {switchChain.isPending ? 'Switching...' : 'Switch to Hardhat'}
+                            {switchChain.isPending ? 'Switching...' : 'Switch to Sepolia Testnet'}
                         </button>
                     </div>
                     <details className="text-sm text-amber-900 bg-amber-100/60 rounded-lg p-3 border border-amber-200">
-                        <summary className="font-bold cursor-pointer">Switch not working? Add Hardhat manually</summary>
-                        <p className="mt-2 mb-2">In your wallet (e.g. Rainbow), add a custom network with:</p>
-                        <ul className="list-disc list-inside space-y-1 font-mono text-xs bg-white/80 p-3 rounded border border-amber-200">
-                            <li><strong>Network name:</strong> Hardhat Local</li>
-                            <li><strong>RPC URL:</strong> http://127.0.0.1:8545</li>
-                            <li><strong>Chain ID:</strong> 31337</li>
-                            <li><strong>Currency symbol:</strong> ETH</li>
-                        </ul>
-                        <p className="mt-2 text-amber-800">Then select this network. Make sure Anvil is running (<code className="bg-white/80 px-1 rounded">anvil</code> in the contracts folder).</p>
+                        <summary className="font-bold cursor-pointer">Switch not working? Connect manually</summary>
+                        <p className="mt-2 mb-2">In your wallet (e.g. MetaMask or Rainbow), make sure testnets are enabled and choose Sepolia.</p>
                     </details>
                 </div>
             )}
@@ -292,9 +326,9 @@ export default function Wallet() {
                             <div className="mt-8 pt-6 border-t border-white/10">
                                 <h3 className="text-white/60 font-medium uppercase tracking-widest text-xs mb-3">Asset Contract</h3>
                                 <div className="bg-black/30 p-3 rounded-lg flex items-center justify-between">
-                                    <span className="font-mono text-sm text-white/80">0xe7f1...0512</span>
+                                    <span className="font-mono text-sm text-white/80">{tokenAddress ? `${tokenAddress.slice(0, 6)}...${tokenAddress.slice(-4)}` : '0x...'}</span>
                                     <button className="text-white/40 hover:text-white transition-colors" title="Copy Address" onClick={() => {
-                                        navigator.clipboard.writeText("0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512");
+                                        navigator.clipboard.writeText(tokenAddress || "");
                                         toast.success("Contract address copied!");
                                     }}>
                                         <span className="material-symbols-outlined text-[16px]">content_copy</span>
@@ -340,8 +374,8 @@ export default function Wallet() {
                                             <input
                                                 type="number"
                                                 required
-                                                min="1"
-                                                max={balance}
+                                                min={balance > 0 ? "1" : "0"}
+                                                max={balance > 0 ? balance : 0}
                                                 value={retireAmount}
                                                 onChange={(e) => setRetireAmount(e.target.value)}
                                                 className="w-full border border-slate-300 rounded-lg py-2 pl-3 pr-12 focus:outline-none focus:border-[#1A7A4A] focus:ring-1 focus:ring-[#1A7A4A]"
@@ -395,8 +429,8 @@ export default function Wallet() {
                                             <input
                                                 type="number"
                                                 required
-                                                min="1"
-                                                max={balance}
+                                                min={balance > 0 ? "1" : "0"}
+                                                max={balance > 0 ? balance : 0}
                                                 value={sellAmount}
                                                 onChange={(e) => setSellAmount(e.target.value)}
                                                 className="w-full border border-slate-300 rounded-lg py-2 pl-3 pr-12 focus:outline-none focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600"
@@ -479,8 +513,8 @@ export default function Wallet() {
                                             <input
                                                 type="number"
                                                 required
-                                                min="1"
-                                                max={balance}
+                                                min={balance > 0 ? "1" : "0"}
+                                                max={balance > 0 ? balance : 0}
                                                 value={transferAmount}
                                                 onChange={(e) => setTransferAmount(e.target.value)}
                                                 className="w-full border border-slate-300 rounded-lg py-2 pl-3 pr-12 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
@@ -543,14 +577,16 @@ export default function Wallet() {
                                         <tr key={index} className="hover:bg-slate-50 transition-colors group">
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center gap-2">
-                                                    <a href="#" className="font-mono text-sm text-blue-600 hover:text-blue-800 hover:underline">{tx.id}</a>
-                                                    <span className="material-symbols-outlined text-[14px] text-slate-300 group-hover:text-slate-500 transition-colors opacity-0 group-hover:opacity-100 cursor-pointer" title="View on Etherscan">open_in_new</span>
+                                                    <a href={tx.fullHash ? `https://sepolia.etherscan.io/tx/${tx.fullHash}` : '#'} target="_blank" rel="noreferrer" className="font-mono text-sm text-blue-600 hover:text-blue-800 hover:underline">{tx.id}</a>
+                                                    <a href={tx.fullHash ? `https://sepolia.etherscan.io/tx/${tx.fullHash}` : '#'} target="_blank" rel="noreferrer">
+                                                        <span className="material-symbols-outlined text-[14px] text-slate-300 group-hover:text-slate-500 transition-colors opacity-0 group-hover:opacity-100 cursor-pointer" title="View on Etherscan">open_in_new</span>
+                                                    </a>
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4">{txTypeBadge(tx.type)}</td>
                                             <td className="px-6 py-4">
-                                                <span className={`font-bold font-syne text-lg ${tx.type === 'Purchase' ? 'text-[#1A7A4A]' : 'text-slate-700'}`}>
-                                                    {tx.type === 'Purchase' ? '+' : '-'}{tx.amount}
+                                                <span className={`font-bold font-syne text-lg ${tx.type === 'Purchase' && !tx.isSender ? 'text-[#1A7A4A]' : 'text-slate-700'}`}>
+                                                    {tx.type === 'Purchase' && !tx.isSender ? '+' : '-'}{tx.amount}
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4">

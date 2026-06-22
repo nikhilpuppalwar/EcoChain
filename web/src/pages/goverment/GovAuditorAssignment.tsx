@@ -96,19 +96,30 @@ function AssignmentModal({ submission, availableAuditors, onClose, onAssigned }:
             return;
         }
         
-        // Pick primary
-        const primary = availableAuditors[Math.floor(Math.random() * availableAuditors.length)];
+        // Smart assign: prefer our fast-login demo auditors if they exist in the DB
+        // Based on your database, the names are literally "auditor" and "secondary".
+        const isAuditor1 = (a: Auditor) => {
+            const n = a.name.toLowerCase();
+            return n === 'auditor' || n.includes('elena') || n.includes('aud1') || n.includes('auditor 1');
+        };
+        const isAuditor2 = (a: Auditor) => {
+            const n = a.name.toLowerCase();
+            return n === 'secondary' || n.includes('chen') || n.includes('aud2') || n.includes('auditor 2');
+        };
+
+        let primary = availableAuditors.find(isAuditor1);
+        if (!primary) {
+            primary = availableAuditors[Math.floor(Math.random() * availableAuditors.length)];
+        }
         setPrimaryAuditorId(primary._id);
         
         if (auditType === 'dual') {
-            // Try to pick secondary from different org
-            let secondaryPool = availableAuditors.filter(a => a._id !== primary._id && a.organization !== primary.organization);
-            if (secondaryPool.length === 0) {
-                // Fallback to same org if no other org available
-                secondaryPool = availableAuditors.filter(a => a._id !== primary._id);
-            }
+            let secondaryPool = availableAuditors.filter(a => a._id !== primary!._id);
             if (secondaryPool.length > 0) {
-                const secondary = secondaryPool[Math.floor(Math.random() * secondaryPool.length)];
+                let secondary = secondaryPool.find(isAuditor2);
+                if (!secondary) {
+                    secondary = secondaryPool[Math.floor(Math.random() * secondaryPool.length)];
+                }
                 setSecondaryAuditorId(secondary._id);
             }
         }
@@ -251,8 +262,13 @@ export default function GovAuditorAssignment() {
     const fetchQueue = useCallback(async () => {
         try {
             const res = await api.get('/audit/pending-assignment');
-            const data = res.data.data || [];
-            setQueue(data.length > 0 ? data : MOCK_ASSIGNMENTS);
+            // If API returns data, use it (even if empty, because empty queue is a valid state)
+            const data = res.data.data;
+            if (data) {
+                 setQueue(data);
+            } else {
+                 setQueue(MOCK_ASSIGNMENTS);
+            }
         } catch (error) {
             toast.error('Failed to load assignment queue, using demo data');
             setQueue(MOCK_ASSIGNMENTS);
@@ -266,13 +282,15 @@ export default function GovAuditorAssignment() {
         try {
             const res = await api.get(`/audit/available?excludeIndustryId=${submission.company._id}`);
             const data = res.data.data || [];
-            setAuditors(data.length > 0 ? data : MOCK_AUDITORS);
+            if (data.length === 0) {
+                toast.error('No available auditors found. All auditors may be assigned to this industry already.', { id: 'auditors' });
+                return;
+            }
+            setAuditors(data);
             setAssigningSubmission(submission);
             toast.dismiss('auditors');
         } catch (error) {
-            toast.error('Failed to find available auditors, using demo data', { id: 'auditors' });
-            setAuditors(MOCK_AUDITORS);
-            setAssigningSubmission(submission);
+            toast.error('Failed to fetch available auditors. Please try again.', { id: 'auditors' });
         }
     };
 

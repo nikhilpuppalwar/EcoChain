@@ -17,7 +17,12 @@ const notificationSchema = new mongoose.Schema({
             'awaiting_second_auditor',
             'credit_transferred',
             'brsr_report_ready',
-            'govt_anomaly_reviewed'
+            'govt_anomaly_reviewed',
+            'report_approved_by_auditor',
+            'pending_issuance',
+            'onboarding_completed',
+            'onboarding_failed',
+            'system_alert'
         ]
     },
     title: String,

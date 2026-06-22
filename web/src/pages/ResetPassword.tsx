@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import api from '../lib/api';
+import ecochainIconWhite from '../assets/ecochain_icon_white.png';
 
 export default function ResetPassword() {
     const [searchParams] = useSearchParams();
@@ -51,8 +52,8 @@ export default function ResetPassword() {
             <div className="w-full max-w-md bg-white rounded-2xl shadow-lg border border-gray-100 p-8 space-y-6">
                 <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2">
-                        <div className="w-9 h-9 rounded-xl bg-emerald-100 flex items-center justify-center">
-                            <span className="material-symbols-outlined text-emerald-600 text-2xl">eco</span>
+                        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white shadow-sm border border-gray-100 overflow-hidden">
+                            <img src={ecochainIconWhite} alt="EcoChain Logo" className="w-full h-full rounded-xl object-contain" />
                         </div>
                         <span className="text-lg font-black tracking-wide text-gray-900">ECOCHAIN</span>
                     </div>

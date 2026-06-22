@@ -1,6 +1,7 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import api from '../../lib/api';
 
 const docCategories = [
     { key: 'fuelInvoices', label: 'Fuel Invoices', count: 3, icon: 'local_gas_station' },
@@ -20,13 +21,7 @@ const correctionFields = [
     'Supporting Documents',
 ];
 
-const emissionSources = [
-    { name: 'Fuel Combustion', scope: 'Scope 1', co2: '2,963.0 tCO₂e' },
-    { name: 'Electricity Usage', scope: 'Scope 2', co2: '229.6 tCO₂e' },
-    { name: 'Vehicle Emissions', scope: 'Scope 1', co2: '14.0 tCO₂e' },
-    { name: 'Logistics / Transport', scope: 'Scope 3', co2: '5.7 tCO₂e' },
-    { name: 'Waste Generation', scope: 'Scope 3', co2: '0.4 tCO₂e' },
-];
+
 
 // Simulated dual audit: this auditor is Auditor 2
 const coAuditorDecision = {
@@ -39,6 +34,25 @@ const coAuditorDecision = {
 
 export default function VerifySubmit() {
     const navigate = useNavigate();
+    const { id } = useParams<{ id: string }>();
+
+    const [submissionData, setSubmissionData] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const res = await api.get(`/audit/submission/${id}`);
+                setSubmissionData(res.data.data);
+            } catch (err) {
+                toast.error('Failed to load submission data');
+                console.error(err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchData();
+    }, [id]);
 
     // Checklist state
     const [checklist, setChecklist] = useState<Record<string, boolean>>({});
@@ -57,6 +71,7 @@ export default function VerifySubmit() {
     const [signature, setSignature] = useState('');
     const [submitted, setSubmitted] = useState(false);
     const [showPreview, setShowPreview] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const [txHash] = useState('0x' + Array.from({ length: 32 }, () => Math.floor(Math.random() * 16).toString(16)).join(''));
     const [reportHash] = useState(Array.from({ length: 32 }, () => Math.floor(Math.random() * 16).toString(16)).join(''));
@@ -82,7 +97,7 @@ export default function VerifySubmit() {
         setChecklist(prev => ({ ...prev, [key]: val }));
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!allDocsVerified) { toast.error('Complete the document verification checklist first'); return; }
         if (!decision) { toast.error('You must select Approve, Reject, or Request Correction'); return; }
@@ -92,7 +107,26 @@ export default function VerifySubmit() {
             if (correctionNote.length < 30) { toast.error('Correction instructions must be at least 30 characters'); return; }
         }
         if (!signature) { toast.error('Digital signature is required'); return; }
-        setSubmitted(true);
+        
+        setIsSubmitting(true);
+        try {
+            await api.post('/audit/verify', {
+                submissionId: id,
+                decision: decision === 'correction' ? 'correction_requested' : decision,
+                remarks: remarks,
+                digitalSignature: signature,
+                documentChecklist: checklist,
+                correctionRequired: Array.from(correctionFields_sel)
+            });
+            setShowPreview(false);
+            setSubmitted(true);
+            toast.success('Verification submitted successfully');
+        } catch (error) {
+            console.error('Failed to submit verification:', error);
+            toast.error('Failed to submit verification');
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     if (showPreview) {
@@ -110,27 +144,31 @@ export default function VerifySubmit() {
                             <span className="material-symbols-outlined text-white">eco</span>
                         </div>
                         <h2 className="text-xl font-black text-gray-900 font-sans">BRSR Sustainability Report</h2>
-                        <p className="text-gray-600 mt-1">Company: SteelMax Industries</p>
-                        <p className="text-gray-600">CIN: IND-2024-4421 · Reporting Period: Q4 2024</p>
-                        <p className="text-gray-400 text-xs mt-1">Generated: 2026-03-13</p>
+                        <p className="text-gray-600 mt-1">Company: {submissionData?.company?.name || 'Unknown'}</p>
+                        <p className="text-gray-600">CIN: {submissionData?.company?.regNumber || 'Unknown'} · Reporting Period: {submissionData?.periodMonth}/{submissionData?.periodYear}</p>
+                        <p className="text-gray-400 text-xs mt-1">Generated: {new Date().toISOString().split('T')[0]}</p>
                     </div>
                     <div>
                         <p className="font-black text-gray-900 font-sans mb-2">Section A — General Disclosures</p>
-                        <p className="text-gray-600">SteelMax Industries operates in the Steel Manufacturing sector. This report covers Q4 2024 (October–December). The company employs 1,200 personnel across 2 facilities.</p>
+                        <p className="text-gray-600">{submissionData?.company?.name} operates in the {submissionData?.company?.sector || 'Unknown'} sector. The company employs {submissionData?.company?.employeeCount || 'Unknown'} personnel.</p>
                     </div>
                     <div>
                         <p className="font-black text-gray-900 font-sans mb-2">Section C — Principle 6: Environment</p>
                         <div className="bg-gray-50 border rounded-xl p-4 grid grid-cols-2 gap-3">
-                            <div><p className="text-gray-500 text-xs">Scope 1</p><p className="font-black text-gray-900">2,963.0 tCO₂e</p></div>
-                            <div><p className="text-gray-500 text-xs">Scope 2</p><p className="font-black text-gray-900">229.6 tCO₂e</p></div>
-                            <div><p className="text-gray-500 text-xs">Scope 3</p><p className="font-black text-gray-900">6.1 tCO₂e</p></div>
-                            <div><p className="text-gray-500 text-xs">Total</p><p className="font-black text-[#1A7A4A] text-lg">3,198.7 tCO₂e</p></div>
+                            <div><p className="text-gray-500 text-xs">Scope 1</p><p className="font-black text-gray-900">{submissionData?.scope1 || (submissionData?.quantityTonnes ? (submissionData.quantityTonnes * 0.8).toFixed(1) : 0)} tCO₂e</p></div>
+                            <div><p className="text-gray-500 text-xs">Scope 2</p><p className="font-black text-gray-900">{submissionData?.scope2 || (submissionData?.quantityTonnes ? (submissionData.quantityTonnes * 0.15).toFixed(1) : 0)} tCO₂e</p></div>
+                            <div><p className="text-gray-500 text-xs">Scope 3</p><p className="font-black text-gray-900">{submissionData?.scope3 || (submissionData?.quantityTonnes ? (submissionData.quantityTonnes * 0.05).toFixed(1) : 0)} tCO₂e</p></div>
+                            <div><p className="text-gray-500 text-xs">Total</p><p className="font-black text-[#1A7A4A] text-lg">{submissionData?.quantityTonnes || 0} tCO₂e</p></div>
                         </div>
                     </div>
                     <div>
                         <p className="font-black text-gray-900 font-sans mb-2">AI Verification</p>
-                        <p className="text-gray-600">Risk Score: 72/100 — <span className="text-red-600 font-bold">🔴 RED FLAG</span></p>
-                        <p className="text-gray-600 text-xs mt-1">Anomaly: Emission-to-production ratio +16.4% above expected range. Fuel consumption +19.2% above range.</p>
+                        <p className="text-gray-600">Risk Score: {submissionData?.aiResult?.riskScore || 'N/A'}/100 — 
+                            <span className={`font-bold ml-1 ${submissionData?.aiResult?.riskFlag?.toLowerCase() === 'green' ? 'text-green-600' : 'text-red-600'}`}>
+                                {submissionData?.aiResult?.riskFlag === 'GREEN' ? '🟢 GREEN FLAG' : '🔴 RED FLAG'}
+                            </span>
+                        </p>
+                        <p className="text-gray-600 text-xs mt-1">Anomaly: {submissionData?.aiResult?.explanation || 'None detected'}</p>
                     </div>
                     <div>
                         <p className="font-black text-gray-900 font-sans mb-2">Auditor Verification</p>
@@ -146,7 +184,7 @@ export default function VerifySubmit() {
                         <p className="text-gray-400 text-xs">[TX Hash will appear after blockchain submission]</p>
                     </div>
                 </div>
-                <button className="w-full border border-gray-200 rounded-xl py-3 text-sm font-bold text-gray-600 hover:bg-gray-50 flex items-center justify-center gap-2">
+                <button onClick={() => window.print()} className="w-full border border-gray-200 rounded-xl py-3 text-sm font-bold text-gray-600 hover:bg-gray-50 flex items-center justify-center gap-2">
                     <span className="material-symbols-outlined text-sm">download</span>
                     Download Preview PDF (Draft)
                 </button>
@@ -172,7 +210,7 @@ export default function VerifySubmit() {
                             {decision?.toUpperCase()}
                         </span>
                     </div>
-                    <p className="text-gray-400 text-sm mb-6">SteelMax Industries · Q4 2024</p>
+                    <p className="text-gray-400 text-sm mb-6">{submissionData?.company?.name || 'Unknown'} · {submissionData?.periodMonth}/{submissionData?.periodYear}</p>
 
                     {decision === 'approved' && (
                         <div className="bg-gray-50 rounded-xl border border-gray-200 p-5 mb-6 text-left space-y-3">
@@ -227,12 +265,20 @@ export default function VerifySubmit() {
         );
     }
 
+    if (loading) {
+        return <div className="p-8 text-center text-gray-500">Loading submission data...</div>;
+    }
+
+    if (!submissionData) {
+        return <div className="p-8 text-center text-red-500 font-bold">Failed to load submission or you are not assigned to it.</div>;
+    }
+
     return (
         <div className="space-y-6 max-w-3xl mx-auto">
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-black text-gray-900">Verify & Submit — SUB-2024-0084</h1>
-                    <p className="text-gray-400 text-sm mt-1">SteelMax Industries · Q4 2024 · Risk Score: 72/100 🔴</p>
+                    <h1 className="text-2xl font-black text-gray-900">Verify & Submit — {submissionData._id.slice(-6).toUpperCase()}</h1>
+                    <p className="text-gray-400 text-sm mt-1">{submissionData.company.name} · {submissionData.periodMonth}/{submissionData.periodYear} · Risk Score: {submissionData.aiResult?.riskScore || 'N/A'}/100 {submissionData.aiResult?.riskFlag === 'GREEN' ? '🟢' : '🔴'}</p>
                 </div>
                 <button onClick={() => setShowPreview(true)} className="flex items-center gap-2 border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-bold text-gray-600 hover:bg-gray-50 transition-colors">
                     <span className="material-symbols-outlined text-sm">preview</span>
@@ -242,24 +288,28 @@ export default function VerifySubmit() {
 
             <form onSubmit={handleSubmit} className="space-y-5">
                 {/* Co-auditor decision (dual audit) */}
-                <div className="bg-purple-50 rounded-2xl border border-purple-100 p-6 shadow-sm">
-                    <div className="flex items-center gap-2 mb-3">
-                        <span className="material-symbols-outlined text-purple-600">group</span>
-                        <h2 className="font-black text-purple-900">Auditor 1 Decision (Primary Auditor)</h2>
+                {submissionData.coAuditorReview && (
+                    <div className="bg-purple-50 rounded-2xl border border-purple-100 p-6 shadow-sm">
+                        <div className="flex items-center gap-2 mb-3">
+                            <span className="material-symbols-outlined text-purple-600">group</span>
+                            <h2 className="font-black text-purple-900">Auditor 1 Decision (Primary Auditor)</h2>
+                        </div>
+                        <div className="text-sm space-y-1.5">
+                            <p><span className="text-purple-500 font-medium">Auditor:</span> <strong className="text-purple-900">{submissionData.coAuditorReview.name}</strong> — {submissionData.coAuditorReview.org}</p>
+                            <p className="flex items-center gap-2">
+                                <span className="text-purple-500 font-medium">Decision:</span>
+                                <span className={`font-black uppercase px-2 py-0.5 rounded-md ${submissionData.coAuditorReview.decision === 'approved' ? 'text-green-700 bg-green-100' : 'text-red-700 bg-red-100'}`}>
+                                    {submissionData.coAuditorReview.decision}
+                                </span>
+                            </p>
+                            <p className="text-purple-800 bg-white/60 rounded-xl p-3 mt-2 italic text-xs">
+                                "{submissionData.coAuditorReview.remarks}"
+                            </p>
+                            <p className="text-xs text-purple-400">Signed at: {new Date(submissionData.coAuditorReview.signedAt).toLocaleString()}</p>
+                        </div>
+                        <p className="text-xs text-purple-600 mt-3 font-bold">Your decision as Auditor 2 will be recorded below ↓</p>
                     </div>
-                    <div className="text-sm space-y-1.5">
-                        <p><span className="text-purple-500 font-medium">Auditor:</span> <strong className="text-purple-900">{coAuditorDecision.name}</strong> — {coAuditorDecision.org}</p>
-                        <p className="flex items-center gap-2">
-                            <span className="text-purple-500 font-medium">Decision:</span>
-                            <span className="font-black text-green-700 bg-green-100 px-2 py-0.5 rounded-md">{coAuditorDecision.decision.toUpperCase()}</span>
-                        </p>
-                        <p className="text-purple-800 bg-white/60 rounded-xl p-3 mt-2 italic text-xs">
-                            "{coAuditorDecision.remarks}"
-                        </p>
-                        <p className="text-xs text-purple-400">Signed at: {coAuditorDecision.signedAt}</p>
-                    </div>
-                    <p className="text-xs text-purple-600 mt-3 font-bold">Your decision as Auditor 2 will be recorded below ↓</p>
-                </div>
+                )}
 
                 {/* Document Checklist */}
                 <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
@@ -383,7 +433,10 @@ export default function VerifySubmit() {
                 <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
                     <h2 className="font-black text-gray-900 mb-4">Compliance Assessment per Emission Source</h2>
                     <div className="space-y-3">
-                        {emissionSources.map(s => (
+                        {[
+                            { name: submissionData.emissionSource || 'General Source', scope: 'Mixed Scope', co2: `${submissionData.quantityTonnes} tCO₂e` },
+                            // Add logic here if submissionData has granular waste/logistics fields as well
+                        ].map(s => (
                             <div key={s.name} className="flex items-center justify-between py-3 border-b border-gray-50 last:border-0">
                                 <div>
                                     <p className="font-bold text-gray-900 text-sm">{s.name}</p>

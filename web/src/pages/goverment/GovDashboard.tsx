@@ -1,37 +1,8 @@
+import { useState, useEffect } from 'react';
 import { useAuthStore } from '../../store/authStore';
 import { Link } from 'react-router-dom';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, LineChart, Line, Legend, Cell } from 'recharts';
-
-const sectorCompliance = [
-    { sector: 'Manufacturing', rate: 91, target: 95 },
-    { sector: 'Energy', rate: 78, target: 95 },
-    { sector: 'Transport', rate: 88, target: 90 },
-    { sector: 'Agriculture', rate: 96, target: 90 },
-    { sector: 'Construction', rate: 72, target: 90 },
-    { sector: 'Mining', rate: 83, target: 95 },
-];
-
-const aiForcast = [
-    { month: 'Jan', actual: 850000 }, { month: 'Feb', actual: 820000 }, { month: 'Mar', actual: 780000 },
-    { month: 'Apr', actual: 750000 }, { month: 'May', actual: 790000 }, { month: 'Jun', actual: 740000 },
-    { month: 'Jul', forecast: 710000 }, { month: 'Aug', forecast: 680000 }, { month: 'Sep', forecast: 650000 },
-    { month: 'Oct', forecast: 630000 }, { month: 'Nov', forecast: 600000 }, { month: 'Dec', forecast: 570000 },
-];
-
-const nationalEmissionsData = [
-    { name: 'Jan', value: 850000, target: 800000 },
-    { name: 'Feb', value: 820000, target: 800000 },
-    { name: 'Mar', value: 780000, target: 790000 },
-    { name: 'Apr', value: 750000, target: 780000 },
-    { name: 'May', value: 790000, target: 770000 },
-    { name: 'Jun', value: 740000, target: 760000 },
-];
-
-const pendingActions = [
-    { id: '1', type: 'registration', company: 'Global Logistics Corp', submitted: '2 hours ago' },
-    { id: '2', type: 'emission_report', company: 'TechFusion Inc', submitted: '5 hours ago' },
-    { id: '3', type: 'emission_report', company: 'Nexus Manufacturing', submitted: '1 day ago' },
-];
+import api from '../../lib/api';
 
 const quickLinks = [
     { label: 'Monitor Industries', to: '/gov/monitoring', icon: 'factory', color: 'bg-violet-50 text-violet-600' },
@@ -42,7 +13,54 @@ const quickLinks = [
 
 export default function GovDashboard() {
     const { user } = useAuthStore();
-    const stats = { totalRegistered: 124, pendingReports: 18, creditsIssued: 245000, complianceRate: 88 };
+    const [loading, setLoading] = useState(true);
+    const [stats, setStats] = useState({
+        totalRegistered: 0,
+        pendingReports: 0,
+        creditsIssued: 0,
+        complianceRate: 100
+    });
+    const [pendingActions, setPendingActions] = useState<any[]>([]);
+    const [nationalEmissionsData, setNationalEmissionsData] = useState<any[]>([]);
+    const [aiForecast, setAiForecast] = useState<any[]>([]);
+    const [sectorCompliance, setSectorCompliance] = useState<any[]>([]);
+
+    useEffect(() => {
+        const fetchDashboardData = async () => {
+            try {
+                const response = await api.get('/gov/dashboard/stats');
+                if (response.data?.success) {
+                    const data = response.data.data;
+                    setStats({
+                        totalRegistered: data.totalRegistered || 0,
+                        pendingReports: data.pendingReports || 0,
+                        creditsIssued: data.creditsIssued || 0,
+                        complianceRate: data.complianceRate || 100
+                    });
+                    setPendingActions(data.pendingActions || []);
+                    setNationalEmissionsData(data.nationalEmissionsData || []);
+                    setAiForecast(data.aiForecast || []);
+                    setSectorCompliance(data.sectorCompliance || []);
+                }
+            } catch (error) {
+                console.error("Error fetching dashboard stats:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchDashboardData();
+    }, []);
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center min-h-[400px]">
+                <div className="flex flex-col items-center gap-3">
+                    <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                    <p className="text-slate-500 font-medium">Loading live dashboard data...</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-6">
@@ -158,7 +176,7 @@ export default function GovDashboard() {
                     </h3>
                     <p className="text-xs text-slate-500 mb-4">ML-projected national CO₂e for rest of year (dashed = forecast)</p>
                     <ResponsiveContainer width="100%" height={200}>
-                        <LineChart data={aiForcast} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
+                        <LineChart data={aiForecast} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
                             <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                             <XAxis dataKey="month" tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
                             <YAxis tick={{ fontSize: 10 }} tickFormatter={v => `${Number(v) / 1000}k`} axisLine={false} tickLine={false} />

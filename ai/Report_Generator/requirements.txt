@@ -1,0 +1,9 @@
+fastapi
+uvicorn[standard]
+python-docx
+matplotlib
+pillow
+openai
+pydantic
+python-dotenv
+python-multipart

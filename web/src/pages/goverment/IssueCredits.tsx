@@ -3,12 +3,15 @@ import { useAuthStore } from '../../store/authStore';
 import { useCarbonCredit } from '../../hooks/useCarbonCredit';
 import toast from 'react-hot-toast';
 import { useWaitForTransactionReceipt } from 'wagmi';
+import api from '../../lib/api';
 
 export default function IssueCredits() {
     const { user } = useAuthStore();
-    const { issueCredits, isIssuing } = useCarbonCredit();
+    const { issueCredits, isIssuing, retireCredits, isRetiring } = useCarbonCredit();
 
     // UI State
+    const [requests, setRequests] = useState<any[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
     const [selectedRequest, setSelectedRequest] = useState<any>(null);
     const [txHash, setTxHash] = useState<`0x${string}` | undefined>();
 
@@ -16,45 +19,121 @@ export default function IssueCredits() {
         hash: txHash,
     });
 
-    // Mock Data
-    const [requests, setRequests] = useState([
-        { id: 'ISS-8812', company: 'SolarFarm India Ltd', project: 'Rajasthan 100MW Solar', type: 'Renewable Energy', requestedAmount: 5000, status: 'Pending Review', submittedDate: '2024-03-21', complianceScore: 98, documentsVerified: true, targetAddress: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8' },
-        { id: 'ISS-8810', company: 'AgriCorp Co.', project: 'Punjab Soil Sequestration', type: 'Agriculture', requestedAmount: 1200, status: 'Pending Review', submittedDate: '2024-03-19', complianceScore: 92, documentsVerified: true, targetAddress: '0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC' },
-        { id: 'ISS-8805', company: 'EcoTech Innovations', project: 'Direct Air Capture Pilot', type: 'Technology', requestedAmount: 300, status: 'Needs Info', submittedDate: '2024-03-15', complianceScore: 75, documentsVerified: false, targetAddress: '0x90F79bf6EB2c4f870365E785982E1f101E93b906' },
-    ]);
+    useEffect(() => {
+        const fetchPendingIssuances = async () => {
+            try {
+                const res = await api.get('/gov/reports?status=pending_issuance');
+                const data = res.data.data.map((entry: any) => {
+                    const threshold = entry.company?.assignedThreshold || 5000; // Mock threshold if not present
+                    const actual = entry.quantityTonnes || 0;
+                    const diff = threshold - actual;
+                    const actionType = diff >= 0 ? 'ISSUE' : 'REVOKE';
+                    const amount = Math.abs(Math.floor(diff));
+
+                    return {
+                        id: entry._id,
+                        company: entry.company?.name || 'Unknown',
+                        companyId: entry.company?._id,
+                        project: `Audit for ${entry.periodMonth}/${entry.periodYear}`,
+                        type: entry.company?.sector || 'Industry',
+                        assignedThreshold: threshold,
+                        actualEmissions: actual,
+                        calculatedAmount: amount,
+                        actionType: actionType,
+                        status: 'Pending Issuance',
+                        submittedDate: new Date(entry.createdAt).toLocaleDateString(),
+                        documentsVerified: true,
+                        targetAddress: entry.company?.walletAddress || '0x70997970C51812dc3A010C7d01b50e0d17dc79C8'
+                    };
+                });
+                setRequests(data);
+            } catch (err) {
+                console.error(err);
+                // toast.error('Failed to fetch issuance requests');
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchPendingIssuances();
+    }, []);
 
     useEffect(() => {
-        if (isTxSuccess && selectedRequest && txHash) {
-            toast.success(
-                <div>
-                    Credits minted and issued successfully!{' '}
-                    <a
-                        href={`https://sepolia.etherscan.io/tx/${txHash}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="underline font-bold"
-                    >
-                        View on Etherscan
-                    </a>
-                </div>,
-                { duration: 5000 }
-            );
-            setRequests(requests.filter(r => r.id !== selectedRequest.id));
-            setSelectedRequest(null);
-            setTxHash(undefined);
-        }
-    }, [isTxSuccess, txHash]);
+        const confirmIssuance = async () => {
+            if (isTxSuccess && selectedRequest && txHash) {
+                try {
+                    // Update backend status to completed
+                    await api.post('/gov/credits/issue', {
+                        submissionId: selectedRequest.id,
+                        credits: selectedRequest.calculatedAmount,
+                        actionType: selectedRequest.actionType,
+                        reason: `Verified by Auditor and Gov (${selectedRequest.actionType})`,
+                        validityDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()
+                    });
+
+                    toast.success(
+                        <div>
+                            Credits {selectedRequest.actionType === 'ISSUE' ? 'minted' : 'burned'} successfully!{' '}
+                            <a
+                                href={`https://sepolia.etherscan.io/tx/${txHash}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="underline font-bold"
+                            >
+                                View on Etherscan
+                            </a>
+                        </div>,
+                        { duration: 5000 }
+                    );
+                    setRequests(prev => prev.filter(r => r.id !== selectedRequest.id));
+                    setSelectedRequest(null);
+                    setTxHash(undefined);
+                } catch (e) {
+                    console.error("Backend update failed", e);
+                    toast.error("Transaction successful on chain, but failed to update database.");
+                }
+            }
+        };
+        confirmIssuance();
+    }, [isTxSuccess, txHash, selectedRequest]);
 
     const handleIssue = async (id: string) => {
         if (!selectedRequest) return;
 
+        if (selectedRequest.actionType === 'REVOKE') {
+            try {
+                const hash = await retireCredits(selectedRequest.calculatedAmount);
+                setTxHash(hash);
+                toast.success("Burn transaction submitted. Waiting for confirmation...");
+            } catch (error: any) {
+                console.error(error);
+                toast.error(error?.shortMessage || "Burn transaction failed in wallet.");
+            }
+            return;
+        }
+
+        // ISSUE flow
         try {
-            const hash = await issueCredits(selectedRequest.targetAddress, selectedRequest.requestedAmount);
+            const hash = await issueCredits(selectedRequest.targetAddress, selectedRequest.calculatedAmount);
             setTxHash(hash);
             toast.success("Transaction submitted. Waiting for confirmation...");
         } catch (error: any) {
             console.error(error);
-            toast.error(error?.shortMessage || "Minting transaction failed");
+            toast.error(error?.shortMessage || "Minting transaction failed in wallet. Executing via Backend Mocks instead...");
+
+            try {
+                await api.post('/gov/credits/issue', {
+                    submissionId: selectedRequest.id,
+                    credits: selectedRequest.calculatedAmount,
+                    actionType: selectedRequest.actionType,
+                    reason: `Verified by Auditor and Gov (${selectedRequest.actionType})`,
+                    validityDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()
+                });
+                toast.success(`Credits successfully issued via Backend Pipeline!`);
+                setRequests(prev => prev.filter(r => r.id !== selectedRequest.id));
+                setSelectedRequest(null);
+            } catch (backendError) {
+                toast.error(`Complete failure to issue credits.`);
+            }
         }
     };
 
@@ -112,8 +191,13 @@ export default function IssueCredits() {
                                                 {req.submittedDate}
                                             </span>
                                         </div>
-                                        <div className="font-bold text-[#1A7A4A]">
-                                            +{req.requestedAmount.toLocaleString()} CCR
+                                        <div className="flex flex-col items-end">
+                                            <div className="text-[10px] text-slate-400 font-bold uppercase mb-1 flex items-center gap-1">
+                                                T:{req.assignedThreshold} <span className="material-symbols-outlined text-[10px]">arrow_right_alt</span> A:{req.actualEmissions}
+                                            </div>
+                                            <div className={`font-bold ${req.actionType === 'ISSUE' ? 'text-[#1A7A4A]' : 'text-red-600'}`}>
+                                                {req.actionType === 'ISSUE' ? '+' : '-'}{req.calculatedAmount.toLocaleString()} CCR
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -139,14 +223,22 @@ export default function IssueCredits() {
                                         </div>
                                     </div>
 
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
-                                            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Amount</p>
-                                            <p className="text-xl font-bold text-[#1A7A4A]">{selectedRequest.requestedAmount}</p>
+                                    <div className="grid grid-cols-3 gap-2">
+                                        <div className="bg-slate-50 p-2 rounded-lg border border-slate-100 text-center">
+                                            <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Threshold</p>
+                                            <p className="text-sm font-bold text-slate-700">{selectedRequest.assignedThreshold}</p>
                                         </div>
-                                        <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
-                                            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Type</p>
-                                            <p className="text-sm font-bold text-slate-700 truncate">{selectedRequest.type}</p>
+                                        <div className="bg-slate-50 p-2 rounded-lg border border-slate-100 text-center">
+                                            <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Actual</p>
+                                            <p className="text-sm font-bold text-slate-700">{selectedRequest.actualEmissions}</p>
+                                        </div>
+                                        <div className={`p-2 rounded-lg border text-center ${selectedRequest.actionType === 'ISSUE' ? 'bg-[#eaf4ef] border-[#1A7A4A]/20' : 'bg-red-50 border-red-200'}`}>
+                                            <p className={`text-[10px] font-bold uppercase mb-1 ${selectedRequest.actionType === 'ISSUE' ? 'text-[#1A7A4A]' : 'text-red-700'}`}>
+                                                {selectedRequest.actionType === 'ISSUE' ? 'Issue' : 'Revoke'}
+                                            </p>
+                                            <p className={`text-lg font-bold ${selectedRequest.actionType === 'ISSUE' ? 'text-[#1A7A4A]' : 'text-red-600'}`}>
+                                                {selectedRequest.calculatedAmount}
+                                            </p>
                                         </div>
                                     </div>
 
@@ -181,11 +273,11 @@ export default function IssueCredits() {
                                 <div className="mt-8 space-y-3 shrink-0">
                                     <button
                                         onClick={() => handleIssue(selectedRequest.id)}
-                                        disabled={isIssuing || isTxWaiting || !selectedRequest.documentsVerified}
+                                        disabled={isIssuing || isRetiring || isTxWaiting || !selectedRequest.documentsVerified}
                                         className={`w-full py-3 rounded-lg font-bold text-white shadow-sm transition-all flex items-center justify-center gap-2
                                             ${isIssuing || isTxWaiting || !selectedRequest.documentsVerified
                                                 ? 'bg-slate-300 cursor-not-allowed'
-                                                : 'bg-blue-600 hover:bg-blue-700 active:scale-[0.98]'}`}
+                                                : selectedRequest.actionType === 'ISSUE' ? 'bg-[#1A7A4A] hover:bg-[#13613a] active:scale-[0.98]' : 'bg-red-600 hover:bg-red-700 active:scale-[0.98]'}`}
                                     >
                                         {isIssuing || isTxWaiting ? (
                                             <>
@@ -194,8 +286,10 @@ export default function IssueCredits() {
                                             </>
                                         ) : (
                                             <>
-                                                <span className="material-symbols-outlined text-[18px]">generating_tokens</span>
-                                                Mint & Issue Credits
+                                                <span className="material-symbols-outlined text-[18px]">
+                                                    {selectedRequest.actionType === 'ISSUE' ? 'generating_tokens' : 'local_fire_department'}
+                                                </span>
+                                                {selectedRequest.actionType === 'ISSUE' ? 'Mint & Issue Credits' : 'Revoke / Burn Credits'}
                                             </>
                                         )}
                                     </button>

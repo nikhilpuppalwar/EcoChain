@@ -18,18 +18,19 @@ import "../src/CarbonMarketplace.sol";
 contract SeedMarketplace is Script {
     function run() external {
         // Must match Deploy.s.sol order: EcoChainAccess, CarbonCredit, CarbonMarketplace, ...
-        address tokenAddr = 0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512;  // CarbonCredit (2nd deployed)
-        address marketAddr = 0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0; // CarbonMarketplace (3rd deployed)
+        address tokenAddr = 0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512;
+        address marketAddr = 0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0;
 
-        vm.startBroadcast();
-
+        uint256 deployerPrivateKey = 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80;
+        vm.startBroadcast(deployerPrivateKey);
         CarbonCredit token = CarbonCredit(payable(tokenAddr));
         CarbonMarketplace market = CarbonMarketplace(payable(marketAddr));
 
         uint256 amount = 5000;
         uint256 pricePerCredit = 0.00001 ether; // 0.00001 ETH per credit
 
-        token.issueCredits(msg.sender, amount);
+        address deployerAddress = 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266;
+        token.issueCredits(deployerAddress, amount);
         token.approve(marketAddr, amount);
         market.listCredits(amount, pricePerCredit);
 

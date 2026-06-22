@@ -50,8 +50,15 @@ app.use('/api/marketplace', require('./src/routes/marketplace.routes'));
 app.use('/api/gov', require('./src/routes/government.routes'));
 app.use('/api/notifications', require('./src/routes/notifications.routes'));
 app.use('/api/wallet', require('./src/routes/wallet.routes'));
+app.use('/api/credits', require('./src/routes/wallet.routes')); // Alias for the frontend
 app.use('/api/ai', require('./src/routes/ai.routes'));
 app.use('/api/audit', require('./src/routes/audit.routes'));
+app.use('/api/reports', require('./src/routes/reports.routes'));
+app.use('/api/public', require('./src/routes/public.routes'));
+app.use('/api/profile', require('./src/routes/profile.routes'));
+// DEV ONLY admin helpers (only active when HACKATHON_MODE=true)
+app.use('/api/admin', require('./src/routes/admin.routes'));
+
 
 // Basic Health Check
 app.get('/health', (req, res) => res.json({ status: 'ok', time: new Date() }));

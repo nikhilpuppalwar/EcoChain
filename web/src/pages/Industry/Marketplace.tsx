@@ -15,6 +15,7 @@ interface Listing {
     expiresAt: string;
     status: 'active' | 'sold' | 'cancelled';
     txHash?: string;
+    onChainId?: number;
 }
 
 const TYPE_COLORS: Record<string, string> = {
@@ -37,7 +38,7 @@ export default function Marketplace() {
     const [cancellingId, setCancellingId] = useState<string | null>(null);
 
     // Web3 Hooks
-    const { buyCredits, isBuying } = useMarketplace();
+    const { buyCredits, cancelListing, isBuying, isCancelling } = useMarketplace();
     const { balance, refetchBalance } = useCarbonCredit();
 
     const [txHash, setTxHash] = useState<`0x${string}` | undefined>();
@@ -89,12 +90,15 @@ export default function Marketplace() {
         }
     }, [isTxSuccess, txHash, purchasingId, chain?.id, refetchBalance, fetchListings]);
 
-    const handlePurchase = async (listing: Listing) => {
+    const handlePurchase = async (listing: any) => {
         if (!isConnected) {
             toast.error("Please connect your wallet first.");
             return;
         }
-        const onChainId = allListings.indexOf(listing); // use index as on-chain ID fallback
+        
+        // Priority: onChainId stored in Mongo, fallback: assumption based on older list indexing.
+        const onChainId = listing.onChainId !== undefined ? listing.onChainId : allListings.findIndex(l => l._id === listing._id);
+        
         try {
             setPurchasingId(listing._id);
             const hash = await buyCredits(onChainId, listing.creditsAvailable, listing.pricePerCredit.toString());
@@ -114,15 +118,21 @@ export default function Marketplace() {
         }
     };
 
-    const handleCancel = async (listingId: string) => {
-        setCancellingId(listingId);
+    const handleCancel = async (listing: Listing) => {
+        setCancellingId(listing._id);
         try {
-            await api.delete(`/marketplace/listings/${listingId}`);
-            toast.success('Listing cancelled. Credits restored to your wallet.');
+            toast.loading("Sending cancellation to blockchain...", { id: 'cancel-toast' });
+            const onChainId = listing.onChainId !== undefined ? listing.onChainId : allListings.findIndex(l => l._id === listing._id);
+            await cancelListing(onChainId);
+            toast.success("Transaction submitted. Wait for block confirmation...", { id: 'cancel-toast' });
+
+            await api.delete(`/marketplace/listings/${listing._id}`);
+            toast.success('Listing cancelled. Credits restored to your wallet.', { id: 'cancel-toast' });
             fetchListings();
             refetchBalance();
         } catch (error: any) {
-            toast.error(error?.response?.data?.message || 'Failed to cancel listing.');
+            console.error(error);
+            toast.error(error?.response?.data?.message || error?.shortMessage || error?.message || 'Failed to cancel listing.', { id: 'cancel-toast' });
         } finally {
             setCancellingId(null);
         }
@@ -304,7 +314,19 @@ export default function Marketplace() {
                                                 </div>
                                                 <div className="flex items-center gap-1.5">
                                                     {isOwn && (
-                                                        <span className="bg-emerald-100 text-emerald-700 text-xs font-bold px-2 py-0.5 rounded-full">Your Listing</span>
+                                                        <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                                                            listing.status === 'sold'
+                                                                ? 'bg-blue-100 text-blue-700'
+                                                                : listing.status === 'cancelled'
+                                                                    ? 'bg-slate-100 text-slate-700'
+                                                                    : 'bg-emerald-100 text-emerald-700'
+                                                        }`}>
+                                                            {listing.status === 'sold'
+                                                                ? 'Sold'
+                                                                : listing.status === 'cancelled'
+                                                                    ? 'Cancelled'
+                                                                    : 'Your Listing'}
+                                                        </span>
                                                     )}
                                                     <span className="text-xs text-slate-400 font-medium">{daysLeft}d left</span>
                                                 </div>
@@ -328,26 +350,38 @@ export default function Marketplace() {
                                         </div>
                                         <div className="bg-slate-50 p-4 border-t border-slate-200">
                                             {isOwn ? (
-                                                <button
-                                                    onClick={() => handleCancel(listing._id)}
-                                                    disabled={cancellingId === listing._id}
-                                                    className={`w-full py-2 font-bold rounded-lg transition-colors text-sm flex items-center justify-center gap-2
-                                                        ${cancellingId === listing._id
-                                                            ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
-                                                            : 'bg-red-50 text-red-600 hover:bg-red-100 border border-red-200'}`}
-                                                >
-                                                    {cancellingId === listing._id ? (
-                                                        <>
-                                                            <span className="material-symbols-outlined animate-spin text-[18px]">sync</span>
-                                                            Cancelling...
-                                                        </>
-                                                    ) : (
-                                                        <>
-                                                            <span className="material-symbols-outlined text-[18px]">cancel</span>
-                                                            Cancel Listing
-                                                        </>
-                                                    )}
-                                                </button>
+                                                listing.status === 'sold' ? (
+                                                    <div className="w-full py-2 bg-blue-50 text-blue-700 font-bold border border-blue-200 rounded-lg text-sm flex items-center justify-center gap-2">
+                                                        <span className="material-symbols-outlined text-[18px]">check_circle</span>
+                                                        Sold
+                                                    </div>
+                                                ) : listing.status === 'cancelled' ? (
+                                                    <div className="w-full py-2 bg-slate-100 text-slate-500 font-bold border border-slate-200 rounded-lg text-sm flex items-center justify-center gap-2">
+                                                        <span className="material-symbols-outlined text-[18px]">block</span>
+                                                        Cancelled
+                                                    </div>
+                                                ) : (
+                                                    <button
+                                                        onClick={() => handleCancel(listing)}
+                                                        disabled={cancellingId === listing._id}
+                                                        className={`w-full py-2 font-bold rounded-lg transition-colors text-sm flex items-center justify-center gap-2
+                                                            ${cancellingId === listing._id
+                                                                ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                                                                : 'bg-red-50 text-red-600 hover:bg-red-100 border border-red-200'}`}
+                                                    >
+                                                        {cancellingId === listing._id ? (
+                                                            <>
+                                                                <span className="material-symbols-outlined animate-spin text-[18px]">sync</span>
+                                                                Cancelling...
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <span className="material-symbols-outlined text-[18px]">cancel</span>
+                                                                Cancel Listing
+                                                            </>
+                                                        )}
+                                                    </button>
+                                                )
                                             ) : (
                                                 <button
                                                     onClick={() => handlePurchase(listing)}

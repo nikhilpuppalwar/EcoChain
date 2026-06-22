@@ -1,13 +1,11 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import ecochainLogo from '../assets/ecochain_icon_white.png';
 
 const navLinks = [
-    { label: 'Public Dashboard', to: '/public/dashboard', icon: 'bar_chart' },
-    { label: 'Emission Map', to: '/public/map', icon: 'map' },
-    { label: 'Carbon Market', to: '/public/market', icon: 'swap_horiz' },
-    { label: 'Policies', to: '/public/policies', icon: 'policy' },
+    { label: 'Dashboard', to: '/public/dashboard', icon: 'bar_chart' },
+    { label: 'Policies & Reports', to: '/public/policies', icon: 'policy' },
     { label: 'How It Works', to: '/how-it-works', icon: 'info' },
-    { label: 'Contact', to: '/contact', icon: 'mail' },
 ];
 
 export default function PublicNav() {
@@ -16,16 +14,19 @@ export default function PublicNav() {
 
     return (
         <>
+            <div style={{ height: '3px', background: 'linear-gradient(to right, #FF9933 33.3%, #FFFFFF 33.3%, #FFFFFF 66.6%, #138808 66.6%)' }} />
             <nav className="bg-white/90 backdrop-blur-md border-b border-gray-100 shadow-sm sticky top-0 z-50">
                 <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
                     {/* Brand */}
-                    <Link to="/" className="flex items-center gap-2.5 shrink-0">
-                        <div className="w-8 h-8 bg-primary rounded-xl flex items-center justify-center shadow-green">
-                            <span className="material-symbols-outlined text-white text-lg">eco</span>
-                        </div>
-                        <span className="text-base font-black tracking-wide text-gray-900 font-display">ECOCHAIN</span>
-                        <span className="text-[10px] bg-emerald-100 text-emerald-700 font-bold px-2 py-0.5 rounded-full hidden sm:block">PUBLIC</span>
-                    </Link>
+                    <div className="flex items-center gap-2.5 shrink-0">
+                        <Link to="/" className="flex items-center gap-2">
+                            <img src={ecochainLogo} alt="EcoChain Icon" className="w-8 h-8 object-contain" />
+                            <span className="text-base font-black tracking-wide text-gray-900 font-display">ECOCHAIN</span>
+                        </Link>
+                        <Link to="/public/dashboard" className="text-[10px] bg-emerald-100 text-emerald-700 font-bold px-2 py-0.5 rounded-full hover:bg-emerald-200 transition-colors">
+                            PUBLIC
+                        </Link>
+                    </div>
 
                     {/* Desktop links */}
                     <div className="hidden lg:flex items-center gap-1">

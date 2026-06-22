@@ -10,7 +10,10 @@ const companySchema = new mongoose.Schema({
     walletAddress: { type: String, trim: true }, // Ethereum Wallet Address for Web3 integration
 
     complianceStatus: { type: String, enum: ['compliant', 'non-compliant', 'pending'], default: 'pending' },
+    verificationStatus: { type: String, enum: ['pending', 'approved', 'rejected', 'suspended'], default: 'pending' },
+    rejectionReason: String,
     creditBalance: { type: Number, default: 0 }, // Mirrored off-chain balance
+    penalty: { type: Number, default: 0 },
 
     adminUser: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     createdAt: { type: Date, default: Date.now }

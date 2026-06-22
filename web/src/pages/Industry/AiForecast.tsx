@@ -1,39 +1,93 @@
 import React, { useState, useEffect } from 'react';
 import { useAuthStore } from '../../store/authStore';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
+import api from '../../lib/api';
+import toast from 'react-hot-toast';
+
+interface ForecastResult {
+    forecastPeriod: string;
+    predictedEmissions: number;
+    predictedCreditsNeeded: number;
+    riskLevel: 'Low' | 'Medium' | 'High';
+    modelConfidence: number;
+    generatedAt?: string;
+}
+
+const historicalData = [
+    { name: 'Jan', value: 1800 },
+    { name: 'Feb', value: 1750 },
+    { name: 'Mar', value: 1680 },
+    { name: 'Apr', value: 1720 },
+    { name: 'May', value: 1600 },
+    { name: 'Jun', value: 1550 },
+];
+
+function buildForecastChart(predictedTotal: number) {
+    // Distribute predicted total over 6 months with a downward trend
+    const perMonth = predictedTotal / 6;
+    const months = ['Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const steps = [1.05, 1.02, 0.99, 0.96, 0.93, 0.90];
+    return months.map((name, i) => ({
+        name,
+        value: Math.round(perMonth * steps[i]),
+        isForecast: true,
+    }));
+}
+
+const RISK_COLORS: Record<string, string> = {
+    Low:    '#1A7A4A',
+    Medium: '#f59e0b',
+    High:   '#ef4444',
+};
 
 export default function AiForecast() {
     const { user } = useAuthStore();
     const [isGenerating, setIsGenerating] = useState(false);
-    const [hasForecast, setHasForecast] = useState(false);
+    const [forecast, setForecast] = useState<ForecastResult | null>(null);
+    const [history, setHistory] = useState<ForecastResult[]>([]);
+    const [loadingHistory, setLoadingHistory] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
-    // Mock initial and projected data
-    const historicalData = [
-        { name: 'Jan', value: 1800 },
-        { name: 'Feb', value: 1750 },
-        { name: 'Mar', value: 1680 },
-        { name: 'Apr', value: 1720 },
-        { name: 'May', value: 1600 },
-        { name: 'Jun', value: 1550 },
-    ];
+    // Load previous forecasts on mount
+    useEffect(() => {
+        const fetchHistory = async () => {
+            try {
+                const res = await api.get('/ai/history');
+                const records: ForecastResult[] = res.data.data || [];
+                setHistory(records);
+                if (records.length > 0) setForecast(records[0]); // show most recent
+            } catch {
+                // No history yet — normal for new accounts
+            } finally {
+                setLoadingHistory(false);
+            }
+        };
+        fetchHistory();
+    }, []);
 
-    const forecastData = [
-        ...historicalData,
-        { name: 'Jul', value: 1500, isForecast: true },
-        { name: 'Aug', value: 1450, isForecast: true },
-        { name: 'Sep', value: 1380, isForecast: true },
-        { name: 'Oct', value: 1300, isForecast: true },
-        { name: 'Nov', value: 1250, isForecast: true },
-        { name: 'Dec', value: 1180, isForecast: true },
-    ];
-
-    const generateForecast = () => {
+    const generateForecast = async () => {
         setIsGenerating(true);
-        setTimeout(() => {
-            setHasForecast(true);
+        setError(null);
+        try {
+            const res = await api.get('/ai/forecast');
+            const data: ForecastResult = res.data.data;
+            setForecast(data);
+            setHistory(prev => [data, ...prev].slice(0, 10));
+            toast.success('AI forecast generated successfully!');
+        } catch (err: any) {
+            const msg = err?.response?.data?.message || 'Failed to generate forecast. Please try again.';
+            setError(msg);
+            toast.error(msg);
+        } finally {
             setIsGenerating(false);
-        }, 2000);
+        }
     };
+
+    const forecastChart = forecast
+        ? [...historicalData, ...buildForecastChart(forecast.predictedEmissions)]
+        : [...historicalData];
+
+    const riskColor = forecast ? RISK_COLORS[forecast.riskLevel] || '#1A7A4A' : '#1A7A4A';
 
     return (
         <div className="space-y-6">
@@ -44,18 +98,35 @@ export default function AiForecast() {
                         <h1 className="text-2xl font-bold font-syne text-slate-800">AI Emission Forecast</h1>
                     </div>
                     <p className="text-sm text-slate-500 max-w-2xl">
-                        Leverage our proprietary machine learning models to predict your future carbon trajectory based on historical data, industry trends, and planned reductions.
+                        Leverage our proprietary machine learning models to predict your future carbon trajectory based on
+                        historical data, industry trends, and planned reductions.
                     </p>
                 </div>
-                {hasForecast && (
-                    <button className="px-4 py-2 bg-white text-blue-600 border border-blue-200 rounded-lg text-sm font-bold shadow-sm hover:bg-blue-50 transition-colors flex items-center gap-2">
-                        <span className="material-symbols-outlined text-[18px]">download</span>
-                        Export Report
-                    </button>
+                {forecast && (
+                    <div className="flex items-center gap-3">
+                        <span className="text-xs text-slate-400">
+                            Generated: {forecast.generatedAt ? new Date(forecast.generatedAt).toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Just now'}
+                        </span>
+                        <button
+                            onClick={generateForecast}
+                            disabled={isGenerating}
+                            className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-bold shadow-sm hover:bg-blue-700 transition-colors flex items-center gap-2 disabled:opacity-60"
+                        >
+                            <span className="material-symbols-outlined text-[18px]">refresh</span>
+                            Regenerate
+                        </button>
+                    </div>
                 )}
             </div>
 
-            {!hasForecast ? (
+            {error && (
+                <div className="bg-red-50 border border-red-200 rounded-xl px-5 py-3 flex items-center gap-3 text-red-700 text-sm">
+                    <span className="material-symbols-outlined text-red-500">error</span>
+                    {error}
+                </div>
+            )}
+
+            {!forecast ? (
                 <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-12 text-center flex flex-col items-center justify-center min-h-[400px]">
                     <div className="w-24 h-24 bg-blue-50 rounded-full flex items-center justify-center mb-6 relative">
                         {isGenerating && (
@@ -64,7 +135,11 @@ export default function AiForecast() {
                         <span className={`material-symbols-outlined text-4xl text-blue-600 ${isGenerating ? 'animate-pulse' : ''}`}>psychology</span>
                     </div>
                     <h2 className="text-xl font-bold font-syne text-slate-800 mb-3">
-                        {isGenerating ? 'Analyzing historical data and market trends...' : 'Ready to generate your Q3-Q4 forecast?'}
+                        {isGenerating
+                            ? 'Analyzing historical data and market trends...'
+                            : loadingHistory
+                            ? 'Loading previous forecasts...'
+                            : 'Ready to generate your H2 forecast?'}
                     </h2>
                     <p className="text-slate-500 mb-8 max-w-md">
                         {isGenerating
@@ -72,10 +147,11 @@ export default function AiForecast() {
                             : 'Generate a 6-month forward-looking projection to optimize your credit purchasing strategy and ensure compliance.'}
                     </p>
                     <button
+                        id="run-ai-forecast-btn"
                         onClick={generateForecast}
-                        disabled={isGenerating}
+                        disabled={isGenerating || loadingHistory}
                         className={`px-8 py-3 bg-blue-600 text-white font-bold rounded-lg shadow-md shadow-blue-600/20 transition-all flex items-center gap-2
-                            ${isGenerating ? 'opacity-80 cursor-not-allowed' : 'hover:bg-blue-700 active:scale-[0.98]'}`}
+                            ${(isGenerating || loadingHistory) ? 'opacity-80 cursor-not-allowed' : 'hover:bg-blue-700 active:scale-[0.98]'}`}
                     >
                         {isGenerating ? 'Processing...' : 'Run Analysis'}
                         {!isGenerating && <span className="material-symbols-outlined text-[18px]">play_arrow</span>}
@@ -83,56 +159,77 @@ export default function AiForecast() {
                 </div>
             ) : (
                 <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    {/* KPI Cards */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div className="bg-gradient-to-br from-blue-600 to-blue-800 rounded-xl p-6 text-white shadow-md">
-                            <span className="text-blue-200 text-sm font-bold uppercase tracking-wider mb-2 block">Projected Total (H2)</span>
+                            <span className="text-blue-200 text-sm font-bold uppercase tracking-wider mb-2 block">
+                                Projected Total ({forecast.forecastPeriod})
+                            </span>
                             <div className="flex items-baseline gap-2 mb-2">
-                                <h3 className="text-4xl font-bold font-syne">8,060</h3>
+                                <h3 className="text-4xl font-bold font-syne">{forecast.predictedEmissions.toLocaleString()}</h3>
                                 <span className="text-blue-200 font-medium">tCO₂e</span>
                             </div>
                             <div className="flex items-center text-sm text-green-300 font-medium mt-4">
                                 <span className="material-symbols-outlined text-[16px] mr-1">trending_down</span>
-                                -12.4% vs H1 2024
+                                AI confidence: {forecast.modelConfidence}%
                             </div>
                         </div>
+
                         <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
                             <span className="text-slate-500 text-sm font-bold uppercase tracking-wider mb-2 block">Credit Deficit Risk</span>
                             <div className="flex items-baseline gap-2 mb-2">
-                                <h3 className="text-4xl font-bold font-syne text-amber-500">450</h3>
+                                <h3 className="text-4xl font-bold font-syne text-amber-500">
+                                    {forecast.predictedCreditsNeeded.toLocaleString()}
+                                </h3>
                                 <span className="text-slate-500 font-medium">CCR</span>
                             </div>
                             <div className="flex items-center text-sm text-slate-500 font-medium mt-4">
                                 <span className="w-2 h-2 rounded-full bg-amber-500 mr-2"></span>
-                                Required purchase by Nov 15th
+                                Required purchase before end of period
                             </div>
                         </div>
+
                         <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
-                            <span className="text-slate-500 text-sm font-bold uppercase tracking-wider mb-2 block">Compliance Probability</span>
+                            <span className="text-slate-500 text-sm font-bold uppercase tracking-wider mb-2 block">Risk Level</span>
                             <div className="flex items-baseline gap-2 mb-2">
-                                <h3 className="text-4xl font-bold font-syne text-[#1A7A4A]">92%</h3>
+                                <h3 className="text-4xl font-bold font-syne" style={{ color: riskColor }}>
+                                    {forecast.riskLevel}
+                                </h3>
                             </div>
                             <div className="flex items-center text-sm text-slate-500 font-medium mt-4">
-                                <span className="w-2 h-2 rounded-full bg-[#1A7A4A] mr-2"></span>
-                                Highly likely to meet annual target
+                                <span className="w-2 h-2 rounded-full mr-2" style={{ backgroundColor: riskColor }}></span>
+                                {forecast.riskLevel === 'Low'
+                                    ? 'Highly likely to meet annual target'
+                                    : forecast.riskLevel === 'Medium'
+                                    ? 'Some risk — consider early credit purchases'
+                                    : 'High risk — immediate action required'}
                             </div>
                         </div>
                     </div>
 
+                    {/* Chart */}
                     <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
-                        <h3 className="font-bold text-lg font-syne text-slate-800 mb-6">6-Month Emission Projection</h3>
-                        <div className="min-h-[400px] w-full">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <AreaChart
-                                    data={forecastData}
-                                    margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
-                                >
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="font-bold text-lg font-syne text-slate-800">6-Month Emission Projection</h3>
+                            <div className="flex items-center gap-4 text-xs text-slate-500">
+                                <span className="flex items-center gap-1.5">
+                                    <span className="w-3 h-0.5 bg-slate-400 inline-block rounded"></span> Historical
+                                </span>
+                                <span className="flex items-center gap-1.5">
+                                    <span className="w-3 h-0.5 bg-blue-500 inline-block rounded"></span> Forecast
+                                </span>
+                            </div>
+                        </div>
+                        <div className="min-h-[360px] w-full">
+                            <ResponsiveContainer width="100%" height={360}>
+                                <AreaChart data={forecastChart} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                                     <defs>
                                         <linearGradient id="colorHistorical" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor="#94a3b8" stopOpacity={0.3} />
+                                            <stop offset="5%"  stopColor="#94a3b8" stopOpacity={0.3} />
                                             <stop offset="95%" stopColor="#94a3b8" stopOpacity={0} />
                                         </linearGradient>
                                         <linearGradient id="colorForecast" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor="#2563eb" stopOpacity={0.3} />
+                                            <stop offset="5%"  stopColor="#2563eb" stopOpacity={0.25} />
                                             <stop offset="95%" stopColor="#2563eb" stopOpacity={0} />
                                         </linearGradient>
                                     </defs>
@@ -142,8 +239,18 @@ export default function AiForecast() {
                                     <Tooltip
                                         contentStyle={{ borderRadius: '8px', border: '1px solid #E2E8F0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                                         cursor={{ stroke: '#cbd5e1', strokeWidth: 1, strokeDasharray: '4 4' }}
+                                        formatter={(v: number, _: string, entry: any) => [
+                                            `${v.toLocaleString()} tCO₂e`,
+                                            entry.payload.isForecast ? 'Forecast' : 'Actual',
+                                        ]}
                                     />
-                                    <ReferenceLine x="Jun" stroke="#94a3b8" strokeDasharray="3 3" label={{ position: 'top', value: 'Today', fill: '#64748b', fontSize: 12 }} />
+                                    <ReferenceLine
+                                        x="Jun"
+                                        stroke="#94a3b8"
+                                        strokeDasharray="3 3"
+                                        label={{ position: 'top', value: 'Today', fill: '#64748b', fontSize: 12 }}
+                                    />
+                                    {/* Historical area */}
                                     <Area
                                         type="monotone"
                                         dataKey="value"
@@ -152,12 +259,17 @@ export default function AiForecast() {
                                         fillOpacity={1}
                                         fill="url(#colorHistorical)"
                                         activeDot={{ r: 6 }}
+                                        dot={(props: any) => {
+                                            if (props.payload.isForecast) return <g key={props.key} />;
+                                            return <circle key={props.key} cx={props.cx} cy={props.cy} r={4} fill="#94a3b8" stroke="#fff" strokeWidth={2} />;
+                                        }}
                                     />
                                 </AreaChart>
                             </ResponsiveContainer>
                         </div>
                     </div>
 
+                    {/* AI Recommendations */}
                     <div className="bg-blue-50 border border-blue-100 rounded-xl p-6">
                         <h3 className="font-bold text-blue-900 mb-4 flex items-center gap-2">
                             <span className="material-symbols-outlined text-blue-600">lightbulb</span>
@@ -169,8 +281,13 @@ export default function AiForecast() {
                                     <span className="material-symbols-outlined text-[18px]">shopping_cart</span>
                                 </div>
                                 <div>
-                                    <p className="font-bold text-slate-800 text-sm">Purchase 450 CCRs by Q3</p>
-                                    <p className="text-sm text-slate-600 mt-1">Based on projected Scope 2 emissions from planned factory expansion in September. Buying early mitigates price volatility risk.</p>
+                                    <p className="font-bold text-slate-800 text-sm">
+                                        Purchase {forecast.predictedCreditsNeeded.toLocaleString()} CCRs by Q3
+                                    </p>
+                                    <p className="text-sm text-slate-600 mt-1">
+                                        Based on your projected {forecast.forecastPeriod} emissions. Buying credits early mitigates price volatility
+                                        and ensures you remain compliant before the reporting deadline.
+                                    </p>
                                 </div>
                             </li>
                             <li className="flex items-start gap-3 bg-white p-4 rounded-lg border border-blue-100 shadow-sm">
@@ -179,11 +296,60 @@ export default function AiForecast() {
                                 </div>
                                 <div>
                                     <p className="font-bold text-slate-800 text-sm">Optimize Heating Systems in Q4</p>
-                                    <p className="text-sm text-slate-600 mt-1">Historical data indicates a 25% spike in heating emissions in Nov/Dec. Preemptive maintenance could reduce this by ~80 tCO₂e.</p>
+                                    <p className="text-sm text-slate-600 mt-1">
+                                        Historical data indicates a 25% spike in heating emissions in Nov/Dec. Preemptive
+                                        maintenance could reduce this by ~80 tCO₂e, lowering your overall risk level to{' '}
+                                        <span className="font-bold text-green-600">Low</span>.
+                                    </p>
                                 </div>
                             </li>
+                            {forecast.riskLevel !== 'Low' && (
+                                <li className="flex items-start gap-3 bg-white p-4 rounded-lg border border-red-100 shadow-sm">
+                                    <div className="w-8 h-8 rounded-full bg-red-100 text-red-600 flex items-center justify-center shrink-0 mt-0.5">
+                                        <span className="material-symbols-outlined text-[18px]">warning</span>
+                                    </div>
+                                    <div>
+                                        <p className="font-bold text-slate-800 text-sm">Risk Level: {forecast.riskLevel} — Action Required</p>
+                                        <p className="text-sm text-slate-600 mt-1">
+                                            Your projected emissions exceed your sector benchmark threshold. Consider submitting a
+                                            reduction plan to the government portal and increasing your offset purchases.
+                                        </p>
+                                    </div>
+                                </li>
+                            )}
                         </ul>
                     </div>
+
+                    {/* History panel */}
+                    {history.length > 1 && (
+                        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+                            <h3 className="font-bold text-slate-800 font-syne mb-4 flex items-center gap-2">
+                                <span className="material-symbols-outlined text-slate-500">history</span>
+                                Previous Forecasts
+                            </h3>
+                            <div className="divide-y divide-slate-100">
+                                {history.slice(1, 5).map((h, i) => (
+                                    <div key={i} className="py-3 flex items-center justify-between text-sm">
+                                        <div>
+                                            <p className="font-bold text-slate-700">{h.forecastPeriod}</p>
+                                            <p className="text-slate-400 text-xs">
+                                                {h.generatedAt ? new Date(h.generatedAt).toLocaleDateString() : ''}
+                                            </p>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="font-bold text-slate-800">{h.predictedEmissions.toLocaleString()} tCO₂e</p>
+                                            <p
+                                                className="text-xs font-bold"
+                                                style={{ color: RISK_COLORS[h.riskLevel] || '#1A7A4A' }}
+                                            >
+                                                {h.riskLevel} risk · {h.predictedCreditsNeeded} CCR needed
+                                            </p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
             )}
         </div>

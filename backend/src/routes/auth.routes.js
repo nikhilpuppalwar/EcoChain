@@ -13,4 +13,8 @@ router.post('/logout', authController.logout);
 router.post('/forgot-password', authController.forgotPassword);
 router.post('/reset-password', authController.resetPassword);
 
+// Admin - Get all users (requires auth + admin role)
+const { verifyToken, requireRole } = require('../middleware/auth');
+router.get('/users', verifyToken, requireRole('admin'), authController.getAllUsers);
+
 module.exports = router;

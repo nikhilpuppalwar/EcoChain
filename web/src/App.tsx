@@ -1,7 +1,8 @@
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, Navigate } from 'react-router-dom';
 import AnimatedCounter from './components/AnimatedCounter';
 import LoginPage from './pages/LoginPage';
 import ResetPassword from './pages/ResetPassword';
+import ecochainLogo from './assets/ecochain_icon_white.png';
 
 
 import IndustryStep1 from './pages/onboarding/IndustryStep1';
@@ -25,22 +26,21 @@ import ReportReview from './pages/goverment/ReportReview';
 import IssueCredits from './pages/goverment/IssueCredits';
 import ComplianceMonitor from './pages/goverment/ComplianceMonitor';
 import GovMonitoring from './pages/goverment/GovMonitoring';
-import GovAnalytics from './pages/goverment/GovAnalytics';
+import GovIndustriesAnalytics from './pages/goverment/GovIndustriesAnalytics';
 import GovBlockchain from './pages/goverment/GovBlockchain';
 import GovNotifications from './pages/goverment/GovNotifications';
 import GovAIVerifier from './pages/goverment/GovAIVerifier';
 import GovAuditorAssignment from './pages/goverment/GovAuditorAssignment';
+import GovVerification from './pages/goverment/GovVerification';
+import GovRegistry from './pages/goverment/GovRegistry';
 import TransparencyDashboard from './pages/TransparencyDashboard';
 import NotFound from './pages/NotFound';
 import GovPendingVerification from './pages/GovPendingVerification';
 import AuditorPendingVerification from './pages/AuditorPendingVerification';
 // Landing & Public pages
 import HowItWorks from './pages/HowItWorks';
-import Contact from './pages/Contact';
 import Register from './pages/Register';
 import PublicDashboard from './pages/public/PublicDashboard';
-import EmissionMap from './pages/public/EmissionMap';
-import CarbonMarket from './pages/public/CarbonMarket';
 import PoliciesReports from './pages/public/PoliciesReports';
 // Auditor pages
 import AuditorDashboard from './pages/auditor/AuditorDashboard';
@@ -57,6 +57,11 @@ import AdminContent from './pages/admin/AdminContent';
 import AdminSettings from './pages/admin/AdminSettings';
 import SubmissionTracker from './pages/Industry/SubmissionTracker';
 import IndustryNotifications from './pages/Industry/IndustryNotifications';
+import IndustryProfile from './pages/Industry/IndustryProfile';
+import IndustryCompliance from './pages/Industry/ComplianceMonitor';
+import GovProfile from './pages/goverment/GovProfile';
+import AuditorProfile from './pages/auditor/AuditorProfile';
+import AdminProfile from './pages/admin/AdminProfile';
 import ProtectedRoute from './components/ProtectedRoute';
 import DashboardLayout from './components/DashboardLayout';
 import { Toaster } from 'react-hot-toast';
@@ -228,438 +233,286 @@ const liveTxns = [
 function LandingPage() {
   return (
     <>
-      {/* ═══════════════════════════════════════════════
-          NAVBAR
-      ═══════════════════════════════════════════════ */}
-      <nav className="fixed top-0 w-full z-50 glass-panel border-b border-border-subtle">
-        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-primary rounded-xl flex items-center justify-center shadow-green">
-              <span className="material-symbols-outlined text-white text-2xl">eco</span>
+      {/* ═══ NAVBAR ═══ */}
+      <div className="fixed top-0 left-0 w-full z-50">
+        {/* Indian tricolor accent strip */}
+        <div style={{ height: '3px', background: 'linear-gradient(to right, #FF9933 33.3%, #FFFFFF 33.3%, #FFFFFF 66.6%, #138808 66.6%)' }} />
+        <nav className="glass-panel border-b border-border-subtle">
+          <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <a href="#" onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="flex items-center gap-2">
+                <img src={ecochainLogo} alt="EcoChain Icon" className="w-8 h-8 object-contain" />
+                <span className="text-xl font-display font-bold tracking-wide text-text-main">ECOCHAIN</span>
+              </a>
             </div>
-            <span className="text-xl font-display font-bold tracking-wide text-text-main">ECOCHAIN</span>
-          </div>
-
-          <div className="hidden md:flex items-center gap-8">
-            <Link className="text-sm font-medium text-text-muted hover:text-primary transition-colors" to="/public/dashboard">Public Data</Link>
-            <Link className="text-sm font-medium text-text-muted hover:text-primary transition-colors" to="/how-it-works">How It Works</Link>
-            <Link className="text-sm font-medium text-text-muted hover:text-primary transition-colors" to="/public/market">Carbon Market</Link>
-            <Link className="text-sm font-medium text-text-muted hover:text-primary transition-colors" to="/contact">Contact</Link>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <Link to="/register" className="hidden sm:block text-sm font-medium text-text-muted hover:text-primary transition-colors">Register</Link>
-            <Link to="/login" className="btn-primary h-10 px-6 text-sm">
-              Login
-              <span className="material-symbols-outlined text-sm">arrow_forward</span>
-            </Link>
-          </div>
-        </div>
-      </nav>
-
-      {/* ═══════════════════════════════════════════════
-          HERO SECTION
-      ═══════════════════════════════════════════════ */}
-      <main className="relative pt-20">
-        {/* Background layers */}
-        <div className="absolute inset-0 z-0 pointer-events-none hero-glow" />
-        <div className="absolute inset-0 z-0 pointer-events-none bg-dots opacity-50" />
-
-        <section className="relative z-10 max-w-7xl mx-auto px-6 pt-20 pb-16 lg:pt-28 lg:pb-24 grid lg:grid-cols-2 gap-16 items-center">
-          {/* Hero text */}
-          <div className="flex flex-col gap-8 animate-slide-up">
-            <div className="section-label w-fit">
-              <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-              Mainnet Live · March 2026
+            <div className="hidden md:flex items-center gap-8">
+              <a className="text-sm font-medium text-text-muted hover:text-primary transition-colors" href="#features">Platform Features</a>
+              <a className="text-sm font-medium text-text-muted hover:text-primary transition-colors" href="#workflow">14-Step Workflow</a>
+              <a className="text-sm font-medium text-text-muted hover:text-primary transition-colors" href="#architecture">Architecture Stack</a>
+              <a className="text-sm font-medium text-text-muted hover:text-primary transition-colors" href="#portals">Integrated Portals</a>
+              <Link className="text-sm font-medium text-text-muted hover:text-primary transition-colors" to="/public/dashboard">Public</Link>
             </div>
-
-            <h1 className="font-display font-bold text-5xl lg:text-7xl leading-[0.92] text-text-main">
-              TRANSPARENT<br />
-              <span className="text-gradient-green">CARBON.</span><br />
-              <span className="text-4xl lg:text-5xl text-text-muted font-normal">Verified by AI. Secured by Blockchain.</span>
-            </h1>
-
-            <p className="text-lg text-text-muted max-w-lg leading-relaxed">
-              EcoChain brings accountability to carbon emissions — with AI anomaly detection, immutable blockchain audit trails, and trustless smart-contract trading.
-            </p>
-
-            <div className="flex flex-wrap gap-4">
-              <Link to="/register" className="btn-primary h-14 px-8 text-base">
-                Get Started Free
-                <span className="material-symbols-outlined">arrow_forward</span>
-              </Link>
-              <Link to="/public/dashboard" className="btn-secondary h-14 px-8 text-base">
-                <span className="material-symbols-outlined">public</span>
-                Explore Public Data
+            <div className="flex items-center gap-3">
+              <Link to="/register" className="hidden sm:block text-sm font-medium text-text-muted hover:text-primary transition-colors">Register</Link>
+              <Link to="/login" className="btn-primary h-10 px-6 text-sm">
+                Login<span className="material-symbols-outlined text-sm">arrow_forward</span>
               </Link>
             </div>
-
-            {/* Trust badges */}
-            <div className="flex flex-wrap items-center gap-6 pt-4 border-t border-border-subtle">
-              {[
-                { icon: 'security', label: 'ISO 14064 Compliant' },
-                { icon: 'gpp_good', label: 'OWASP Top 10 Secure' },
-                { icon: 'currency_exchange', label: 'ERC-20 Standard' },
-              ].map(b => (
-                <div key={b.label} className="flex items-center gap-2 text-xs text-text-muted">
-                  <span className="material-symbols-outlined text-primary text-base">{b.icon}</span>
-                  {b.label}
-                </div>
-              ))}
-            </div>
           </div>
+        </nav>
+      </div>
 
-          {/* Hero visual: animated globe + floating cards */}
-          <div className="relative h-[460px] flex items-center justify-center">
-            {/* Orbiting rings */}
-            <div className="absolute w-[380px] h-[380px] border border-primary/10 rounded-full animate-[spin_50s_linear_infinite]" />
-            <div className="absolute w-[300px] h-[300px] border border-dashed border-primary/15 rounded-full animate-[spin_35s_linear_infinite_reverse]" />
-            <div className="absolute w-[220px] h-[220px] border border-primary/20 rounded-full" />
+      <main className="pt-[51px]">
 
-            {/* Globe core */}
-            <div className="relative w-48 h-48 bg-gradient-to-br from-primary to-primary-light rounded-full shadow-green flex items-center justify-center overflow-hidden">
-              <div className="absolute inset-0 carbon-pattern opacity-30" />
-              <span className="material-symbols-outlined text-white text-7xl z-10">public</span>
-            </div>
-
-            {/* Floating card: AI Result */}
-            <div className="absolute top-6 right-4 lg:right-0 animate-float">
-              <div className="bg-white/90 backdrop-blur-sm p-4 rounded-2xl border border-border-subtle shadow-card border-l-4 border-l-violet-500 min-w-[180px]">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="material-symbols-outlined text-violet-500 text-base">psychology</span>
-                  <span className="text-xs font-mono text-violet-600 font-bold">AI RESULT</span>
-                </div>
-                <div className="text-lg font-bold text-text-main font-display">Risk: 12/100</div>
-                <div className="text-xs text-emerald-600 font-bold flex items-center gap-1"><span className="material-symbols-outlined text-xs">check_circle</span> Clean — Pass</div>
+        {/* ═══ HERO ═══ */}
+        <section className="bg-white py-20 px-6 border-b border-border-subtle overflow-hidden">
+          <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+            <div className="space-y-6 animate-slide-up">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-green-50 text-primary rounded-full border border-primary/20">
+                <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                <span className="text-xs font-bold uppercase tracking-widest">MAINNET LIVE · MARCH 2026</span>
               </div>
-            </div>
-
-            {/* Floating card: Block confirmed */}
-            <div className="absolute bottom-12 left-0 lg:-left-4 animate-float-slow">
-              <div className="bg-white/90 backdrop-blur-sm p-4 rounded-2xl border border-border-subtle shadow-card border-l-4 border-l-primary min-w-[180px]">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="material-symbols-outlined text-primary text-base">link</span>
-                  <span className="text-xs font-mono text-primary font-bold">BLOCK #8,421</span>
-                </div>
-                <div className="text-lg font-bold text-text-main font-display">+840 tCO₂e</div>
-                <div className="text-xs text-text-muted">Credits Minted • Polygon</div>
-              </div>
-            </div>
-
-            {/* Floating card: Audit done */}
-            <div className="absolute top-1/2 -translate-y-1/2 right-0 lg:-right-4 animate-[bounce_4s_ease-in-out_infinite]">
-              <div className="bg-white/90 backdrop-blur-sm p-3 rounded-2xl border border-border-subtle shadow-card">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 bg-emerald-100 rounded-xl flex items-center justify-center">
-                    <span className="material-symbols-outlined text-emerald-600 text-lg">verified_user</span>
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-text-main">Audit Approved</p>
-                    <p className="text-[10px] text-text-muted">Dr. Tanaka · 2s ago</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* ═══════════════════════════════════════════════
-            LIVE STATS COUNTERS
-        ═══════════════════════════════════════════════ */}
-        <section className="relative z-10 max-w-7xl mx-auto px-6 pb-20">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
-            {[
-              { label: 'Registered Industries', value: 500, suffix: '+', icon: 'factory', color: 'text-blue-600', bg: 'bg-blue-50', trend: '+48 this month' },
-              { label: 'Carbon Credits Issued', value: 100000, suffix: '+', icon: 'token', color: 'text-primary', bg: 'bg-green-50', trend: 'tCO₂e tokenized' },
-              { label: 'CO₂ Reduced', value: 2500000, suffix: '', icon: 'co2', color: 'text-emerald-600', bg: 'bg-emerald-50', trend: 'Tonnes verified' },
-              { label: 'Certified Auditors', value: 50, suffix: '+', icon: 'verified', color: 'text-violet-600', bg: 'bg-violet-50', trend: '94% approval rate' },
-            ].map(s => (
-              <div key={s.label} className="stat-card group">
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary to-primary-light rounded-t-2xl" />
-                <div className="flex justify-between items-start mb-4">
-                  <span className="text-text-muted text-sm font-medium">{s.label}</span>
-                  <div className={`w-9 h-9 ${s.bg} rounded-xl flex items-center justify-center`}>
-                    <span className={`material-symbols-outlined text-base ${s.color}`}>{s.icon}</span>
-                  </div>
-                </div>
-                <h3 className="text-3xl font-display font-bold text-text-main mb-1">
-                  <AnimatedCounter end={s.value} suffix={s.suffix} />
-                </h3>
-                <p className="text-xs text-text-muted">{s.trend}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* ═══════════════════════════════════════════════
-            6 FEATURE CARDS
-        ═══════════════════════════════════════════════ */}
-        <section className="relative z-10 bg-white border-y border-border-subtle py-24">
-          <div className="max-w-7xl mx-auto px-6">
-            <div className="text-center mb-16">
-              <div className="section-label w-fit mx-auto mb-4">Platform Features</div>
-              <h2 className="font-display font-bold text-4xl lg:text-5xl text-text-main mb-4">
-                EVERYTHING YOU NEED
-              </h2>
-              <p className="text-text-muted max-w-2xl mx-auto text-lg">
-                Six integrated modules designed to make carbon compliance transparent, automated, and trustless.
+              <h1 className="font-display font-bold uppercase leading-none text-text-main" style={{fontSize: 'clamp(3rem, 7vw, 6rem)', lineHeight: '1'}}>
+                TRANSPARENT<br />
+                <span className="text-primary">CARBON</span><br />
+                MARKETS
+              </h1>
+              <p className="text-2xl text-text-muted" style={{fontFamily: 'Rajdhani, sans-serif', fontWeight: 600}}>
+                Verified by AI. Secured by Blockchain.
               </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {features.map(f => (
-                <div key={f.title} className="group bg-white rounded-2xl border border-border-subtle p-7 card-hover-lift shadow-sm hover:border-primary/30 transition-all">
-                  <div className="flex items-start justify-between mb-5">
-                    <div className={`w-12 h-12 ${f.bg} rounded-2xl flex items-center justify-center`}>
-                      <span className={`material-symbols-outlined text-2xl ${f.iconColor}`}>{f.icon}</span>
-                    </div>
-                    <span className={`feature-chip ${f.badgeColor}`}>{f.badge}</span>
-                  </div>
-                  <h3 className="text-lg font-bold font-display text-text-main mb-3 group-hover:text-primary transition-colors">{f.title}</h3>
-                  <p className="text-sm text-text-muted leading-relaxed">{f.description}</p>
-                  <div className={`mt-5 h-1 w-16 bg-gradient-to-r ${f.color} rounded-full transition-all duration-300 group-hover:w-full`} />
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* ═══════════════════════════════════════════════
-            14-STEP WORKFLOW (4 PHASES)
-        ═══════════════════════════════════════════════ */}
-        <section className="relative z-10 py-24 max-w-7xl mx-auto px-6">
-          <div className="text-center mb-16">
-            <div className="section-label w-fit mx-auto mb-4">14-Step Workflow</div>
-            <h2 className="font-display font-bold text-4xl lg:text-5xl text-text-main mb-4">HOW IT WORKS</h2>
-            <p className="text-text-muted max-w-2xl mx-auto text-lg">
-              From raw emission data to blockchain-secured carbon credit — a fully automated 14-step pipeline with 3 AI decision gates.
-            </p>
-          </div>
-
-          {/* Phase cards with connector arrows */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 relative">
-            {/* Connector line (desktop only) */}
-            <div className="absolute top-10 left-0 w-full h-0.5 bg-gradient-to-r from-blue-300 via-violet-300 via-emerald-300 to-orange-300 hidden lg:block z-0 pointer-events-none" />
-
-            {workflowPhases.map((phase, i) => (
-              <div key={phase.phase} className="relative z-10 flex flex-col bg-white rounded-2xl border border-border-subtle shadow-sm overflow-hidden card-hover-lift">
-                <div className={`${phase.color} p-5`}>
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="w-8 h-8 bg-white/20 rounded-xl flex items-center justify-center">
-                      <span className="text-white font-bold text-sm font-display">PHASE {phase.phase}</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className="material-symbols-outlined text-white text-3xl">{phase.icon}</span>
-                    <h3 className="text-white font-bold text-lg font-display">{phase.title}</h3>
-                  </div>
-                </div>
-                <ul className="p-5 flex flex-col gap-2.5 flex-1">
-                  {phase.steps.map((step, j) => (
-                    <li key={j} className="flex items-start gap-2.5 text-sm">
-                      <div className={`w-5 h-5 rounded-full ${phase.lightBg} ${phase.textColor} flex items-center justify-center text-[10px] font-bold flex-shrink-0 mt-0.5`}>
-                        {(i * 4) + j + 1}
-                      </div>
-                      <span className="text-text-muted leading-snug">{step}</span>
-                    </li>
-                  ))}
-                </ul>
-                {i < workflowPhases.length - 1 && (
-                  <div className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-white border-2 border-border-subtle rounded-full items-center justify-center z-20 hidden lg:flex">
-                    <span className="material-symbols-outlined text-text-muted text-sm">arrow_forward</span>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-
-          <div className="text-center mt-10">
-            <Link to="/how-it-works" className="btn-secondary h-12 px-8 text-sm inline-flex">
-              <span className="material-symbols-outlined text-base">info</span>
-              See Full Workflow with AI Gate Details
-            </Link>
-          </div>
-        </section>
-
-        {/* ═══════════════════════════════════════════════
-            MISSION & VISION
-        ═══════════════════════════════════════════════ */}
-        <section className="relative z-10 bg-gradient-to-br from-primary to-primary-dark py-24 overflow-hidden">
-          <div className="absolute inset-0 carbon-pattern opacity-20" />
-          <div className="max-w-7xl mx-auto px-6 relative z-10">
-            <div className="grid lg:grid-cols-2 gap-16 items-center">
-              <div className="flex flex-col gap-6">
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-white/20 bg-white/10 w-fit">
-                  <span className="material-symbols-outlined text-white text-base">eco</span>
-                  <span className="text-xs font-bold uppercase tracking-wider text-white">Our Mission</span>
-                </div>
-                <h2 className="font-display font-bold text-4xl lg:text-5xl text-white leading-tight">
-                  MAKING CARBON MARKETS<br />
-                  <span className="text-primary-light">TRUSTWORTHY.</span>
-                </h2>
-                <p className="text-white/80 text-lg leading-relaxed">
-                  Carbon markets fail when data can be manipulated, credits double-counted, and trades lack transparency. EcoChain solves all three — using AI to catch fraud, blockchain to ensure immutability, and smart contracts to eliminate intermediaries.
-                </p>
-                <div className="grid grid-cols-2 gap-4 mt-4">
-                  {[
-                    { icon: 'verified_user', label: 'AI-Verified Data', sub: 'Isolation Forest catches fraud' },
-                    { icon: 'lock', label: 'Blockchain Immutability', sub: 'Polygon stores every report' },
-                    { icon: 'swap_horiz', label: 'Trustless Trading', sub: 'Smart contracts automate trades' },
-                    { icon: 'loop', label: 'End-to-End Traceability', sub: 'Mint → Trade → Retire tracked' },
-                  ].map(m => (
-                    <div key={m.label} className="flex items-start gap-3">
-                      <div className="w-9 h-9 bg-white/15 rounded-xl flex items-center justify-center flex-shrink-0">
-                        <span className="material-symbols-outlined text-white text-lg">{m.icon}</span>
-                      </div>
-                      <div>
-                        <p className="text-white font-bold text-sm">{m.label}</p>
-                        <p className="text-white/60 text-xs">{m.sub}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Vision stats */}
-              <div className="grid grid-cols-2 gap-4">
-                {[
-                  { value: '95%+', label: 'AI Detection Accuracy', icon: 'psychology' },
-                  { value: '$0', label: 'Total Infrastructure Cost', icon: 'savings' },
-                  { value: '500+', label: 'Industries (Year 1 Target)', icon: 'factory' },
-                  { value: '100k', label: 'tCO₂e Credits (Year 1)', icon: 'token' },
-                ].map(v => (
-                  <div key={v.label} className="bg-white/10 border border-white/15 rounded-2xl p-6 text-center backdrop-blur-sm">
-                    <div className="w-10 h-10 bg-white/15 rounded-xl flex items-center justify-center mx-auto mb-3">
-                      <span className="material-symbols-outlined text-white text-xl">{v.icon}</span>
-                    </div>
-                    <div className="text-3xl font-display font-bold text-primary-light mb-1">{v.value}</div>
-                    <p className="text-white/70 text-xs">{v.label}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* ═══════════════════════════════════════════════
-            WHY BLOCKCHAIN + LIVE LEDGER
-        ═══════════════════════════════════════════════ */}
-        <section className="relative z-10 max-w-7xl mx-auto px-6 py-24">
-          <div className="grid lg:grid-cols-2 gap-16 items-start">
-            <div className="flex flex-col gap-6 lg:sticky top-32">
-              <div className="section-label w-fit">Blockchain First</div>
-              <h2 className="font-display font-bold text-4xl lg:text-5xl text-text-main">WHY BLOCKCHAIN?</h2>
-              <p className="text-text-muted text-lg leading-relaxed">
-                Traditional carbon markets suffer from double-counting, opacity, and fraud. EcoChain uses a public, immutable ledger to ensure every credit is real, unique, and verifiable by anyone.
+              <p className="text-base text-text-muted max-w-xl leading-relaxed">
+                Eliminating double-counting and greenwashing through automated anomaly detection and immutable ledger audit trails. The sovereign layer for ecological assets.
               </p>
-              <ul className="space-y-5 mt-2">
-                {[
-                  { icon: 'lock', title: 'Immutable Record', desc: 'AuditRegistry.sol stores every verified report on Polygon. Once confirmed, data cannot be altered.', color: 'text-blue-600 bg-blue-50' },
-                  { icon: 'do_not_touch', title: 'No Double Counting', desc: 'ERC-20 token burning via CreditRetirement.sol permanently removes credits — zero double spend.', color: 'text-emerald-600 bg-emerald-50' },
-                  { icon: 'smart_toy', title: 'Smart Contract Automation', desc: 'CarbonMarketplace.sol executes trustless trades with zero intermediaries or manual approval.', color: 'text-violet-600 bg-violet-50' },
-                  { icon: 'public', title: 'Public Verifiability', desc: 'Anyone can search, verify, and export any transaction on Polygonscan — no account required.', color: 'text-amber-600 bg-amber-50' },
-                ].map(li => (
-                  <li key={li.title} className="flex items-start gap-4">
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${li.color}`}>
-                      <span className="material-symbols-outlined text-xl">{li.icon}</span>
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-text-main">{li.title}</h4>
-                      <p className="text-sm text-text-muted mt-0.5 leading-snug">{li.desc}</p>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Live Ledger Feed */}
-            <div className="bg-white rounded-2xl border border-border-subtle shadow-card overflow-hidden">
-              <div className="flex items-center justify-between p-5 border-b border-border-subtle bg-gray-50/70">
-                <div className="flex items-center gap-2">
-                  <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-                  <span className="text-sm font-mono font-bold text-primary">LIVE LEDGER</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-text-muted font-mono">Polygon Mainnet</span>
-                  <span className="text-xs font-bold bg-green-100 text-green-600 px-2 py-0.5 rounded-full">●&nbsp;Connected</span>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-4 gap-3 text-xs font-bold text-text-muted uppercase tracking-wide px-5 py-3 border-b border-gray-50">
-                <span>TX Hash</span>
-                <span>Type</span>
-                <span>Amount</span>
-                <span className="text-right">Time</span>
-              </div>
-
-              <div className="divide-y divide-gray-50">
-                {liveTxns.map((tx, i) => (
-                  <div key={i} className={`grid grid-cols-4 gap-3 px-5 py-3.5 text-sm font-mono items-center ${i === 0 ? 'bg-green-50/50' : 'hover:bg-gray-50'} transition-colors`}>
-                    <span className="text-primary font-bold truncate">{tx.hash}</span>
-                    <span className={`font-bold text-xs inline-flex items-center gap-1 ${tx.type === 'MINT' ? 'text-emerald-600 bg-emerald-50' : tx.type === 'RETIRE' ? 'text-red-600 bg-red-50' : 'text-blue-600 bg-blue-50'
-                      } px-2 py-0.5 rounded-full w-fit`}>
-                      {tx.type}
-                    </span>
-                    <span className={`font-bold ${tx.color}`}>{tx.amount}</span>
-                    <span className="text-right text-text-muted text-xs">{tx.time}</span>
-                  </div>
-                ))}
-              </div>
-
-              <div className="p-5 border-t border-border-subtle flex items-center justify-between">
-                <span className="text-xs text-text-muted">Updated every block (~2s)</span>
-                <Link to="/public/market" className="btn-primary text-xs h-8 px-4">
-                  Explore Explorer
-                  <span className="material-symbols-outlined text-xs">arrow_forward</span>
+              <div className="flex flex-wrap gap-4 pt-2">
+                <Link to="/register" className="btn-primary h-14 px-8 text-sm">
+                  Get Started Free <span className="material-symbols-outlined">arrow_forward</span>
+                </Link>
+                <Link to="/public/dashboard" className="btn-secondary h-14 px-8 text-sm">
+                  <span className="material-symbols-outlined">public</span> Explore Public Data
                 </Link>
               </div>
+              <div className="flex flex-wrap items-center gap-6 pt-2 opacity-60">
+                {[{icon:'verified_user', label:'ISO 14064'},{icon:'security', label:'OWASP'},{icon:'token', label:'ERC-20'}].map(b => (
+                  <div key={b.label} className="flex items-center gap-2 text-xs text-text-muted">
+                    <span className="material-symbols-outlined text-primary text-base">{b.icon}</span>{b.label}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* AI Validation Panel */}
+            <div className="relative hidden lg:block">
+              <div className="absolute inset-0 bg-gray-50 rotate-2 -z-10 border border-border-subtle rounded-lg" />
+              <div className="bg-white border border-border-subtle shadow-sm p-8">
+                <div className="flex justify-between items-center mb-6">
+                  <span className="text-xs font-bold uppercase tracking-widest text-text-muted">AI VALIDATION CORE</span>
+                  <span className="px-2 py-1 bg-green-50 text-primary text-xs" style={{fontFamily:'JetBrains Mono, monospace'}}>REAL-TIME</span>
+                </div>
+                <div className="p-4 border-l-4 border-l-primary bg-green-50/60 mb-6">
+                  <p className="text-text-main text-lg font-bold" style={{fontFamily:'JetBrains Mono, monospace'}}>AI RESULT · Risk: 12/100</p>
+                  <p className="text-primary font-bold text-sm mt-1">✓ Clean — Pass</p>
+                </div>
+                <div className="space-y-4">
+                  <div className="h-2 w-full bg-gray-100 overflow-hidden rounded-full">
+                    <div className="h-full bg-primary w-3/4" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    {[{label:'VERIFICATION', val:'99.98%'},{label:'LATENCY', val:'142ms'}].map(d => (
+                      <div key={d.label} className="p-3 border border-border-subtle bg-gray-50">
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-text-muted">{d.label}</p>
+                        <p className="font-bold text-text-main mt-1" style={{fontFamily:'JetBrains Mono, monospace'}}>{d.val}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                {/* Floating badges */}
+                <div className="mt-6 grid grid-cols-3 gap-2">
+                  {[
+                    {icon:'factory', val:'500+', label:'Industries'},
+                    {icon:'token', val:'100K+', label:'Credits'},
+                    {icon:'verified', val:'50+', label:'Auditors'},
+                  ].map(s => (
+                    <div key={s.label} className="text-center p-2 bg-green-50 border border-primary/20">
+                      <p className="font-bold text-primary text-lg font-display">{s.val}</p>
+                      <p className="text-[10px] text-text-muted">{s.label}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
         </section>
 
-        {/* ═══════════════════════════════════════════════
-            SYSTEM ARCHITECTURE OVERVIEW
-        ═══════════════════════════════════════════════ */}
-        <section className="relative z-10 bg-gray-50 border-y border-border-subtle py-24">
-          <div className="max-w-7xl mx-auto px-6">
-            <div className="text-center mb-16">
-              <div className="section-label w-fit mx-auto mb-4">System Architecture</div>
-              <h2 className="font-display font-bold text-4xl lg:text-5xl text-text-main mb-4">BUILT FOR SCALE</h2>
-              <p className="text-text-muted max-w-2xl mx-auto text-lg">
-                Four independent service layers — all deployable at $0 using free tiers. Each layer scales independently.
+        {/* ═══ LIVE STATS ═══ */}
+        <section className="bg-gray-50 py-12 px-6 border-b border-border-subtle">
+          <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[
+              {label:'Registered Industries', value:500, suffix:'+', icon:'factory'},
+              {label:'Credits Issued', value:100000, suffix:'+', icon:'token'},
+              {label:'CO₂ Reduced (T)', value:2500000, suffix:'', icon:'co2'},
+              {label:'Verified Auditors', value:50, suffix:'+', icon:'verified'},
+            ].map(s => (
+              <div key={s.label} className="bg-white p-6 border border-border-subtle hover:border-primary/30 transition-colors">
+                <p className="text-xs font-bold uppercase tracking-widest text-text-muted mb-2">{s.label}</p>
+                <p className="font-display font-bold text-primary" style={{fontSize:'2.5rem', lineHeight:1}}>
+                  <AnimatedCounter end={s.value} suffix={s.suffix} />
+                </p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* ═══ SYSTEM CAPABILITIES ═══ */}
+        <section id="features" className="bg-white py-24 px-6">
+          <div className="max-w-7xl mx-auto">
+            <div className="mb-16">
+              <span className="text-xs font-bold uppercase tracking-widest text-text-muted">Platform Features</span>
+              <h2 className="font-display font-bold text-5xl text-text-main mt-2 uppercase">SYSTEM CAPABILITIES</h2>
+              <div className="w-16 h-1 bg-primary mt-4" />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {features.map((f, i) => (
+                <div key={f.title} className={`bg-white p-8 border border-border-subtle border-l-4 hover:shadow-md transition-shadow ${
+                  i % 3 === 0 ? 'border-l-primary' : i % 3 === 1 ? 'border-l-emerald-500' : 'border-l-amber-500'
+                }`}>
+                  <div className="flex justify-between items-start mb-4">
+                    <span className={`material-symbols-outlined text-4xl ${f.iconColor}`}>{f.icon}</span>
+                    <span className={`text-[10px] px-2 py-1 font-bold uppercase tracking-widest ${f.badgeColor}`}>{f.badge}</span>
+                  </div>
+                  <h3 className="font-display font-bold text-xl text-text-main mb-2">{f.title}</h3>
+                  <p className="text-text-muted text-sm leading-relaxed">{f.description}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ═══ GOVERNANCE & LIFECYCLE ═══ */}
+        <section id="workflow" className="bg-gray-50 py-24 px-6 border-y border-border-subtle">
+          <div className="max-w-7xl mx-auto">
+            <div className="flex flex-col items-center text-center mb-16">
+              <span className="text-xs font-bold uppercase tracking-widest text-text-main px-4 py-1 border border-text-main mb-4">14-STEP WORKFLOW</span>
+              <h2 className="font-display font-bold text-5xl text-text-main uppercase">GOVERNANCE & LIFECYCLE</h2>
+            </div>
+            <div className="space-y-4">
+              {workflowPhases.map((phase, i) => (
+                <div key={phase.phase} className="bg-white p-8 border border-border-subtle border-l-4 border-l-primary grid md:grid-cols-[100px_1fr] gap-8 items-start">
+                  <span className="font-display font-bold text-primary/10 select-none" style={{fontSize:'5rem', lineHeight:1}}>0{i+1}</span>
+                  <div>
+                    <h4 className="font-display font-bold text-xl text-text-main mb-3 uppercase">{phase.title}</h4>
+                    <ul className="space-y-1.5">
+                      {phase.steps.map((step, j) => (
+                        <li key={j} className="flex items-start gap-2 text-sm text-text-muted">
+                          <span className="material-symbols-outlined text-primary text-base flex-shrink-0 mt-0.5">arrow_right</span>{step}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="text-center mt-10">
+              <Link to="/how-it-works" className="btn-secondary h-12 px-8 text-sm inline-flex">
+                <span className="material-symbols-outlined text-base">info</span>See Full Workflow with AI Gate Details
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        {/* ═══ MAKING CARBON MARKETS TRUSTWORTHY ═══ */}
+        <section className="bg-white py-24 px-6">
+          <div className="max-w-7xl mx-auto">
+            <h2 className="font-display font-bold text-5xl text-text-main mb-12">
+              MAKING CARBON MARKETS <span className="text-primary">TRUSTWORTHY.</span>
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+              {[
+                {icon:'auto_awesome', label:'AI-Verified', sub:'Non-human bias in data auditing.'},
+                {icon:'lock', label:'Immutable', sub:'Permanent record of all actions.'},
+                {icon:'hub', label:'Trustless', sub:'Decentralized ledger technology.'},
+                {icon:'history', label:'Traceability', sub:'Deep lineage for every credit.'},
+              ].map(m => (
+                <div key={m.label} className="space-y-3">
+                  <span className="material-symbols-outlined text-primary text-3xl">{m.icon}</span>
+                  <h4 className="font-bold text-text-main uppercase tracking-wide text-xs">{m.label}</h4>
+                  <p className="text-text-muted text-sm leading-relaxed">{m.sub}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ═══ LIVE LEDGER (dark section) ═══ */}
+        <section className="py-24 px-6" style={{background:'#071022'}}>
+          <div className="max-w-7xl mx-auto border border-primary/30 p-8">
+            <div className="flex justify-between items-center mb-8 border-b border-primary/20 pb-4">
+              <div className="flex items-center gap-4">
+                <h2 className="text-xl tracking-widest text-primary" style={{fontFamily:'JetBrains Mono, monospace'}}>LIVE LEDGER</h2>
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+                  <span className="text-[10px] text-primary/60 uppercase tracking-widest" style={{fontFamily:'JetBrains Mono, monospace'}}>Node Connected</span>
+                </div>
+              </div>
+              <span className="text-[10px] text-gray-500" style={{fontFamily:'JetBrains Mono, monospace'}}>BLOCK: #14,899,201</span>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm border-collapse" style={{fontFamily:'JetBrains Mono, monospace'}}>
+                <thead className="text-xs tracking-widest border-b border-primary/20" style={{color:'rgba(26,122,74,0.6)'}}>
+                  <tr>
+                    <th className="py-3 px-2 font-normal">TX HASH</th>
+                    <th className="py-3 px-2 font-normal">TYPE</th>
+                    <th className="py-3 px-2 font-normal text-right">AMOUNT</th>
+                    <th className="py-3 px-2 font-normal text-right">TIME</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y" style={{borderColor:'rgba(26,122,74,0.1)'}}>
+                  {liveTxns.map((tx, i) => (
+                    <tr key={i} className="hover:bg-primary/5 transition-colors">
+                      <td className="py-3 px-2 text-primary font-medium">{tx.hash}</td>
+                      <td className="py-3 px-2">
+                        <span className={`px-2 py-0.5 border text-[10px] tracking-widest ${
+                          tx.type==='MINT' ? 'border-green-500 text-green-400 bg-green-500/10' :
+                          tx.type==='RETIRE' ? 'border-amber-500 text-amber-400 bg-amber-500/10' :
+                          'border-blue-500 text-blue-400 bg-blue-500/10'
+                        }`}>{tx.type}</span>
+                      </td>
+                      <td className={`py-3 px-2 text-right font-bold ${tx.color}`}>{tx.amount}</td>
+                      <td className="py-3 px-2 text-right text-xs text-gray-500">{tx.time}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="mt-6 pt-4 border-t border-primary/20 flex justify-between items-center">
+              <span className="text-xs text-gray-500" style={{fontFamily:'JetBrains Mono, monospace'}}>Updated every block (~2s)</span>
+              <Link to="/public/dashboard?tab=market" className="btn-primary text-xs h-8 px-4">
+                Explore Explorer<span className="material-symbols-outlined text-xs">arrow_forward</span>
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        {/* ═══ WHY BLOCKCHAIN ═══ */}
+        <section className="bg-white py-24 px-6">
+          <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-16">
+            <div>
+              <h2 className="font-display font-bold text-5xl text-text-main mb-6 uppercase">WHY THE BLOCKCHAIN LAYER?</h2>
+              <p className="text-text-muted leading-relaxed">
+                Legacy systems rely on siloed databases and opaque manual verification. EcoChain replaces trust with cryptographic certainty — every emission record, audit report, and credit trade permanently secured on Polygon.
               </p>
             </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {techLayers.map((layer, i) => (
-                <div key={layer.layer} className="relative flex flex-col">
-                  {/* Connector arrow */}
-                  {i < techLayers.length - 1 && (
-                    <div className="absolute -right-3 top-12 w-6 h-6 bg-white border border-border-subtle rounded-full items-center justify-center z-10 hidden lg:flex shadow-sm">
-                      <span className="material-symbols-outlined text-text-muted text-sm">arrow_forward</span>
-                    </div>
-                  )}
-                  <div className="bg-white rounded-2xl border border-border-subtle shadow-sm p-6 card-hover-lift flex flex-col gap-4 h-full">
-                    <div className={`w-12 h-12 ${layer.color} rounded-2xl flex items-center justify-center`}>
-                      <span className="material-symbols-outlined text-2xl">{layer.icon}</span>
-                    </div>
-                    <div>
-                      <div className="text-xs font-bold text-text-muted uppercase tracking-wider mb-1">Layer {i + 1}</div>
-                      <h3 className="font-bold text-lg font-display text-text-main">{layer.layer}</h3>
-                      <p className="text-sm text-text-muted font-mono">{layer.tech}</p>
-                    </div>
-                    <div className="flex-1">
-                      {layer.items.map(item => (
-                        <div key={item} className="flex items-center gap-2 py-1.5 border-b border-gray-50 last:border-0">
-                          <span className="material-symbols-outlined text-primary text-sm">check</span>
-                          <span className="text-xs text-text-muted">{item}</span>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="text-xs font-bold text-text-muted bg-gray-50 rounded-lg px-3 py-2 flex items-center gap-1.5">
-                      <span className="material-symbols-outlined text-sm">cloud</span>
-                      {layer.host} — Free Tier
-                    </div>
+            <div className="space-y-5">
+              {[
+                {icon:'lock', title:'Immutable Record', desc:'AuditRegistry.sol stores every verified report on Polygon. Once confirmed, data cannot be altered.'},
+                {icon:'do_not_touch', title:'No Double Counting', desc:'ERC-20 token burning via CreditRetirement.sol permanently removes credits — zero double spend.'},
+                {icon:'smart_toy', title:'Smart Contract Automation', desc:'CarbonMarketplace.sol executes trustless trades with zero intermediaries.'},
+                {icon:'public', title:'Public Verifiability', desc:'Anyone can verify any transaction on Polygonscan — no account required.'},
+              ].map(li => (
+                <div key={li.title} className="flex gap-4 items-start border-b border-border-subtle pb-4">
+                  <span className="material-symbols-outlined text-primary mt-1 flex-shrink-0">{li.icon}</span>
+                  <div>
+                    <h4 className="font-bold text-text-main text-sm">{li.title}</h4>
+                    <p className="text-sm text-text-muted mt-0.5 leading-snug">{li.desc}</p>
                   </div>
                 </div>
               ))}
@@ -667,77 +520,71 @@ function LandingPage() {
           </div>
         </section>
 
-        {/* ═══════════════════════════════════════════════
-            ROLE PORTAL CARDS
-        ═══════════════════════════════════════════════ */}
-        <section className="relative z-10 py-24 max-w-7xl mx-auto px-6">
-          <div className="text-center mb-16">
-            <div className="section-label w-fit mx-auto mb-4">Role-Based Portals</div>
-            <h2 className="font-display font-bold text-4xl lg:text-5xl text-text-main mb-4">YOUR PORTAL AWAITS</h2>
-            <p className="text-text-muted max-w-2xl mx-auto text-lg">
-              6 portals, 33 screens — each role gets a purpose-built workspace with tailored features and data.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {portals.map(p => (
-              <Link key={p.role} to={p.href} className={`group block bg-white rounded-2xl border border-border-subtle ${p.hoverBorder} shadow-sm card-hover-lift overflow-hidden transition-all`}>
-                <div className={`${p.color} p-6`}>
-                  <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center mb-4">
-                    <span className="material-symbols-outlined text-white text-2xl">{p.icon}</span>
-                  </div>
-                  <h3 className="text-white font-bold text-xl font-display">{p.role} Portal</h3>
-                  <p className="text-white/70 text-sm">Login to begin →</p>
-                </div>
-                <div className="p-5">
-                  <ul className="space-y-2.5">
-                    {p.features.map(f => (
-                      <li key={f} className="flex items-start gap-2 text-sm text-text-muted">
-                        <span className="material-symbols-outlined text-primary text-base flex-shrink-0 mt-0.5">check_circle</span>
-                        {f}
-                      </li>
+        {/* ═══ ARCHITECTURE STACK ═══ */}
+        <section id="architecture" className="bg-gray-50 py-24 px-6 border-y border-border-subtle">
+          <div className="max-w-7xl mx-auto">
+            <div className="text-center mb-16">
+              <span className="text-xs font-bold uppercase tracking-widest text-text-muted">System Architecture</span>
+              <h2 className="font-display font-bold text-5xl text-text-main mt-2 mb-4 uppercase">ARCHITECTURE STACK</h2>
+              <p className="text-text-muted max-w-2xl mx-auto">A robust, tiered environment built for scale. Four independent service layers — all deployable at $0 using free tiers.</p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {techLayers.map((layer, i) => (
+                <div key={layer.layer} className="bg-white border border-border-subtle p-5 space-y-4 hover:border-primary/30 transition-colors">
+                  <p className="text-xs font-bold uppercase tracking-widest text-text-main border-b border-border-subtle pb-2">
+                    0{i+1} {layer.layer.toUpperCase()}
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {layer.items.map(item => (
+                      <span key={item} className="px-2 py-1 bg-gray-50 text-[10px] text-text-muted border border-border-subtle"
+                        style={{fontFamily:'JetBrains Mono, monospace'}}>{item}</span>
                     ))}
-                  </ul>
+                  </div>
+                  <span className="block text-xs text-primary font-bold">● PRODUCTION READY</span>
                 </div>
-              </Link>
-            ))}
+              ))}
+            </div>
           </div>
         </section>
 
-        {/* ═══════════════════════════════════════════════
-            CTA SECTION
-        ═══════════════════════════════════════════════ */}
-        <section className="relative z-10 bg-white border-t border-border-subtle py-24 px-6">
+        {/* ═══ INTEGRATED PORTALS ═══ */}
+        <section id="portals" className="bg-white py-24 px-6">
+          <div className="max-w-7xl mx-auto">
+            <h2 className="font-display font-bold text-5xl text-text-main mb-4 text-center uppercase">INTEGRATED PORTALS</h2>
+            <p className="text-text-muted text-center mb-12">6 portals, 33 screens — each role gets a purpose-built workspace with tailored features and data.</p>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              {portals.map(p => (
+                <Link key={p.role} to={p.href}
+                  className="p-8 border border-border-subtle hover:bg-gray-50 hover:border-primary/30 transition-all flex flex-col items-center text-center group">
+                  <span className="material-symbols-outlined text-4xl mb-4 text-text-muted group-hover:text-primary transition-colors">{p.icon}</span>
+                  <h4 className="font-bold text-text-main group-hover:text-primary transition-colors">{p.role}</h4>
+                  <p className="text-xs text-text-muted mt-1">Portal →</p>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ═══ CTA ═══ */}
+        <section className="bg-gray-50 py-24 px-6 border-t border-border-subtle">
           <div className="max-w-4xl mx-auto text-center flex flex-col items-center gap-8">
-            <div className="w-16 h-16 bg-primary/10 rounded-3xl flex items-center justify-center">
-              <span className="material-symbols-outlined text-primary text-3xl">eco</span>
-            </div>
-            <h2 className="font-display font-bold text-4xl lg:text-6xl text-text-main">
-              READY TO MAKE AN IMPACT?
-            </h2>
-            <p className="text-text-muted text-xl max-w-2xl">
-              Join industries, auditors, and governments building the transparent carbon market of the future — at zero cost.
-            </p>
+            <span className="material-symbols-outlined text-primary text-6xl">eco</span>
+            <h2 className="font-display font-bold text-5xl text-text-main uppercase">READY TO MAKE AN IMPACT?</h2>
+            <p className="text-text-muted text-lg max-w-2xl">Join the sovereign ecosystem for institutional carbon trading. Free forever · No credit card required.</p>
             <div className="flex flex-wrap gap-4 justify-center">
-              <Link to="/register" className="btn-primary h-14 px-10 text-base">
-                Register Your Organization
-                <span className="material-symbols-outlined">arrow_forward</span>
+              <Link to="/register" className="btn-primary h-14 px-10 text-sm">
+                Register Organization<span className="material-symbols-outlined">arrow_forward</span>
               </Link>
-              <Link to="/public/dashboard" className="btn-secondary h-14 px-10 text-base">
-                <span className="material-symbols-outlined">public</span>
-                Explore Public Dashboard
+              <Link to="/public/dashboard" className="btn-secondary h-14 px-10 text-sm">
+                <span className="material-symbols-outlined">public</span>Explore Public Dashboard
               </Link>
             </div>
-            <p className="text-sm text-text-muted">Free forever · No credit card required · Deploy in minutes</p>
           </div>
         </section>
 
-        {/* ═══════════════════════════════════════════════
-            FOOTER
-        ═══════════════════════════════════════════════ */}
+        {/* ═══ FOOTER ═══ */}
         <footer className="border-t border-border-subtle bg-gray-50 pt-16 pb-8 px-6">
           <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-5 gap-10 mb-12">
-            {/* Brand */}
             <div className="col-span-2 md:col-span-1">
               <div className="flex items-center gap-2.5 mb-4">
                 <div className="w-8 h-8 bg-primary rounded-xl flex items-center justify-center">
@@ -745,59 +592,38 @@ function LandingPage() {
                 </div>
                 <span className="font-display font-bold text-text-main">ECOCHAIN</span>
               </div>
-              <p className="text-xs text-text-muted leading-relaxed">
-                Blockchain-Powered AI-Verified Carbon Emission Monitoring & Trading Platform.
-              </p>
+              <p className="text-xs text-text-muted leading-relaxed">Blockchain-Powered AI-Verified Carbon Emission Monitoring & Trading Platform.</p>
               <p className="text-xs text-text-muted mt-4">© 2026 EcoChain Protocol</p>
             </div>
-
             <div className="flex flex-col gap-2 text-sm">
               <span className="font-bold text-text-main mb-2">Platform</span>
-              {[
-                { label: 'Public Dashboard', to: '/public/dashboard' },
-                { label: 'Carbon Market', to: '/public/market' },
-                { label: 'Emission Map', to: '/public/map' },
-                { label: 'Policies', to: '/public/policies' },
-              ].map(l => (
+              {[{label:'Dashboard', to:'/public/dashboard'},{label:'Policies & Reports', to:'/public/policies'}].map(l => (
                 <Link key={l.to} className="text-text-muted hover:text-primary transition-colors" to={l.to}>{l.label}</Link>
               ))}
             </div>
-
             <div className="flex flex-col gap-2 text-sm">
               <span className="font-bold text-text-main mb-2">Learn</span>
-              {[
-                { label: 'How It Works', to: '/how-it-works' },
-                { label: 'Contact Us', to: '/contact' },
-                { label: 'Register', to: '/register' },
-              ].map(l => (
+              {[{label:'How It Works', to:'/how-it-works'},{label:'Register', to:'/register'}].map(l => (
                 <Link key={l.to} className="text-text-muted hover:text-primary transition-colors" to={l.to}>{l.label}</Link>
               ))}
             </div>
-
             <div className="flex flex-col gap-2 text-sm">
               <span className="font-bold text-text-main mb-2">Portals</span>
-              {[
-                { label: 'Industry Login', to: '/login' },
-                { label: 'Auditor Login', to: '/login' },
-                { label: 'Government Login', to: '/login' },
-                { label: 'Admin Login', to: '/login' },
-              ].map(l => (
+              {[{label:'Industry Login', to:'/login'},{label:'Auditor Login', to:'/login'},{label:'Government Login', to:'/login'},{label:'Admin Login', to:'/login'}].map(l => (
                 <Link key={l.label} className="text-text-muted hover:text-primary transition-colors" to={l.to}>{l.label}</Link>
               ))}
             </div>
-
             <div className="flex flex-col gap-2 text-sm">
               <span className="font-bold text-text-main mb-2">Compliance</span>
-              {['GHG Protocol', 'ISO 14064', 'IPCC Factors', 'ERC-20 Standard', 'GDPR', 'OWASP Top 10'].map(l => (
+              {['GHG Protocol','ISO 14064','IPCC Factors','ERC-20 Standard','GDPR','OWASP Top 10'].map(l => (
                 <span key={l} className="text-text-muted">{l}</span>
               ))}
             </div>
           </div>
-
           <div className="max-w-7xl mx-auto border-t border-border-subtle pt-8 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-text-muted">
-            <div className="flex flex-wrap gap-4">
-              <span className="flex items-center gap-1"><span className="material-symbols-outlined text-primary text-sm">eco</span> MERN + Python FastAPI + Solidity/Foundry + Polygon</span>
-            </div>
+            <span className="flex items-center gap-1">
+              <span className="material-symbols-outlined text-primary text-sm">eco</span>MERN + Python FastAPI + Solidity/Foundry + Polygon
+            </span>
             <div className="flex gap-4">
               <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" /> Mainnet Live</span>
               <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-500 inline-block" /> API Online</span>
@@ -809,6 +635,8 @@ function LandingPage() {
     </>
   );
 }
+
+
 export default function App() {
   return (
     <Router>
@@ -833,18 +661,23 @@ export default function App() {
           <Route path="/industry/tracker" element={<ProtectedRoute allowedRoles={['industry']}><SubmissionTracker /></ProtectedRoute>} />
           <Route path="/industry/notifications" element={<ProtectedRoute allowedRoles={['industry']}><IndustryNotifications /></ProtectedRoute>} />
           <Route path="/industry/reports" element={<ProtectedRoute allowedRoles={['industry']}><IndustryReports /></ProtectedRoute>} />
+          <Route path="/industry/compliance" element={<ProtectedRoute allowedRoles={['industry']}><IndustryCompliance /></ProtectedRoute>} />
+          <Route path="/industry/profile" element={<ProtectedRoute allowedRoles={['industry']}><IndustryProfile /></ProtectedRoute>} />
 
           {/* Government Routes */}
           <Route path="/gov/dashboard" element={<ProtectedRoute allowedRoles={['government']}><GovDashboard /></ProtectedRoute>} />
+          <Route path="/gov/verification" element={<ProtectedRoute allowedRoles={['government']}><GovVerification /></ProtectedRoute>} />
           <Route path="/gov/reports" element={<ProtectedRoute allowedRoles={['government']}><ReportReview /></ProtectedRoute>} />
           <Route path="/gov/issue-credits" element={<ProtectedRoute allowedRoles={['government']}><IssueCredits /></ProtectedRoute>} />
+          <Route path="/gov/registry" element={<ProtectedRoute allowedRoles={['government']}><GovRegistry /></ProtectedRoute>} />
           <Route path="/gov/compliance" element={<ProtectedRoute allowedRoles={['government']}><ComplianceMonitor /></ProtectedRoute>} />
-          <Route path="/gov/monitoring" element={<ProtectedRoute allowedRoles={['government']}><GovMonitoring /></ProtectedRoute>} />
-          <Route path="/gov/analytics" element={<ProtectedRoute allowedRoles={['government']}><GovAnalytics /></ProtectedRoute>} />
+          <Route path="/gov/monitoring" element={<ProtectedRoute allowedRoles={['government']}><GovIndustriesAnalytics /></ProtectedRoute>} />
+          <Route path="/gov/analytics" element={<ProtectedRoute allowedRoles={['government']}><GovIndustriesAnalytics /></ProtectedRoute>} />
           <Route path="/gov/blockchain" element={<ProtectedRoute allowedRoles={['government']}><GovBlockchain /></ProtectedRoute>} />
           <Route path="/gov/notifications" element={<ProtectedRoute allowedRoles={['government']}><GovNotifications /></ProtectedRoute>} />
           <Route path="/gov/ai-verifier" element={<ProtectedRoute allowedRoles={['government']}><GovAIVerifier /></ProtectedRoute>} />
           <Route path="/gov/assignment" element={<ProtectedRoute allowedRoles={['government']}><GovAuditorAssignment /></ProtectedRoute>} />
+          <Route path="/gov/profile" element={<ProtectedRoute allowedRoles={['government']}><GovProfile /></ProtectedRoute>} />
 
           {/* Auditor Routes */}
           <Route path="/auditor/dashboard" element={<ProtectedRoute allowedRoles={['auditor']}><AuditorDashboard /></ProtectedRoute>} />
@@ -852,6 +685,7 @@ export default function App() {
           <Route path="/auditor/verify/:id" element={<ProtectedRoute allowedRoles={['auditor']}><VerifySubmit /></ProtectedRoute>} />
           <Route path="/auditor/blockchain" element={<ProtectedRoute allowedRoles={['auditor']}><AuditorBlockchain /></ProtectedRoute>} />
           <Route path="/auditor/history" element={<ProtectedRoute allowedRoles={['auditor']}><AuditorHistory /></ProtectedRoute>} />
+          <Route path="/auditor/profile" element={<ProtectedRoute allowedRoles={['auditor']}><AuditorProfile /></ProtectedRoute>} />
 
           {/* Admin Routes */}
           <Route path="/admin/dashboard" element={<ProtectedRoute allowedRoles={['admin']}><AdminDashboard /></ProtectedRoute>} />
@@ -860,6 +694,7 @@ export default function App() {
           <Route path="/admin/logs" element={<ProtectedRoute allowedRoles={['admin']}><AdminLogs /></ProtectedRoute>} />
           <Route path="/admin/content" element={<ProtectedRoute allowedRoles={['admin']}><AdminContent /></ProtectedRoute>} />
           <Route path="/admin/settings" element={<ProtectedRoute allowedRoles={['admin']}><AdminSettings /></ProtectedRoute>} />
+          <Route path="/admin/profile" element={<ProtectedRoute allowedRoles={['admin']}><AdminProfile /></ProtectedRoute>} />
         </Route>
 
         {/* Industry Onboarding */}
@@ -882,11 +717,11 @@ export default function App() {
         {/* Public Routes */}
         <Route path="/transparency" element={<TransparencyDashboard />} />
         <Route path="/how-it-works" element={<HowItWorks />} />
-        <Route path="/contact" element={<Contact />} />
+        <Route path="/contact" element={<Navigate to="/how-it-works?tab=contact" replace />} />
         <Route path="/register" element={<Register />} />
         <Route path="/public/dashboard" element={<PublicDashboard />} />
-        <Route path="/public/map" element={<EmissionMap />} />
-        <Route path="/public/market" element={<CarbonMarket />} />
+        <Route path="/public/map" element={<Navigate to="/public/dashboard" replace />} />
+        <Route path="/public/market" element={<Navigate to="/public/dashboard" replace />} />
         <Route path="/public/policies" element={<PoliciesReports />} />
 
         {/* Catch-all 404 Route */}

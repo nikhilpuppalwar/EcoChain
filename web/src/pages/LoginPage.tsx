@@ -6,6 +6,8 @@ import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import toast from 'react-hot-toast';
 import api from '../lib/api';
+import ecochainIconWhite from '../assets/ecochain_icon_white.png';
+import ecochainIconDark from '../assets/ecochain_icon_dark.png';
 
 export default function LoginPage() {
     const navigate = useNavigate();
@@ -98,8 +100,8 @@ export default function LoginPage() {
 
                     {/* Logo Section */}
                     <div className="relative z-10 flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/10 backdrop-blur-sm">
-                            <Leaf className="text-white w-6 h-6" />
+                        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white shadow-sm overflow-hidden">
+                            <img src={ecochainIconWhite} alt="EcoChain Logo" className="w-full h-full rounded-xl object-contain" />
                         </div>
                         <h1 className="text-2xl font-bold tracking-tight">EcoChain</h1>
                     </div>
@@ -138,7 +140,9 @@ export default function LoginPage() {
 
                         {/* Mobile Logo */}
                         <div className="lg:hidden flex items-center gap-2 mb-4 self-center text-primary">
-                            <Leaf className="text-primary w-8 h-8" />
+                            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+                                <img src={ecochainIconWhite} alt="EcoChain Logo" className="w-full h-full rounded-xl object-contain" />
+                            </div>
                             <span className="text-xl font-bold text-slate-900 dark:text-white">EcoChain</span>
                         </div>
 
@@ -179,10 +183,10 @@ export default function LoginPage() {
                                         type="button"
                                         onClick={() => handleRoleChange(r.value)}
                                         className={`flex-1 flex flex-col items-center justify-center py-2.5 px-1 rounded-lg text-xs font-bold transition-all gap-1 ${role === r.value
-                                                ? r.value === 'admin'
-                                                    ? 'bg-slate-800 text-white shadow-sm'
-                                                    : 'bg-white dark:bg-slate-700 text-primary shadow-sm'
-                                                : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
+                                            ? r.value === 'admin'
+                                                ? 'bg-slate-800 text-white shadow-sm'
+                                                : 'bg-white dark:bg-slate-700 text-primary shadow-sm'
+                                            : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
                                             }`}
                                     >
                                         <span className="material-symbols-outlined text-base leading-none">{r.icon}</span>
@@ -260,6 +264,74 @@ export default function LoginPage() {
                                         </svg>
                                     ) : "Sign In"}
                                 </button>
+
+                                {/* DEV LOGIN SHORTCUTS */}
+                                <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
+                                    <p className="text-xs text-center text-slate-500 font-bold mb-3 uppercase tracking-wider">Developer Fast Login</p>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={async (e) => {
+                                                e.preventDefault();
+                                                setIsLoading(true);
+                                                try {
+                                                    await login({ email: 'dev@industry', password: 'devpass', role: 'industry' });
+                                                    navigate('/industry/dashboard');
+                                                } catch (err) { toast.error('Fast login failed'); }
+                                                setIsLoading(false);
+                                            }}
+                                            className="bg-emerald-100 hover:bg-emerald-200 text-emerald-700 py-2 rounded-lg text-xs font-bold transition-colors"
+                                        >
+                                            Industry Demo
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={async (e) => {
+                                                e.preventDefault();
+                                                setIsLoading(true);
+                                                try {
+                                                    await login({ email: 'dev@gov', password: 'devpass', role: 'government' });
+                                                    navigate('/gov/dashboard');
+                                                } catch (err) { toast.error('Fast login failed'); }
+                                                setIsLoading(false);
+                                            }}
+                                            className="bg-violet-100 hover:bg-violet-200 text-violet-700 py-2 rounded-lg text-xs font-bold transition-colors"
+                                        >
+                                            Gov Demo
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={async (e) => {
+                                                e.preventDefault();
+                                                setIsLoading(true);
+                                                try {
+                                                    await login({ email: 'dev@auditor', password: 'devpass', role: 'auditor' });
+                                                    navigate('/auditor/dashboard');
+                                                } catch (err) { toast.error('Fast login failed'); }
+                                                setIsLoading(false);
+                                            }}
+                                            className="bg-blue-100 hover:bg-blue-200 text-blue-700 py-2 rounded-lg text-xs font-bold transition-colors"
+                                        >
+                                            Auditor 1
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={async (e) => {
+                                                e.preventDefault();
+                                                setIsLoading(true);
+                                                try {
+                                                    await login({ email: 'secondary@auditor', password: 'devpass', role: 'auditor' });
+                                                    navigate('/auditor/dashboard');
+                                                } catch (err) { toast.error('Fast login failed'); }
+                                                setIsLoading(false);
+                                            }}
+                                            className="bg-purple-100 hover:bg-purple-200 text-purple-700 py-2 rounded-lg text-xs font-bold transition-colors"
+                                        >
+                                            Auditor 2
+                                        </button>
+                                    </div>
+                                </div>
+
                             </form>
                         </div>
 
