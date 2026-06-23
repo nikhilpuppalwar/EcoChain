@@ -48,11 +48,11 @@ export const useAuthStore = create(
                 try {
                     await api.post('/auth/logout');
                 } catch (e) {
-                    // Ignored on client side
+                    // Ignored on client side — always clear state and redirect
                 } finally {
                     set({ user: null, accessToken: null, isAuthenticated: false });
-                    // Optional: redirect to login
-                    window.location.href = '/login';
+                    // Use replace() so the logged-out page isn't in browser history
+                    window.location.replace('/login');
                 }
             },
 
