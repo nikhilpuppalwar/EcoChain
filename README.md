@@ -476,28 +476,93 @@ python -m uvicorn main:app --reload --port 8000
 
 ## Deployment
 
-| Service | Platform | Trigger |
-|---|---|---|
-| React Frontend | Vercel | Git push to `main` → auto-deploy |
-| Express Backend | Render.com | Git push to `main` → auto-deploy |
-| Python AI Service | Render.com | Git push to `main` → auto-deploy |
-| MongoDB | MongoDB Atlas | Always on (cloud) |
-| Redis Cache | Upstash | Always on (serverless) |
-| File Storage | Cloudinary | Always on (cloud) |
-| Blockchain (Dev) | Polygon Mumbai | `forge script` deploy |
-| Blockchain (Prod) | Polygon Mainnet | `forge script` deploy |
-| IPFS Files | Web3.Storage | On-demand upload |
-| Error Tracking | Sentry | Auto (SDK integrated) |
-| Uptime Monitor | UptimeRobot | Always on |
+EcoChain is designed for deployment on free-tier platforms. Push your monorepo directly to GitHub and use the configurations below.
 
-### CI/CD (GitHub Actions)
+### 🌐 Deployment Map & Platform Targets
+| Component | Subdirectory | Hosting Platform | Build Command | Start Command / Output |
+| :--- | :--- | :--- | :--- | :--- |
+| **Vite Frontend** | `/web` | **Vercel** | `npm run build` | Target: `dist` |
+| **Node.js Backend** | `/backend` | **Render** (or Railway) | `npm install` | `npm start` |
+| **AI Anomaly Service** | `/ai` | **Render** | `pip install -r requirements.txt` | `uvicorn main:app --host 0.0.0.0 --port $PORT` |
+| **AI Report Generator** | `/ai/Report_Generator` | **Render** | `pip install -r requirements.txt` | `uvicorn backend.api:app --host 0.0.0.0 --port $PORT` |
 
-```
-.github/workflows/
-├── deploy-client.yml    # Vercel deploy on push to main
-├── deploy-server.yml    # Render backend deploy on push to main
-└── deploy-ai.yml        # Render AI service deploy on push to main
-```
+---
+
+### 1. 🗄️ Database Setup (MongoDB Atlas)
+1. Register a free account at [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) and create an **M0 Shared Free Tier** Cluster.
+2. In database access settings, create a user with a secure password.
+3. In network access settings, add IP Address **0.0.0.0/0** (allows connection from cloud platforms like Render).
+4. Copy the connection string (e.g. `mongodb+srv://<username>:<password>@cluster0.mongodb.net/ecochain`).
+
+---
+
+### 2. 🤖 Deploy AI Anomaly Service (FastAPI)
+1. Go to [Render](https://render.com/) and create a new **Web Service**.
+2. Connect your GitHub repository.
+3. Set the following parameters:
+   * **Name**: `ecochain-ai-anomaly`
+   * **Language**: `Python 3`
+   * **Root Directory**: `ai`
+   * **Build Command**: `pip install -r requirements.txt`
+   * **Start Command**: `uvicorn main:app --host 0.0.0.0 --port $PORT`
+4. Click **Deploy Web Service** and copy the generated URL (e.g., `https://ecochain-ai-anomaly.onrender.com`).
+
+---
+
+### 3. 📄 Deploy AI Report Generator (FastAPI)
+1. Go to [Render](https://render.com/) and create a new **Web Service**.
+2. Connect your GitHub repository.
+3. Set the following parameters:
+   * **Name**: `ecochain-ai-reports`
+   * **Language**: `Python 3`
+   * **Root Directory**: `ai/Report_Generator`
+   * **Build Command**: `pip install -r requirements.txt`
+   * **Start Command**: `uvicorn backend.api:app --host 0.0.0.0 --port $PORT`
+4. Set the **Environment Variables**:
+   * Add `OPENROUTER_API_KEY` = `your_openrouter_api_key` (if using Llama-3.1 via OpenRouter. Otherwise, leaves empty to fallback to built-in templates).
+5. Click **Deploy Web Service** and copy the generated URL (e.g., `https://ecochain-ai-reports.onrender.com`).
+
+---
+
+### 4. ⚡ Deploy Node.js Express Backend
+1. Go to [Render](https://render.com/) and create a new **Web Service**.
+2. Connect your GitHub repository.
+3. Set the following parameters:
+   * **Name**: `ecochain-backend`
+   * **Language**: `Node`
+   * **Root Directory**: `backend`
+   * **Build Command**: `npm install`
+   * **Start Command**: `npm start`
+4. In the **Environment Variables** tab, add the following configuration:
+   * `NODE_ENV` = `production`
+   * `PORT` = `10000`
+   * `MONGODB_URI` = `your_mongodb_atlas_connection_string`
+   * `JWT_SECRET` = `your_secure_jwt_secret`
+   * `JWT_REFRESH_SECRET` = `your_secure_refresh_token_secret`
+   * `HACKATHON_MODE` = `true`
+   * `RPC_URL` = `https://eth-sepolia.g.alchemy.com/v2/zaQqZ5FkpkbS9x00cVjzV`
+   * `GOV_PRIVATE_KEY` = `your_deployer_wallet_private_key` (Needs DEFAULT_ADMIN_ROLE to issue credits)
+   * `CARBON_CREDIT_ADDRESS` = `0x...` (Auto-injected during Sepolia contract deploy)
+   * `AUDIT_REGISTRY_ADDRESS` = `0x...` (Auto-injected during Sepolia contract deploy)
+   * `CARBON_MARKETPLACE_ADDRESS` = `0x...` (Auto-injected during Sepolia contract deploy)
+   * `CREDIT_RETIREMENT_ADDRESS` = `0x...` (Auto-injected during Sepolia contract deploy)
+   * `AI_SERVICE_URL` = `https://ecochain-ai-anomaly.onrender.com`
+   * `PYTHON_REPORT_API_URL` = `https://ecochain-ai-reports.onrender.com/generate-report`
+5. Click **Deploy Web Service** and copy the generated backend URL (e.g., `https://ecochain-backend.onrender.com`).
+
+---
+
+### 5. 🎨 Deploy Vite React Frontend
+1. Go to [Vercel](https://vercel.com) and create a new Project.
+2. Import your GitHub repository.
+3. Set the following parameters:
+   * **Framework Preset**: `Vite`
+   * **Root Directory**: `web`
+   * **Build Command**: `npm run build`
+   * **Output Directory**: `dist`
+4. In **Environment Variables**, add:
+   * `VITE_API_URL` = `https://ecochain-backend.onrender.com/api`
+5. Click **Deploy**. Your EcoChain platform is now live!
 
 ---
 
