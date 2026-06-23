@@ -127,13 +127,26 @@ const ReportReview = require('../models/ReportReview');
 exports.getAssignedSubmission = async (req, res, next) => {
     try {
         const submissionId = req.params.id;
-        const submission = await EmissionEntry.findOne({
-            _id: submissionId,
-            assignedAuditors: req.user._id
-        }).populate('company');
+        const hackathonMode = process.env.HACKATHON_MODE === 'true';
+
+        // Build query — in hackathon mode allow any auditor to open any submission
+        // for demo purposes (submissions may not have been formally assigned via gov portal)
+        const query = hackathonMode
+            ? { _id: submissionId }
+            : { _id: submissionId, assignedAuditors: req.user._id };
+
+        const submission = await EmissionEntry.findOne(query).populate('company');
 
         if (!submission) {
             return res.status(404).json({ success: false, message: 'Submission not found or not assigned to you' });
+        }
+
+        // In production mode, also check via .toString() to avoid ObjectId vs String mismatch
+        if (!hackathonMode) {
+            const assignedIds = (submission.assignedAuditors || []).map(id => id.toString());
+            if (!assignedIds.includes(req.user._id.toString())) {
+                return res.status(403).json({ success: false, message: 'You are not assigned to this submission' });
+            }
         }
 
         const AnomalyReport = require('../models/AnomalyReport');
@@ -182,6 +195,7 @@ exports.getAssignedSubmission = async (req, res, next) => {
 exports.verifySubmission = async (req, res, next) => {
     try {
         const { submissionId, decision, remarks, digitalSignature, documentChecklist, correctionRequired } = req.body;
+        const hackathonMode = process.env.HACKATHON_MODE === 'true';
 
         const submission = await EmissionEntry.findById(submissionId).populate('assignedAuditors').populate('company');
         if (!submission) {
@@ -193,12 +207,15 @@ exports.verifySubmission = async (req, res, next) => {
             auditReport = new ReportReview({ report: submissionId });
         }
 
-        // Determine Role
-        const auditorIndex = submission.assignedAuditors.findIndex(a => a._id.toString() === req.user._id.toString());
-        if (auditorIndex === -1) {
-            return res.status(403).json({ success: false, message: 'You are not assigned to this audit' });
+        // Determine Role — in hackathon mode bypass the assignment check
+        let role = 'primary';
+        if (!hackathonMode) {
+            const auditorIndex = submission.assignedAuditors.findIndex(a => a._id.toString() === req.user._id.toString());
+            if (auditorIndex === -1) {
+                return res.status(403).json({ success: false, message: 'You are not assigned to this audit' });
+            }
+            role = submission.auditType === 'dual' ? (auditorIndex === 0 ? 'primary' : 'secondary') : 'primary';
         }
-        const role = submission.auditType === 'dual' ? (auditorIndex === 0 ? 'primary' : 'secondary') : 'primary';
 
         // Add this auditor's review to the auditors array
         auditReport.auditors.push({
