@@ -81,8 +81,11 @@ This service serves the Isolation Forest ML model and resides in the `/ai` direc
    * **Root Directory**: `ai`
    * **Build Command**: `pip install -r requirements.txt`
    * **Start Command**: `uvicorn main:app --host 0.0.0.0 --port $PORT`
-5. Click **Deploy Web Service**.
-6. Copy the generated URL (e.g., `https://ecochain-ai-anomaly.onrender.com`).
+5. Go to the **Environment Variables** tab and click **Add Environment Variable**:
+   * Key: `PYTHON_VERSION`
+   * Value: `3.11.9` *(This is crucial! It tells Render to use a modern Python version where a pre-built binary wheel is available for scikit-learn, preventing compiler errors)*
+6. Click **Deploy Web Service**.
+7. Copy the generated URL (e.g., `https://ecochain-ai-anomaly.onrender.com`).
 
 ---
 

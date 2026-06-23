@@ -505,7 +505,9 @@ EcoChain is designed for deployment on free-tier platforms. Push your monorepo d
    * **Root Directory**: `ai`
    * **Build Command**: `pip install -r requirements.txt`
    * **Start Command**: `uvicorn main:app --host 0.0.0.0 --port $PORT`
-4. Click **Deploy Web Service** and copy the generated URL (e.g., `https://ecochain-ai-anomaly.onrender.com`).
+4. Set the **Environment Variables**:
+   * Add `PYTHON_VERSION` = `3.11.9` (This is crucial to prevent compilation errors during the scikit-learn install process by downloading pre-built wheels).
+5. Click **Deploy Web Service** and copy the generated URL (e.g., `https://ecochain-ai-anomaly.onrender.com`).
 
 ---
 
