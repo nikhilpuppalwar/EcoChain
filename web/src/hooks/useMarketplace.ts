@@ -6,7 +6,7 @@ import CarbonCreditArtifact from '../contracts/CarbonCredit.json';
 import Addresses from '../contracts/addresses.json';
 import { parseEther } from 'viem';
 
-const SUPPORTED_CHAIN_ID = hardhat.id;
+const SUPPORTED_CHAIN_ID = sepolia.id;
 
 export function useMarketplace() {
     const { address, chain } = useAccount();

@@ -4,7 +4,7 @@ import CarbonCreditArtifact from '../contracts/CarbonCredit.json';
 import Addresses from '../contracts/addresses.json';
 import { parseEther } from 'viem';
 
-export const SUPPORTED_CHAIN_ID = hardhat.id; // Contracts are deployed on Sepolia Testnet
+export const SUPPORTED_CHAIN_ID = sepolia.id; // Contracts are deployed on Sepolia Testnet
 
 export function useCarbonCredit() {
     const { address, chain } = useAccount();

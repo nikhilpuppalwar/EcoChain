@@ -86,9 +86,9 @@ export function WalletSection({ walletAddress, onLinked }: { walletAddress?: str
         if (!address) return toast.error('Connect your wallet first');
         setLinking(true);
         try {
-            await api.patch('/profile/wallet', { walletAddress: address });
+            const res = await api.patch('/profile/wallet', { walletAddress: address });
             onLinked(address);
-            toast.success('Wallet linked to your profile!');
+            toast.success(res.data.message || 'Wallet linked to your profile!');
         } catch (err: any) {
             toast.error(err?.response?.data?.message || 'Failed to link wallet');
         } finally {

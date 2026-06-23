@@ -13,7 +13,7 @@ const config = getDefaultConfig({
     appName: 'EcoChain',
     appUrl: typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5173',
     projectId: projectId,
-    chains: [hardhat, sepolia],
+    chains: [sepolia, hardhat],
 });
 
 const queryClient = new QueryClient();
@@ -22,7 +22,7 @@ export default function Web3Provider({ children }: { children: React.ReactNode }
     return (
         <WagmiProvider config={config}>
             <QueryClientProvider client={queryClient}>
-                <RainbowKitProvider initialChain={hardhat}>
+                <RainbowKitProvider initialChain={sepolia}>
                     {children}
                 </RainbowKitProvider>
             </QueryClientProvider>

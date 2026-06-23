@@ -55,3 +55,70 @@ After setting the variable, you can run the deployment with the Sepolia network:
 ```shell
 npx hardhat ignition deploy --network sepolia ignition/modules/Counter.ts
 ```
+
+## 🛠️ Running and Deploying Contracts in the Terminal
+
+This project uses **Foundry** (with npm scripts) as its primary toolkit for smart contract compilation, testing, and deployment.
+
+### 1. Compile Contracts
+To compile all the Solidity smart contracts:
+```shell
+npm run build
+# OR
+forge build
+```
+
+### 2. Run Tests
+To run all the Foundry unit tests:
+```shell
+npm run test
+# OR
+forge test
+```
+
+### 3. Start Local Blockchain
+To spin up a local development blockchain node (Anvil) running on `http://127.0.0.1:8545`:
+```shell
+npm run node
+# OR
+anvil
+```
+
+### 4. Deploy Contracts (Local Chain)
+To deploy the contracts to your running local blockchain and automatically sync the ABIs and addresses to both frontend and backend configurations:
+1. Ensure the local blockchain node is running in a terminal (`npm run node`).
+2. Run the deployment script:
+```shell
+npm run deploy
+```
+
+### 5. Deploy Contracts (Sepolia Testnet)
+To deploy contracts to the live online Sepolia Testnet:
+1. Ensure you have a developer wallet with Sepolia test ETH.
+2. Run the forge deployment script, passing your Sepolia private key and RPC URL.
+3. Run the export script with Sepolia's chain ID (`11155111`) to link the deployed contracts to your frontend and backend.
+
+**For Windows (PowerShell):**
+```powershell
+# 1. Set your private key (make sure to include the 0x prefix)
+$env:PRIVATE_KEY="0xYOUR_PRIVATE_KEY"
+
+# 2. Deploy contracts to Sepolia via Forge
+forge script scripts/Deploy.s.sol --rpc-url https://eth-sepolia.g.alchemy.com/v2/YOUR_ALCHEMY_KEY --broadcast --private-key $env:PRIVATE_KEY
+
+# 3. Export ABIs and deployed addresses to the rest of the project
+node scripts/export_abis.js 11155111
+```
+
+**For Linux/macOS (bash):**
+```bash
+# 1. Set your private key (make sure to include the 0x prefix)
+export PRIVATE_KEY="0xYOUR_PRIVATE_KEY"
+
+# 2. Deploy contracts to Sepolia via Forge
+forge script scripts/Deploy.s.sol --rpc-url https://eth-sepolia.g.alchemy.com/v2/YOUR_ALCHEMY_KEY --broadcast --private-key $PRIVATE_KEY
+
+# 3. Export ABIs and deployed addresses to the rest of the project
+node scripts/export_abis.js 11155111
+```
+

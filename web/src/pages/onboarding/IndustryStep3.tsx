@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useOnboardingStore } from '../../store/onboardingStore';
 import { useAuthStore } from '../../store/authStore';
+import { useAccount } from 'wagmi';
+import { ConnectButton } from '@rainbow-me/rainbowkit';
 import confetti from 'canvas-confetti';
 import toast from 'react-hot-toast';
 
@@ -10,6 +12,8 @@ export default function IndustryStep3() {
     const step1 = useOnboardingStore((state) => state.step1);
     const step2 = useOnboardingStore((state) => state.step2);
     const register = useAuthStore((state) => state.register);
+
+    const { address, isConnected } = useAccount();
 
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitSuccess, setSubmitSuccess] = useState(false);
@@ -27,6 +31,12 @@ export default function IndustryStep3() {
             return;
         }
 
+        if (!isConnected || !address) {
+            setError("Please connect your MetaMask wallet first. This is required to receive your free 5,000 CCR carbon credits.");
+            toast.error("MetaMask connection required");
+            return;
+        }
+
         setIsSubmitting(true);
         setError(null);
 
@@ -37,7 +47,8 @@ export default function IndustryStep3() {
                 taxId: step1.panId,
                 annualCarbonBudget: step1.carbonBudget,
                 workEmail: step2.email,
-                phoneNumber: step2.phone
+                phoneNumber: step2.phone,
+                walletAddress: address
             };
 
             await register('/auth/register/industry', payload);
@@ -88,7 +99,7 @@ export default function IndustryStep3() {
                             </div>
                             <span className="text-xs font-semibold text-[#1A7A4A] dark:text-emerald-400">Employee</span>
                         </div>
-                        <div className="flex-1 h-[2px] mx-4 bg-slate-200 dark:bg-slate-700 mb-6"></div>
+                        <div className="flex-1 h-[2px] mx-4 bg-[#1A7A4A] mb-6"></div>
                         <div className="flex flex-col items-center gap-2">
                             <div className="w-10 h-10 rounded-full bg-white dark:bg-slate-800 border-2 border-[#1A7A4A] text-[#1A7A4A] flex items-center justify-center ring-4 ring-[#1A7A4A]/10">
                                 <span className="text-sm font-bold">3</span>
@@ -184,6 +195,45 @@ export default function IndustryStep3() {
                             <button onClick={() => navigate('/register/industry/step2')} className="text-[#1A7A4A] dark:text-emerald-400 text-sm font-bold flex items-center gap-1 hover:underline">
                                 <span className="material-symbols-outlined text-sm">edit</span> Edit Employee Info
                             </button>
+                        </div>
+                    </div>
+
+                    {/* Web3 MetaMask Integration Card */}
+                    <div className="bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-sm">
+                        <div className="bg-[#1A7A4A]/5 dark:bg-[#1A7A4A]/5 border-b border-slate-200 dark:border-slate-800 px-6 py-4 flex justify-between items-center">
+                            <div className="flex items-center gap-2 text-[#1A7A4A] dark:text-emerald-400">
+                                <span className="material-symbols-outlined">account_balance_wallet</span>
+                                <h3 className="font-bold text-lg text-slate-900 dark:text-white">Web3 MetaMask Integration</h3>
+                            </div>
+                        </div>
+                        <div className="p-6 space-y-4">
+                            <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed font-medium">
+                                Connect your MetaMask wallet. This address will be dynamically retrieved and registered to your industry profile, automatically awarding you <strong>5,000 CCR</strong> on the Ethereum Sepolia testnet upon registration.
+                            </p>
+                            
+                            {isConnected && address ? (
+                                <div className="flex items-center gap-3 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/30 rounded-xl px-4 py-3">
+                                    <span className="material-symbols-outlined text-emerald-600 dark:text-emerald-400">verified</span>
+                                    <div>
+                                        <p className="text-sm font-bold text-emerald-800 dark:text-emerald-300 font-mono">
+                                            {address}
+                                        </p>
+                                        <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">Connected via MetaMask</p>
+                                    </div>
+                                    <span className="ml-auto text-xs px-2.5 py-1 bg-emerald-100 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-300 rounded-full font-bold uppercase tracking-wider">
+                                        Linked
+                                    </span>
+                                </div>
+                            ) : (
+                                <div className="bg-amber-50 dark:bg-amber-950/15 border border-amber-200 dark:border-amber-900/30 rounded-xl px-4 py-3 text-sm text-amber-855 dark:text-amber-300 flex items-center gap-3 font-medium">
+                                    <span className="material-symbols-outlined text-amber-600 dark:text-amber-400">warning</span>
+                                    Please connect your MetaMask wallet using the button below.
+                                </div>
+                            )}
+
+                            <div className="flex justify-start">
+                                <ConnectButton label="Connect MetaMask Wallet" />
+                            </div>
                         </div>
                     </div>
 

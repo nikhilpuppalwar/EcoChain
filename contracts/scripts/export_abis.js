@@ -14,7 +14,12 @@ if (!fs.existsSync(frontendPath)) {
 
 try {
     // 1. Read Addresses from Forge Broadcast
-    const chainId = 31337; // Anvil local chain
+    let chainId = 31337; // Default to Anvil
+    if (process.env.CHAIN_ID) {
+        chainId = parseInt(process.env.CHAIN_ID, 10);
+    } else if (process.argv[2]) {
+        chainId = parseInt(process.argv[2], 10);
+    }
     const broadcastPath = path.join(__dirname, `../broadcast/Deploy.s.sol/${chainId}/run-latest.json`);
 
     if (fs.existsSync(broadcastPath)) {

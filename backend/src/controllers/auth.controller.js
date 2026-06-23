@@ -28,7 +28,8 @@ exports.registerIndustry = async (req, res, next) => {
     try {
         const {
             sector, companyName, state, registrationNo, taxId, annualCarbonBudget,
-            fullName, designation, workEmail, employeeId, phoneNumber, password
+            fullName, designation, workEmail, employeeId, phoneNumber, password,
+            walletAddress
         } = req.body;
 
         const userExists = await User.findOne({ email: workEmail.toLowerCase() });
@@ -39,6 +40,25 @@ exports.registerIndustry = async (req, res, next) => {
         const salt = await bcrypt.genSalt(12);
         const hashedPassword = await bcrypt.hash(password, salt);
 
+        let creditBalance = 0;
+        let autoMinted = false;
+
+        // In Hackathon Mode, if a walletAddress is provided, auto-mint 5000 CCR to the wallet
+        if (hackathonMode && walletAddress) {
+            const cleanAddress = walletAddress.trim();
+            const defaultAmount = 5000;
+            console.log(`[HACKATHON REGISTRATION] Auto-minting ${defaultAmount} CCR to: ${cleanAddress}`);
+            try {
+                const { issueCreditsOnChain } = require('../utils/blockchain');
+                const txHash = await issueCreditsOnChain(cleanAddress, defaultAmount, "Hackathon Registration Auto-Seeding", "QmHackathonDemo");
+                creditBalance = defaultAmount;
+                autoMinted = true;
+                console.log(`[HACKATHON REGISTRATION] Auto-mint success! TX: ${txHash}`);
+            } catch (blockchainErr) {
+                console.error("[HACKATHON REGISTRATION] Failed to auto-mint credits:", blockchainErr.message);
+            }
+        }
+
         const company = await Company.create({
             name: companyName,
             sector,
@@ -46,6 +66,8 @@ exports.registerIndustry = async (req, res, next) => {
             registrationNo,
             taxId,
             annualCarbonBudget,
+            walletAddress: walletAddress ? walletAddress.trim() : undefined,
+            creditBalance,
             verificationStatus: 'approved'
         });
 
@@ -62,7 +84,9 @@ exports.registerIndustry = async (req, res, next) => {
 
         res.status(201).json({
             success: true,
-            message: 'Registration successful',
+            message: autoMinted 
+                ? 'Registration successful and 5,000 CCR auto-minted to your wallet!' 
+                : 'Registration successful',
             user: { id: user._id, email: user.email, role: user.role }
         });
     } catch (error) {

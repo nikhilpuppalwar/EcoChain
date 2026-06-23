@@ -192,10 +192,32 @@ exports.linkWallet = async (req, res, next) => {
             return res.status(400).json({ success: false, message: 'Invalid Ethereum address format' });
         }
 
+        let autoMinted = false;
+
         if (req.user.role === 'industry') {
             const company = await Company.findById(req.user.company);
             if (!company) return res.status(404).json({ success: false, message: 'Company not found' });
-            company.walletAddress = walletAddress.trim();
+            
+            const cleanAddress = walletAddress.trim();
+            const isNewWallet = !company.walletAddress || company.walletAddress.toLowerCase() !== cleanAddress.toLowerCase();
+            
+            company.walletAddress = cleanAddress;
+
+            // In Hackathon Mode, auto-mint 5000 CCR to the wallet when linked for the first time
+            if (process.env.HACKATHON_MODE === 'true' && isNewWallet) {
+                const defaultAmount = 5000;
+                console.log(`[HACKATHON] Auto-minting ${defaultAmount} CCR to newly linked wallet: ${cleanAddress}`);
+                try {
+                    const { issueCreditsOnChain } = require('../utils/blockchain');
+                    const txHash = await issueCreditsOnChain(cleanAddress, defaultAmount, "Hackathon Auto-Seeding", "QmHackathonDemo");
+                    company.creditBalance = (company.creditBalance || 0) + defaultAmount;
+                    autoMinted = true;
+                    console.log(`[HACKATHON] Auto-mint success! TX: ${txHash}`);
+                } catch (blockchainErr) {
+                    console.error("[HACKATHON] Failed to auto-mint credits:", blockchainErr.message);
+                }
+            }
+
             await company.save();
         } else {
             // Store wallet on user document for other roles
@@ -204,7 +226,14 @@ exports.linkWallet = async (req, res, next) => {
             await user.save();
         }
 
-        res.status(200).json({ success: true, message: 'Wallet linked successfully', walletAddress });
+        res.status(200).json({ 
+            success: true, 
+            message: autoMinted 
+                ? 'Wallet linked successfully and 5,000 CCR auto-minted!' 
+                : 'Wallet linked successfully', 
+            walletAddress,
+            autoMinted
+        });
     } catch (error) {
         next(error);
     }
