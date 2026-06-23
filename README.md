@@ -550,6 +550,10 @@ EcoChain is designed for deployment on free-tier platforms. Push your monorepo d
    * `CREDIT_RETIREMENT_ADDRESS` = `0x...` (Auto-injected during Sepolia contract deploy)
    * `AI_SERVICE_URL` = `https://ecochain-ai-anomaly.onrender.com`
    * `PYTHON_REPORT_API_URL` = `https://ecochain-ai-reports.onrender.com/generate-report`
+   * `FRONTEND_URL` = `https://ecochain-web.vercel.app` (Points to your deployed Vercel frontend URL, crucial for CORS authorization)
+   * `CLOUDINARY_CLOUD_NAME` = `ecochain`
+   * `CLOUDINARY_API_KEY` = `your_cloudinary_api_key`
+   * `CLOUDINARY_API_SECRET` = `your_cloudinary_api_secret` (Required for uploading proof documents securely)
 5. Click **Deploy Web Service** and copy the generated backend URL (e.g., `https://ecochain-backend.onrender.com`).
 
 ---

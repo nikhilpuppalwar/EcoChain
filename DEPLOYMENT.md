@@ -145,6 +145,10 @@ The main API backend resides in the `/backend` directory.
 | `CREDIT_RETIREMENT_ADDRESS` | *The deployed contract address from Step 3* |
 | `AI_SERVICE_URL` | *Your AI Anomaly Service URL from Step 4* |
 | `PYTHON_REPORT_API_URL` | *Your AI Report Service URL from Step 5 + `/generate-report`* (e.g., `https://ecochain-ai-reports.onrender.com/generate-report`) |
+| `FRONTEND_URL` | *Your deployed Vercel frontend URL (e.g. `https://ecochain-web.vercel.app`) - **Crucial for CORS authorization*** |
+| `CLOUDINARY_CLOUD_NAME` | *Your Cloudinary cloud name (e.g., `ecochain`)* |
+| `CLOUDINARY_API_KEY` | *Your Cloudinary API key* |
+| `CLOUDINARY_API_SECRET` | *Your Cloudinary API secret - **Needed for upload security*** |
 
 6. Click **Deploy Web Service** and copy the generated Backend URL (e.g., `https://ecochain-backend.onrender.com`).
 
