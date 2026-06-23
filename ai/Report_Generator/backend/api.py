@@ -1,6 +1,11 @@
 import os
+import sys
 import uuid
 import threading
+
+# Ensure the backend directory is in the Python path for sibling imports
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
