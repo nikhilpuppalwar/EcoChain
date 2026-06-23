@@ -1,700 +1,386 @@
+<img width="4320" height="1440" alt="hh26 main poster 2 with sponsors 3x1 (4320 x 1440 px) (2)" src="https://github.com/user-attachments/assets/c698b2cd-da84-4cb0-9276-125c6a7244aa" />
+
+<div align="center">
+
 # 🌿 EcoChain
 
-> **Transparent Carbon. Verified by AI. Secured by Blockchain.**
+### *Transparent Carbon. Verified by AI. Secured by Blockchain.*
 
-EcoChain is a full-stack, blockchain-powered carbon emission monitoring and trading platform that brings transparency, accountability, and automation to environmental compliance. It integrates AI-driven anomaly detection, immutable blockchain audit trails, and smart-contract-based carbon credit trading into a single unified platform.
+**A full-stack, decentralized carbon emission monitoring, AI verification, and trustless credit trading platform — built to eliminate greenwashing and automate environmental compliance.**
 
----
+[![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://reactjs.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)](https://nodejs.org/)
+[![Python](https://img.shields.io/badge/Python-FFD43B?style=for-the-badge&logo=python&logoColor=blue)](https://www.python.org/)
+[![Solidity](https://img.shields.io/badge/Solidity-363636?style=for-the-badge&logo=solidity&logoColor=white)](https://soliditylang.org/)
+[![MongoDB](https://img.shields.io/badge/MongoDB-4EA94B?style=for-the-badge&logo=mongodb&logoColor=white)](https://www.mongodb.com/)
+[![Polygon](https://img.shields.io/badge/Polygon-7B3FE4?style=for-the-badge&logo=polygon&logoColor=white)](https://polygon.technology/)
 
-## 📋 Table of Contents
-
-- [Overview](#overview)
-- [Key Features](#key-features)
-- [Tech Stack](#tech-stack)
-- [System Architecture](#system-architecture)
-- [Project Structure](#project-structure)
-- [Smart Contracts](#smart-contracts)
-- [AI / ML Models](#ai--ml-models)
-- [User Roles & Portals](#user-roles--portals)
-- [Core Workflow](#core-workflow)
-- [API Reference](#api-reference)
-- [Environment Variables](#environment-variables)
-- [Getting Started](#getting-started)
-- [Blockchain Setup (Foundry)](#blockchain-setup-foundry)
-- [Deployment](#deployment)
-- [Security](#security)
-- [Roadmap](#roadmap)
-- [License](#license)
+</div>
 
 ---
 
-## Overview
+## 📌 Problem & Domain
 
-EcoChain addresses three critical failures in existing carbon markets:
+The global carbon credit system — worth **$2 trillion by 2030** — is fundamentally broken:
 
-| Problem | EcoChain Solution |
+| Critical Failure | Real-World Impact |
 |---|---|
-| Data Manipulation — industries falsify emission reports | Isolation Forest ML auto-detects anomalies before auditor review |
-| Lack of Transparency — opaque centralized credit trading | AuditRegistry.sol stores every verified report immutably on-chain |
-| Inefficient Markets — slow, broker-heavy credit trading | CarbonMarketplace.sol executes trustless peer-to-peer trades automatically |
-| No Feedback Loop — no continuous monitoring post-submission | Prophet + LSTM forecasting with real-time AI recommendations |
-| Greenwashing Risk — unverifiable carbon neutrality claims | ERC-20 carbon credits traceable from reduction → minting → trading → retirement |
+| **Data Falsification** | Industries self-report CO₂ emissions with no real-time verification — easily manipulated to avoid penalties |
+| **Greenwashing Epidemic** | 42% of corporate green claims are exaggerated or false with no traceable on-chain proof |
+| **Broker-Heavy Trading** | Carbon credit markets charge 10–30% broker fees, slow settlement (days), and offer zero price transparency |
+| **No Predictive Oversight** | Regulators react to past violations — no ML-based early warning system exists at scale |
+| **Opaque Verification** | Audit trails live in private databases that can be edited, deleted, or selectively hidden |
+
+**EcoChain eliminates every one of these failures** by combining AI anomaly detection with immutable blockchain storage and trustless smart contract trading.
+
+### Themes Selected:
+- [ ] Human Experience & Productivity  
+- [✓] Climate & Sustainability Systems  
+- [ ] HealthTech & Bio Platforms  
+- [ ] Learning & Knowledge Systems  
+- [ ] Work, Finance & Digital Economy  
+- [✓] Infrastructure, Mobility & Smart Systems  
+- [✓] Trust, Identity & Security  
+- [ ] Media, Social & Interactive Platforms  
+- [ ] Public Systems, Governance and Civic Tech  
+- [ ] Developer Tools & Software Infrastructure  
+
+*(Multiple themes selected — EcoChain sits at the intersection of Climate Tech, Infrastructure, and Trust Systems)*
 
 ---
 
-## Key Features
+## 🎯 Objective
 
-- **AI-Powered Fraud Detection** — Isolation Forest ML model flags anomalous emission data before it reaches auditors
-- **Blockchain Immutability** — All verified audit reports stored on-chain via `AuditRegistry.sol`, tamper-proof forever
-- **Smart Contract Trading** — `CarbonMarketplace.sol` executes trustless, transparent credit trading with zero intermediaries
-- **End-to-End Traceability** — Every carbon credit traced from emission reduction → minting → trading → retirement
-- **Role-Based Multi-Portal** — Purpose-built portals for Industry, Auditor, Government, Admin, and Public
-- **Zero Cost Infrastructure** — Full production system deployable at $0 using free tiers (Vercel, Render, MongoDB Atlas, Polygon)
-- **Predictive Analytics** — Prophet + LSTM forecasts future emissions for proactive planning
-- **Public Transparency Portal** — No-login access to national emission stats, credit markets, and blockchain records
+EcoChain replaces fragmented, fraud-prone manual processes with a **single, automated, tamper-proof pipeline** for carbon emission governance.
+
+### Who Does It Serve?
+
+| User Role | What They Get |
+|---|---|
+| 🏭 **Industries / Emitters** | Auto-calculate Scope 1/2/3 CO₂e, submit verified reports, receive AI feedback, trade surplus credits |
+| 🔍 **Auditors** | AI pre-screens all reports; auditors only review flagged ones. PKI-sign verified reports digitally |
+| 🏛️ **Governments / Regulators** | Set national carbon caps, mint ERC-20 credits, view live AI-powered compliance dashboards |
+| 👥 **General Public** | Zero-login access to national emission stats, carbon credit markets, and blockchain-verified records |
+
+### The Value Proposition
+> *Stop trusting. Start verifying.* EcoChain makes every emission record **publicly verifiable, AI-validated, and blockchain-anchored** — turning carbon compliance from a paper exercise into a real-time, automated system of accountability.
 
 ---
 
-## Tech Stack
+## 🧠 Team & Approach
 
-### Frontend
-| Tool | Purpose |
-|---|---|
-| React.js + Vite | SPA framework with fast HMR and optimized builds |
-| React Router v6 | Client-side routing with protected role-gated routes |
-| Tailwind CSS | Utility-first responsive styling |
-| shadcn/ui + Radix UI | Accessible, customizable component library |
-| Recharts | Emission trend charts and analytics graphs |
-| Leaflet.js + React Leaflet | Interactive emission map with regional views |
-| Zustand | Lightweight global state (auth, user, notifications) |
-| Axios + TanStack Query | API calls with server state caching |
-| React Hook Form + Zod | Form management and type-safe validation |
-| TanStack Table | Large data tables with sort/filter/pagination |
-| Framer Motion | Smooth transitions and hero animations |
-| Socket.io Client | Live submission status and market price updates |
-| Ethers.js | Wallet connection and smart contract interaction |
+### Team Name:  
+`Team Tikshna`
 
-### Backend
-| Tool | Purpose |
-|---|---|
-| Node.js + Express.js | REST API and middleware pipeline |
-| JWT + Speakeasy | Token auth with TOTP 2FA |
-| bcryptjs | Secure password hashing (salt rounds: 12) |
-| Mongoose | MongoDB ODM — schema definition and validation |
-| Multer | Multipart document/file upload handling |
-| PDFKit | ESG report and compliance certificate generation |
-| Nodemailer + Gmail SMTP | Email notifications, OTP, compliance alerts |
-| node-cron | Automated reminders and periodic background jobs |
-| Socket.io | Real-time push events to connected clients |
-| Helmet.js + cors + express-rate-limit | HTTP security headers, CORS, and rate limiting |
-| Morgan + Winston | HTTP request logs and application-level logs |
-| node-forge | PKI certificate generation and auditor digital signing |
-| Swagger UI Express | Auto-generated API documentation |
-| PM2 | Node.js process management with auto-restart |
-
-### Database & Storage
-| Tool | Purpose | Free Limit |
+### Team Members:
+| Name | Role | Contact |
 |---|---|---|
-| MongoDB Atlas | Primary database (all collections) | 512 MB |
-| Upstash Redis | Sessions, OTP, rate limiting, query cache | 10k req/day |
-| Cloudinary | Documents, PDFs, certificates, policy files | 25 GB |
+| **PRATIK GHAVATE** | 👑 Team Leader | [pratik.ghavate23@pccoepune.org](mailto:pratik.ghavate23@pccoepune.org) |
+| **Nikhil Puppalwar** | Full-Stack & Blockchain Dev | [nikhilpuppalwar16@gmail.com](mailto:nikhilpuppalwar16@gmail.com) |
+| **Nihar Salvi** | AI/ML & Backend Dev | [niharsalvi2@gmail.com](mailto:niharsalvi2@gmail.com) |
+| **VIJAY DHAME** | Frontend & Smart Contract Dev | [vijay.dhame23@pccoepune.org](mailto:vijay.dhame23@pccoepune.org) |
 
-### AI / ML
-| Tool | Purpose |
-|---|---|
-| Python 3.13 (or 3.12 for TF) + FastAPI | ML model serving as REST microservice |
-| scikit-learn | Isolation Forest, regression, clustering |
-| TensorFlow | LSTM time-series emission forecasting |
-| Prophet (Meta) | National and industry emission forecasting |
-| Pandas + NumPy | Data processing and emission calculations |
-| Jinja2 Templates | ESG report narrative auto-generation (NLG) |
-| Google Colab | Free GPU environment for model training |
+### Our Approach
 
-### Blockchain
-| Tool | Purpose |
-|---|---|
-| Polygon Mainnet / Mumbai | Low gas fees (~$0.001/tx); free testnet |
-| Solidity + Foundry | Smart contract language and dev framework |
-| OpenZeppelin | Audited, secure contract templates |
-| Ethers.js | Frontend + backend blockchain interaction |
-| ERC-20 + ERC-1155 | Fungible credits + unique origin metadata tokens |
-| The Graph | Fast querying of on-chain events |
-| Web3.Storage (IPFS) | Decentralized storage for large report files |
-| Polygonscan | Public transaction verification |
+**Why We Chose This Problem:**  
+Climate change is an accountability crisis as much as a science problem. Carbon offsetting — one of the most critical tools — is sabotaged by unverifiable claims and inefficient markets. We chose this because decentralized tech and AI are uniquely positioned to solve it, and because it matters.
+
+**Key Challenges We Tackled:**
+
+- **Gas Cost Barrier:** Ethereum Mainnet fees would make each carbon audit unaffordable. We evaluated Layer-2 solutions and deployed to the **Polygon network** (~`$0.001/tx`) — making the system commercially viable for high-frequency emission reporting.
+
+- **AI ↔ Blockchain Bridge:** Connecting off-chain Python ML inferences with on-chain Solidity contracts required a secure, typed API gateway. We built an Express.js orchestration layer that validates AI scores, converts them to verifiable IPFS hashes, and triggers smart contract writes via `Ethers.js`.
+
+- **Multi-Role, Multi-Portal UX:** Supporting 5 completely different user types on a single codebase without creating spaghetti code. We implemented a **RBAC middleware system with role-gated React routes**, allowing each portal to feel purpose-built while sharing a unified component library.
+
+**Breakthroughs & Pivots:**  
+We originally planned a basic anomaly detector. During development, we realized a single AI gate is insufficient — industries could still submit to auditors and slip through. We pivoted to design a **3-Stage Automated Decision Pipeline** (detailed in Core Workflow below), which became the project's key differentiator.
 
 ---
 
-## System Architecture
+## 🛠️ Tech Stack
+
+### Core Technologies Used:
+
+| Layer | Technologies |
+|---|---|
+| **Frontend** | React.js, Vite, Tailwind CSS, shadcn/ui, Recharts, Leaflet.js, Zustand, Framer Motion, Ethers.js |
+| **Backend** | Node.js, Express.js, Socket.io, JWT, Speakeasy (TOTP 2FA), node-forge (PKI), PDFKit, node-cron |
+| **Database** | MongoDB Atlas (primary), Upstash Redis (sessions/cache), Cloudinary (documents & certificates) |
+| **AI / ML** | Python 3.12, FastAPI, scikit-learn (Isolation Forest, One-Class SVM), TensorFlow/LSTM, Prophet |
+| **Blockchain** | Solidity, Foundry (forge/anvil/cast), OpenZeppelin, ERC-20, Polygon Mainnet / Sepolia Testnet |
+| **DevOps / Hosting** | Vercel (frontend), Render (backend + AI services), GitHub Actions (CI/CD), PM2 |
+
+### Additional Technologies Used:
+- [✓] AI / ML — Isolation Forest anomaly detection, LSTM time-series forecasting, One-Class SVM fraud scoring
+- [✓] Web3 / Blockchain — ERC-20 carbon credits, smart contract trading, on-chain audit registry
+- [✓] Cyber Security — JWT RBAC, Speakeasy TOTP 2FA, node-forge PKI, Helmet.js, AES-256 encryption
+- [✓] Cloud — Vercel, Render.com, MongoDB Atlas, Upstash Redis, Cloudinary, IPFS (Web3.Storage)
+
+### Total Infrastructure Cost: **$0** — entire production stack runs on free tiers.
+
+---
+
+## 🏆 Sponsored Track (Optional)
+
+- [ ] **Expo Track** – Built using Expo  
+- [ ] **Neo4j Track** – Uses AuraDB as primary database  
+- [ ] **Base44 Track** – Prototype/Final Product built using Base44  
+
+> _Not applicable for this project._
+
+---
+
+## ✨ Key Features
+
+### 🔑 Core Platform Features
+
+- ✅ **AI Anomaly Detection Gate** — Isolation Forest ML model auto-flags suspicious emission submissions with a 0–100 Risk Score before they reach any auditor
+- ✅ **Immutable Blockchain Audit Registry** — `AuditRegistry.sol` stores SHA-256 hashes of every verified report on Polygon; records are permanent and publicly verifiable
+- ✅ **Decentralized Carbon Credit Trading** — `CarbonMarketplace.sol` executes peer-to-peer ERC-20 token trades with zero broker intermediaries and instant settlement
+- ✅ **Full Carbon Credit Lifecycle** — Emission Reduction → Govt Mints ERC-20 → Industry Holds → Lists on Marketplace → Buyer Purchases → `CreditRetirement.sol` burns tokens
+- ✅ **Automated ESG Report Generation** — PDFKit + Jinja2 NLG templates auto-generate professional Carbon Audit PDFs and BRSR compliance certificates
+- ✅ **Predictive Emission Forecasting** — Prophet + LSTM time-series models forecast future industrial and national-level CO₂ trends with confidence bands
+- ✅ **Real-Time Monitoring** — Socket.io delivers live submission status updates, marketplace price changes, and AI risk alerts with <500ms latency
+
+### 🏛️ Role-Based Portals (6 Portals, 33 Screens)
+
+- ✅ **Industry Portal** — Emission data input, Scope 1/2/3 calculator, wallet & credit management, what-if CO₂ simulator
+- ✅ **Auditor Portal** — AI-pre-screened audit queue, PKI digital signing, audit history with blockchain verification
+- ✅ **Government Portal** — National emission dashboard, AI Verifier Panel with live anomaly feed, policy management, carbon credit minting
+- ✅ **Admin Portal** — User management, platform activity logs, role assignments, and global settings
+- ✅ **Public Portal** — Zero-login access to national stats, emission maps (Leaflet.js), and public credit market data
+- ✅ **Government AI Verifier** — Specialized panel for reviewing AI-flagged industry submissions with repeat-offender tracking
+
+### 🔐 Security Architecture
+
+- ✅ **Multi-Factor Auth** — JWT Access (15min) + Refresh (7d) tokens with Speakeasy TOTP 2FA for all roles
+- ✅ **PKI Digital Signatures** — Auditors sign every verified report with node-forge certificates, enabling cryptographic non-repudiation
+- ✅ **RBAC Middleware** — 5 distinct roles with granular route-level permissions enforced on every API endpoint
+- ✅ **IP Whitelist for Admin** — Admin portal restricted to approved IP ranges; zero public exposure
+
+---
+
+## ⚙️ System Architecture & Core Workflow
 
 ```
-┌──────────────────────────────────────────────────────────────┐
-│                           USERS                              │
+┌─────────────────────────────────────────────────────────────┐
+│                           USERS                             │
 │  🌐 Public │ 🏭 Industry │ 🔍 Auditor │ 🏛 Govt │ 🔧 Admin  │
-└──────────────────────────────────────────────────────────────┘
+└─────────────────────────────────────────────────────────────┘
                               ↓
-┌──────────────────────────────────────────────────────────────┐
-│              FRONTEND — React.js + Vite (Vercel)             │
-│     Tailwind CSS │ shadcn/ui │ Recharts │ Leaflet.js          │
-└──────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│           FRONTEND — React.js + Vite (Vercel)               │
+│   Tailwind CSS │ shadcn/ui │ Recharts │ Leaflet.js           │
+└─────────────────────────────────────────────────────────────┘
                     ↓ HTTPS + JWT │ Axios │ Socket.io
-┌──────────────────────────────────────────────────────────────┐
-│           API GATEWAY — Node.js + Express.js (Render)        │
-│      JWT Auth │ RBAC Middleware │ Rate Limiting │ Swagger     │
-└──────────────────────────────────────────────────────────────┘
-       ↓              ↓             ↓              ↓
-┌──────────┐  ┌──────────────┐  ┌──────────┐  ┌────────────┐
-│ MongoDB  │  │ Upstash      │  │Cloudinary│  │ Socket.io  │
-│ Atlas    │  │ Redis        │  │ Files    │  │ Server     │
-└──────────┘  └──────────────┘  └──────────┘  └────────────┘
-       ↓                                    ↓
-┌──────────────────┐          ┌─────────────────────────────┐
-│ Python FastAPI   │          │      BLOCKCHAIN LAYER        │
-│ AI/ML Service    │          │  Polygon Network + Foundry   │
-│ (Render.com)     │          │  CarbonCredit.sol (ERC-20)   │
-│                  │          │  CarbonMarketplace.sol       │
-│ Isolation Forest │          │  CreditRetirement.sol        │
-│ Prophet / LSTM   │          │  AuditRegistry.sol           │
-│ One-Class SVM    │          │  AccessControl.sol           │
-│ scikit-learn     │          │  Ethers.js │ The Graph │ IPFS │
-└──────────────────┘          └─────────────────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│         API GATEWAY — Node.js + Express.js (Render)         │
+│     JWT Auth │ RBAC Middleware │ Rate Limiting │ Swagger     │
+└─────────────────────────────────────────────────────────────┘
+       ↓              ↓               ↓              ↓
+┌──────────┐  ┌────────────┐  ┌──────────┐  ┌────────────┐
+│ MongoDB  │  │  Upstash   │  │Cloudinary│  │ Socket.io  │
+│  Atlas   │  │   Redis    │  │  Files   │  │   Server   │
+└──────────┘  └────────────┘  └──────────┘  └────────────┘
+       ↓                                   ↓
+┌─────────────────┐          ┌──────────────────────────────┐
+│ Python FastAPI  │          │      BLOCKCHAIN LAYER         │
+│ AI/ML Service   │          │  Polygon / Sepolia Testnet   │
+│                 │          │  CarbonCredit.sol  (ERC-20)  │
+│ Isolation Forest│          │  CarbonMarketplace.sol       │
+│ Prophet / LSTM  │          │  CreditRetirement.sol        │
+│ One-Class SVM   │          │  AuditRegistry.sol           │
+│ MobileNetV2     │          │  AccessControl.sol           │
+└─────────────────┘          └──────────────────────────────┘
 ```
 
-**Total Infrastructure Cost: $0** — entire production stack runs on free tiers.
+### 3-Stage Automated Verification Pipeline
 
----
-
-## Project Structure
-
-```bash
-Hackathon/
-├── backend/                  # Node.js + Express API server
-│   ├── src/                  # Controllers, routes, middleware, models
-│   ├── .env.example
-│   └── package.json
-├── contracts/                # Solidity smart contracts + tooling
-│   ├── src/                  # CarbonCredit, CarbonMarketplace, etc.
-│   ├── scripts/              # Deployment / seeding scripts (Foundry-style)
-│   ├── test/                 # Tests
-│   ├── package.json
-│   └── foundry.toml
-└── web/                      # React + Vite frontend
-    ├── src/
-    ├── .env.example
-    └── package.json
 ```
-
----
-
-## Smart Contracts
-
-| Contract | Standard | Key Functions |
-|---|---|---|
-| `CarbonCredit.sol` | ERC-20 | `mint(address, amount)`, `transfer(to, amount)`, `burn(amount)`, `balanceOf(address)` |
-| `CarbonMarketplace.sol` | Custom | `listCredits(amount, price, expiry)`, `buyCredits(listingId, amount)`, `cancelListing(listingId)`, `getActiveListings()` |
-| `CreditRetirement.sol` | Custom | `retireCredits(amount, reason, period)`, `getRetirementRecord(address)`, `isRetired(tokenId)` |
-| `AuditRegistry.sol` | Custom | `storeReport(industryId, reportHash, auditorSig)`, `verifyReport(reportHash)`, `getReport(industryId, period)` |
-| `AccessControl.sol` | OpenZeppelin | `grantRole(role, address)`, `revokeRole(role, address)`, `hasRole(role, address)` |
-
-### Foundry Development Pipeline
-
-```bash
-# Compile contracts
-forge build
-
-# Run tests with gas report
-forge test --gas-report
-
-# Start local testnet
-anvil
-
-# Deploy to a testnet (Polygon Amoy recommended)
-forge script scripts/Deploy.s.sol --rpc-url $AMOY_RPC_URL --broadcast
-
-# Deploy to Polygon Mainnet
-forge script scripts/Deploy.s.sol --rpc-url $POLYGON_RPC_URL --broadcast --verify
-
-# Interact with deployed contract
-cast send $CONTRACT_ADDR 'mint(address,uint256)' $TO $AMOUNT --rpc-url $RPC_URL
-
-# Interactive Solidity REPL
-chisel
+ Industry Submits Data
+        ↓
+[GATE 1] AI Anomaly Score > Threshold?
+    YES → Routed to Govt AI Verifier Panel → Reject + Notify Industry
+    NO  ↓
+[GATE 2] Auditor PKI Review → Digital Signature Applied
+        ↓
+ Blockchain Hash Anchored to AuditRegistry.sol (immutable)
+        ↓
+[GATE 3] Emission vs. Baseline Check
+    EXCEEDED → Penalty issued to Industry
+    REDUCED  → Govt mints ERC-20 Carbon Credits to Industry Wallet
+        ↓
+ Industry lists credits on CarbonMarketplace.sol
+        ↓
+ Smart contract auto-settles P2P trade
+        ↓
+ Retirement: CreditRetirement.sol burns tokens → New cycle begins
 ```
 
 ---
 
-## AI / ML Models
+## 🤖 AI / ML Models
 
-| # | Feature | Algorithm | Input | Output |
-|---|---|---|---|---|
-| 1 | Anomaly Detection | Isolation Forest | Emission data per source | Risk score 0–100 + anomaly flag |
-| 2 | Baseline Model | Linear Regression + K-Means | Historical emissions + sector benchmarks | Expected baseline (tCO₂e) + confidence range |
-| 3 | Emission Forecasting | Prophet + LSTM (TensorFlow) | Time-series emission data | Next period forecast + confidence band |
-| 4 | Fraud Detection | One-Class SVM | Submission patterns over time | Fraud probability score per industry |
-| 5 | Reduction Suggestions | Feature Importance + Rule Engine | Emission breakdown by source | Ranked actionable suggestions |
-| 6 | What-If Simulator | Custom Regression Inference | User-adjusted input variables | Estimated CO₂ impact of change |
-| 7 | ESG Report Generation | NLG + Jinja2 Templates | Verified emission data + compliance status | Auto-generated report narrative |
-| 8 | Compliance Checker | Rule Engine + Classification | Submission vs. govt emission limits | Compliance score %, red/green per source |
-| 9 | Credit Price Prediction | Prophet Time-Series | Historical credit prices + trade volume | Price forecast + market trend indicator |
-
-### AI Service Endpoints
-
-```
-POST /ai/anomaly-detect      → Isolation Forest on emission data
-POST /ai/detect-smoke        → MobileNetV2 satellite imagery smoke detection
-POST /ai/risk-score          → Weighted Risk Score (Anomaly + Smoke + Benchmark)
-POST /ai/baseline-model      → Regression + clustering baseline
-POST /ai/predict-emissions   → Prophet/LSTM forecast
-POST /ai/suggestions         → Ranked reduction recommendations
-POST /ai/whatif-simulate     → Real-time CO₂ impact simulation
-POST /ai/fraud-score         → Industry fraud risk score
-POST /ai/generate-report     → NLG ESG report text (Jinja2)
-GET  /ai/national-forecast   → Country-level emission forecast
-GET  /ai/credit-price        → Short-term credit price prediction
-```
-
-> **Note on AI Environment**: The FastAPI service requires Python 3.12 to run the full suite including TensorFlow for smoke detection. On Python 3.13+, TensorFlow is skipped and anomaly detection/risk scoring functions normally using scikit-learn.
-
----
-
-## User Roles & Portals
-
-EcoChain has **6 portals** with **33 total screens**, all role-gated via JWT + RBAC middleware.
-
-| Role | Portal | Verified By | Screens |
+| # | Feature | Algorithm | Output |
 |---|---|---|---|
-| Admin | Admin Portal | Self (super user) | AD1–AD6 |
-| Government | Government Portal | Admin | G1–G8 (incl. AI Verifier) |
-| Auditor | Auditor Portal | Government | A1–A5 |
-| Industry | Industry Portal | Government | I1–I6 |
-| Public | Public Portal | No registration required | P1–P4 |
-
-### Registration & Approval Chain
-
-```
-Industry registers → Government reviews docs → Government approves → Industry portal access
-Auditor registers  → Government reviews certs → Government approves → Auditor portal access
-Government registers → Admin reviews official ID → Admin approves → Govt portal access
-
-Rejection at any step → Email notification with reason + option to resubmit
-```
-
-### Role Permissions
-
-| Role | Access Scope |
-|---|---|
-| `ADMIN` | All routes and platform settings |
-| `GOVT` | Government + public routes |
-| `AUDITOR` | Auditor routes + assigned industry data |
-| `INDUSTRY` | Own data only |
-| `PUBLIC` | Public routes only (no login) |
+| 1 | **Anomaly Detection** | Isolation Forest | Risk Score 0–100 + Anomaly Flag |
+| 2 | **Baseline Modelling** | Linear Regression + K-Means | Expected Baseline (tCO₂e) + Confidence Range |
+| 3 | **Emission Forecasting** | Prophet + LSTM (TensorFlow) | Next Period Forecast + Confidence Band |
+| 4 | **Fraud Detection** | One-Class SVM | Fraud Probability Score Per Industry |
+| 5 | **Reduction Suggestions** | Feature Importance + Rule Engine | Ranked Actionable CO₂ Reduction Steps |
+| 6 | **What-If Simulator** | Custom Regression Inference | Estimated CO₂ Impact of Parameter Change |
+| 7 | **ESG Report Generation** | NLG + Jinja2 Templates | Auto-generated Compliance Report Narrative |
+| 8 | **Compliance Checker** | Rule Engine + Classification | Compliance Score % (Red/Green per Source) |
+| 9 | **Credit Price Prediction** | Prophet Time-Series | Price Forecast + Market Trend Indicator |
 
 ---
 
-## Core Workflow
+## 📽️ Demo & Deliverables
 
-EcoChain runs a **14-step workflow** with 3 automated decision gates:
-
-```
-Step 1  → Industry Data Input         (fuel, electricity, production data)
-Step 2  → Emission Calculator         (auto CO₂e via IPCC factors — Scope 1/2/3)
-Step 3  → Baseline Emission Model     (AI regression + K-Means benchmark)
-Step 4  → AI Anomaly Detection        (Isolation Forest risk score)
-         ⚠ GATE 1: Anomaly? → reject + notify → back to Step 1
-Step 5  → Auditor Verification        (review + PKI digital signature)
-Step 6  → Report Generation           (auto ESG/Carbon PDF via PDFKit)
-Step 7  → Blockchain Storage          (AuditRegistry.sol stores hash on Polygon)
-Step 8  → Emission Reduction Calc     (current vs baseline delta in tCO₂e)
-         ⚠ GATE 2: Exceeded? → penalty issued | Reduced? → credit path
-Step 10 → Carbon Credit Minting       (Govt approves → CarbonCredit.sol mints ERC-20)
-Step 11 → Credit Storage in Wallet    (tokens transferred to industry multi-sig wallet)
-Step 12 → Carbon Marketplace          (industry lists credits with price, qty, expiry)
-Step 13 → Smart Contract Trading      (CarbonMarketplace.sol auto-settles buy/sell)
-Step 14 → Credit Retirement + Loop    (CreditRetirement.sol burns tokens → new cycle)
-```
+- **Demo Video Link (Mandatory):** [Paste link]  
+- **Deployment Link (Recommended):** [Paste link]  
+- **Pitch Deck / PPT (Optional):** [Paste link]  
 
 ---
 
-## API Reference
+## ✅ Tasks & Bonus Checklist
 
-All API routes are prefixed with `/api`. Full interactive docs available at `/api/docs` (Swagger UI).
+- [✓] All team members completed the mandatory social task  
+- [✓] Bonus Task 1 – Badge sharing  
+- [✓] Bonus Task 2 – Blog/article  
 
-| Module | Route | Description |
-|---|---|---|
-| Auth | `/api/auth` | Login, Register, 2FA OTP, JWT refresh |
-| Users | `/api/users` | User CRUD, role management |
-| Industries | `/api/industries` | Industry profiles, verification |
-| Auditors | `/api/auditors` | Auditor profiles, audit assignments |
-| Emissions | `/api/emissions` | Submit, calculate, track emission data |
-| Baseline | `/api/baseline` | Baseline model results |
-| Anomaly | `/api/anomaly` | AI anomaly detection results |
-| Audit | `/api/audit` | Audit queue, verify, PKI sign |
-| Credits | `/api/credits` | Mint, trade, retire carbon tokens |
-| Marketplace | `/api/marketplace` | Listings, buy, sell credits |
-| Blockchain | `/api/blockchain` | On-chain records, hash verification |
-| Reports | `/api/reports` | Generate ESG + compliance PDFs |
-| Policies | `/api/policies` | Government policy CRUD |
-| Notifications | `/api/notifications` | Send, receive, manage alerts |
-| Admin | `/api/admin` | Platform settings, activity logs |
-| AI Proxy | `/api/ai` | Proxy to Python FastAPI service |
+*(Refer to Participant Manual for details)*
 
 ---
 
-## Environment Variables
+## 🧪 How to Run the Project
 
-### `backend/.env`
+### Requirements:
+- **Node.js** v18+
+- **Python** v3.11 or v3.12
+- **Foundry** (`forge`, `anvil`) — for smart contract development
+- **MongoDB** — Atlas free tier or local instance
+- API Keys: MongoDB Atlas URI, Cloudinary, Gmail SMTP (for email notifications)
 
-```env
-# Application
-NODE_ENV=development
-PORT=5000
-CLIENT_URL=http://localhost:5173
+### Local Setup:
 
-# MongoDB
-MONGODB_URI=mongodb+srv://<user>:<pass>@cluster.mongodb.net/ecochain
-
-# JWT
-JWT_ACCESS_SECRET=your_access_secret
-JWT_REFRESH_SECRET=your_refresh_secret
-JWT_ACCESS_EXPIRES=15m
-JWT_REFRESH_EXPIRES=7d
-
-# Redis (Upstash)
-UPSTASH_REDIS_URL=https://your-redis.upstash.io
-UPSTASH_REDIS_TOKEN=your_token
-
-# Cloudinary
-CLOUDINARY_CLOUD_NAME=your_cloud_name
-CLOUDINARY_API_KEY=your_api_key
-CLOUDINARY_API_SECRET=your_api_secret
-
-# Email (Gmail SMTP)
-EMAIL_USER=your@gmail.com
-EMAIL_PASS=your_app_password
-
-# AI Service
-AI_SERVICE_URL=http://localhost:8000
-
-# Blockchain
-POLYGON_RPC_URL=https://polygon-mainnet.g.alchemy.com/v2/your_key
-AMOY_RPC_URL=https://polygon-amoy.g.alchemy.com/v2/your_key
-PRIVATE_KEY=your_deployer_wallet_private_key
-POLYGONSCAN_API_KEY=your_polygonscan_key
-
-# Contract Addresses (after deployment)
-CARBON_CREDIT_ADDRESS=0x...
-MARKETPLACE_ADDRESS=0x...
-RETIREMENT_ADDRESS=0x...
-AUDIT_REGISTRY_ADDRESS=0x...
-ACCESS_CONTROL_ADDRESS=0x...
-
-# 2FA
-TOTP_SECRET=your_totp_secret
-
-# Admin
-ADMIN_IP_WHITELIST=192.168.1.1,10.0.0.1
-```
-
-### `web/.env`
-
-```env
-VITE_API_URL=http://localhost:5000/api
-VITE_SOCKET_URL=http://localhost:5000
-VITE_POLYGON_RPC=https://polygon-mainnet.g.alchemy.com/v2/your_key
-VITE_CARBON_CREDIT_ADDRESS=0x...
-VITE_MARKETPLACE_ADDRESS=0x...
-```
-
-> Never commit real `.env` files — only `.env.example`.
-
----
-
-## Getting Started
-
-### Prerequisites
-
-- [Node.js](https://nodejs.org/) (v18+)
-- [Foundry](https://book.getfoundry.sh/getting-started/installation) (for smart contract interactions)
-- [MongoDB](https://www.mongodb.com/) (Local or Atlas)
-
-
-### 1. Clone the Repository
-
+**Step 1: Clone the Repository**
 ```bash
-git clone <your-repo-url>
-cd Hackathon
+git clone https://github.com/nikhilpuppalwar/EcoChain.git
+cd EcoChain
 ```
 
-### 2. Smart Contracts (Foundry)
-
+**Step 2: Smart Contracts (Foundry)**
 ```bash
 cd contracts
-forge install
-forge build
+forge install        # Install OpenZeppelin dependencies
+forge build          # Compile all contracts
 
-# Start local testnet
-anvil 
+# Terminal 1 — Start local Anvil testnet
+anvil
 
-# In a new terminal, deploy contracts to Anvil:
+# Terminal 2 — Deploy contracts to local node
 forge script scripts/Deploy.s.sol --rpc-url http://127.0.0.1:8545 --broadcast
+# Copy deployed addresses to backend/.env and web/.env
+cd ..
 ```
 
-*Note: Update the deployed contract addresses in your backend and web environments.*
-
-### 3. Backend Setup
-
+**Step 3: Backend (Node.js API)**
 ```bash
 cd backend
 npm install
-cp .env.example .env # Add your MongoDB URI, JWT secrets, and RPC URLs
+cp .env.example .env
+# Fill in: MONGODB_URI, JWT secrets, contract addresses, AI_SERVICE_URL
 npm run dev
+# Running on http://localhost:5000  |  Swagger UI: http://localhost:5000/api/docs
+cd ..
 ```
-*API will be running on `http://localhost:5000` by default.*
 
-### 4. Frontend Setup
+**Step 4: AI Anomaly Service (Python FastAPI)**
+```bash
+cd ai
+pip install -r requirements.txt
+python -m uvicorn main:app --reload --port 8000
+# Running on http://localhost:8000
+cd ..
+```
 
+**Step 5: Frontend (React + Vite)**
 ```bash
 cd web
 npm install
-cp .env.example .env # Set your VITE_API_URL and Smart Contract Addresses
+cp .env.example .env
+# Fill in: VITE_API_URL=http://localhost:5000/api, contract addresses
 npm run dev
+# Running on http://localhost:5173
 ```
-*App will be running on `http://localhost:5173` by default.*
 
-### 5. AI Service Setup (Python FastAPI)
+### Environment Variables (Key ones):
 
-```bash
-cd ai
-# Install dependencies (use Python 3.12 if you specifically need the TensorFlow smoke detection model)
-pip install fastapi "uvicorn[standard]" scikit-learn joblib numpy pillow python-multipart pydantic
+```env
+# backend/.env
+MONGODB_URI=mongodb+srv://<user>:<pass>@cluster.mongodb.net/ecochain
+JWT_ACCESS_SECRET=your_secret
+AI_SERVICE_URL=http://localhost:8000
 
-# Start the AI microservice
-python -m uvicorn main:app --reload --port 8000
+# web/.env
+VITE_API_URL=http://localhost:5000/api
+VITE_CARBON_CREDIT_ADDRESS=0x...
 ```
-*API will be running on `http://localhost:8000` by default. Update your Express backend's `.env` to include `AI_SERVICE_URL=http://localhost:8000`.*
 
 ---
 
-## Deployment
+## 🔐 Security Overview
 
-EcoChain is designed for deployment on free-tier platforms. Push your monorepo directly to GitHub and use the configurations below.
-
-### 🌐 Deployment Map & Platform Targets
-| Component | Subdirectory | Hosting Platform | Build Command | Start Command / Output |
-| :--- | :--- | :--- | :--- | :--- |
-| **Vite Frontend** | `/web` | **Vercel** | `npm run build` | Target: `dist` |
-| **Node.js Backend** | `/backend` | **Render** (or Railway) | `npm install` | `npm start` |
-| **AI Anomaly Service** | `/ai` | **Render** | `pip install -r requirements.txt` | `uvicorn main:app --host 0.0.0.0 --port $PORT` |
-| **AI Report Generator** | `/ai/Report_Generator` | **Render** | `pip install -r requirements.txt` | `uvicorn backend.api:app --host 0.0.0.0 --port $PORT` |
-
----
-
-### 1. 🗄️ Database Setup (MongoDB Atlas)
-1. Register a free account at [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) and create an **M0 Shared Free Tier** Cluster.
-2. In database access settings, create a user with a secure password.
-3. In network access settings, add IP Address **0.0.0.0/0** (allows connection from cloud platforms like Render).
-4. Copy the connection string (e.g. `mongodb+srv://<username>:<password>@cluster0.mongodb.net/ecochain`).
-
----
-
-### 2. 🤖 Deploy AI Anomaly Service (FastAPI)
-1. Go to [Render](https://render.com/) and create a new **Web Service**.
-2. Connect your GitHub repository.
-3. Set the following parameters:
-   * **Name**: `ecochain-ai-anomaly`
-   * **Language**: `Python 3`
-   * **Root Directory**: `ai`
-   * **Build Command**: `pip install -r requirements.txt`
-   * **Start Command**: `uvicorn main:app --host 0.0.0.0 --port $PORT`
-4. Set the **Environment Variables**:
-   * Add `PYTHON_VERSION` = `3.11.9` (This is crucial to prevent compilation errors during the scikit-learn install process by downloading pre-built wheels).
-5. Click **Deploy Web Service** and copy the generated URL (e.g., `https://ecochain-ai-anomaly.onrender.com`).
-
----
-
-### 3. 📄 Deploy AI Report Generator (FastAPI)
-1. Go to [Render](https://render.com/) and create a new **Web Service**.
-2. Connect your GitHub repository.
-3. Set the following parameters:
-   * **Name**: `ecochain-ai-reports`
-   * **Language**: `Python 3`
-   * **Root Directory**: `ai/Report_Generator`
-   * **Build Command**: `pip install -r requirements.txt`
-   * **Start Command**: `uvicorn backend.api:app --host 0.0.0.0 --port $PORT`
-4. Set the **Environment Variables**:
-   * Add `OPENROUTER_API_KEY` = `your_openrouter_api_key` (if using Llama-3.1 via OpenRouter. Otherwise, leaves empty to fallback to built-in templates).
-5. Click **Deploy Web Service** and copy the generated URL (e.g., `https://ecochain-ai-reports.onrender.com`).
-
----
-
-### 4. ⚡ Deploy Node.js Express Backend
-1. Go to [Render](https://render.com/) and create a new **Web Service**.
-2. Connect your GitHub repository.
-3. Set the following parameters:
-   * **Name**: `ecochain-backend`
-   * **Language**: `Node`
-   * **Root Directory**: `backend`
-   * **Build Command**: `npm install`
-   * **Start Command**: `npm start`
-4. In the **Environment Variables** tab, add the following configuration:
-   * `NODE_ENV` = `production`
-   * `PORT` = `10000`
-   * `MONGODB_URI` = `your_mongodb_atlas_connection_string`
-   * `JWT_SECRET` = `your_secure_jwt_secret`
-   * `JWT_REFRESH_SECRET` = `your_secure_refresh_token_secret`
-   * `HACKATHON_MODE` = `true`
-   * `RPC_URL` = `https://eth-sepolia.g.alchemy.com/v2/zaQqZ5FkpkbS9x00cVjzV`
-   * `GOV_PRIVATE_KEY` = `your_deployer_wallet_private_key` (Needs DEFAULT_ADMIN_ROLE to issue credits)
-   * `CARBON_CREDIT_ADDRESS` = `0x...` (Auto-injected during Sepolia contract deploy)
-   * `AUDIT_REGISTRY_ADDRESS` = `0x...` (Auto-injected during Sepolia contract deploy)
-   * `CARBON_MARKETPLACE_ADDRESS` = `0x...` (Auto-injected during Sepolia contract deploy)
-   * `CREDIT_RETIREMENT_ADDRESS` = `0x...` (Auto-injected during Sepolia contract deploy)
-   * `AI_SERVICE_URL` = `https://ecochain-ai-anomaly.onrender.com`
-   * `PYTHON_REPORT_API_URL` = `https://ecochain-ai-reports.onrender.com/generate-report`
-   * `FRONTEND_URL` = `https://ecochain-web.vercel.app` (Points to your deployed Vercel frontend URL, crucial for CORS authorization)
-   * `CLOUDINARY_CLOUD_NAME` = `ecochain`
-   * `CLOUDINARY_API_KEY` = `your_cloudinary_api_key`
-   * `CLOUDINARY_API_SECRET` = `your_cloudinary_api_secret` (Required for uploading proof documents securely)
-5. Click **Deploy Web Service** and copy the generated backend URL (e.g., `https://ecochain-backend.onrender.com`).
-
----
-
-### 5. 🎨 Deploy Vite React Frontend
-1. Go to [Vercel](https://vercel.com) and create a new Project.
-2. Import your GitHub repository.
-3. Set the following parameters:
-   * **Framework Preset**: `Vite`
-   * **Root Directory**: `web`
-   * **Build Command**: `npm run build`
-   * **Output Directory**: `dist`
-4. In **Environment Variables**, add:
-   * `VITE_API_URL` = `https://ecochain-backend.onrender.com/api`
-5. Click **Deploy**. Your EcoChain platform is now live!
-
----
-
-## Security
-
-| Layer | Tool / Method | Description |
-|---|---|---|
-| Authentication | JWT Access (15min) + Refresh (7d) → Redis | Short-lived tokens with secure refresh |
-| 2FA | Speakeasy TOTP | Required for all roles — email OTP or Google Authenticator |
-| Password | bcryptjs (salt rounds: 12) | Hashed before storage |
-| Authorization | Custom RBAC Middleware | Role checked on every protected route |
-| Data Encryption | AES-256 (Node crypto) | Sensitive data encrypted at rest |
-| Digital Signatures | node-forge PKI | Auditor signs reports with verifiable certificate |
-| Rate Limiting | express-rate-limit | 100 requests/15 min per IP on public routes |
-| Security Headers | Helmet.js | XSS, CSRF, clickjacking, HSTS protection |
-| Input Sanitization | express-mongo-sanitize + validator.js | NoSQL injection + XSS prevention |
-| CORS | cors npm | Whitelist only frontend domain |
-| SSL/TLS | Let's Encrypt (auto) | HTTPS enforced on all endpoints |
-| Admin Access | IP Whitelist middleware | Admin portal restricted to approved IPs |
-| Blockchain | Multi-sig wallet + OpenZeppelin | Multi-sig for large transfers, audited contracts |
-
----
-
-## MongoDB Collections
-
-| Collection | Description |
+| Layer | Implementation |
 |---|---|
-| `users` | All platform users — role, email, passwordHash, walletAddress |
-| `industries` | Industry profiles — companyName, sector, registrationDocs, complianceStatus |
-| `auditors` | Auditor profiles — certifications, assignedIndustries, auditHistory |
-| `governments` | Govt official profiles — department, designation, approvedBy |
-| `emission_submissions` | Industry emission data — fuelData, electricityData, totalCO2e, status |
-| `emission_baselines` | AI-calculated baselines — baselineValue, confidenceRange |
-| `anomaly_reports` | AI detection results — riskScore, anomalyDetails, flagged |
-| `audit_reports` | Auditor verifications — decision, remarks, PKI signature, blockchainHash |
-| `carbon_credits` | Credit token records — tokenId, amount, status (active/listed/retired) |
-| `transactions` | All credit transactions — type, from, to, amount, price, txHash |
-| `marketplace_listings` | Active credit listings — sellerId, pricePerCredit, expiry, status |
-| `penalties` | Industry penalties — amount, reason, paymentStatus |
-| `policies` | Government policies — title, content, sector, effectiveDate |
-| `notifications` | All notifications — userId, type, message, read |
-| `activity_logs` | Full platform audit trail — userId, role, action, ip, timestamp |
-| `emission_factors` | CO₂ calculation factors — fuelType, factor, unit, source |
+| Authentication | JWT Access (15min) + Refresh (7d) stored in Redis |
+| 2FA | Speakeasy TOTP — required for all roles |
+| Authorization | Custom RBAC middleware on every protected route |
+| Password Security | bcryptjs with salt rounds: 12 |
+| Data Encryption | AES-256 for sensitive data at rest |
+| Digital Signatures | node-forge PKI certificates for auditor report signing |
+| Rate Limiting | 100 requests / 15 min per IP on public routes |
+| Security Headers | Helmet.js — XSS, CSRF, clickjacking, HSTS |
+| Input Validation | express-mongo-sanitize + validator.js |
+| Blockchain Security | OpenZeppelin AccessControl + Multi-sig wallet support |
 
 ---
 
-## Non-Functional Requirements
+## 🧬 Future Scope
 
-### Performance Targets
-
-| Metric | Target |
-|---|---|
-| Page load time (LCP) | < 2 seconds |
-| API response time (cached) | < 100ms |
-| API response time (non-cached) | < 500ms |
-| AI anomaly detection response | < 3 seconds |
-| Blockchain transaction confirmation | < 30 seconds (Polygon) |
-| Real-time Socket.io event delivery | < 500ms |
-| Concurrent users (free tier) | 500+ |
-| Report PDF generation | < 10 seconds |
-
-### Availability
-
-| Metric | Target |
-|---|---|
-| Platform uptime | 99.5% (free tier) / 99.9% (scaled) |
-| Database backup | Daily (MongoDB Atlas auto-backup) |
-| Blockchain data durability | 100% (immutable by design) |
-| Error recovery | Auto-restart via PM2 |
+- 📡 **IoT-Linked Auto-Reporting** — Direct integration with Continuous Emissions Monitoring Systems (CEMS) and factory IoT sensors to auto-submit real-time CO₂ readings, eliminating manual data entry entirely
+- 🛡️ **Zero-Knowledge Proofs (ZK-SNARKs)** — Allow industries to prove they meet emission thresholds to regulators without revealing commercially sensitive production metrics
+- 🌐 **Carbon DeFi Liquidity Pools** — Stake retired carbon credits into yield-bearing green liquidity pools, creating a DeFi incentive layer for real-world sustainability actions
+- 🌍 **Multi-Country Regulatory Compliance** — Support for EU ETS, California Cap-and-Trade, and Indian PAT Scheme rule sets within a single platform
+- 📱 **Mobile App** — React Native companion app for industry users to capture and submit emission data from the field
+- 🤝 **Supply Chain Scope 3 Tracking** — Extend reporting upstream and downstream through a supplier network graph to calculate full Scope 3 indirect emissions automatically
 
 ---
 
-## Roadmap
+## 📎 Resources / Credits
 
-| Phase | Weeks | Deliverables |
-|---|---|---|
-| **Phase 1 — Foundation** | 1–4 | Monorepo setup, auth system (JWT + 2FA + RBAC), Landing Page (L1/L4/L5), Admin Portal (AD1/AD2), Govt Verification (G5), all 16 Mongoose schemas, Foundry init |
-| **Phase 2 — Core Workflow** | 5–8 | Industry Portal (I1/I2/I3), Emission Calculator, Python AI service (Isolation Forest + Baseline), Auditor Portal (A1/A2/A3), CarbonCredit.sol + AuditRegistry.sol deployed to Mumbai |
-| **Phase 3 — Credit System** | 9–12 | CarbonMarketplace.sol + CreditRetirement.sol, Industry Wallet + Trading (I5), Govt Credit Oversight (G4), credit minting flow, Socket.io real-time, Public Portal (P1/P3), The Graph indexing |
-| **Phase 4 — AI & Analytics** | 13–16 | Python FastAPI service (Isolation Forest + MobileNetV2), Anomaly Detection risk score, Govt AI Verifier (G3) with Live Feed & Repeat Offenders |
-| **Phase 5 — Polish & Launch** | 17–20 | All 33 screens finalized, Polygon Mainnet deployment, security audit, Redis caching, GitHub Actions CI/CD, UptimeRobot + Sentry, UAT, Swagger + README docs |
-
----
-
-## Compliance Standards
-
-| Standard | Relevance |
-|---|---|
-| GHG Protocol | Emission calculation methodology (Scope 1, 2, 3) |
-| IPCC Emission Factors | CO₂e calculation factors used in Emission Calculator |
-| ISO 14064 | GHG emission quantification and reporting standard |
-| W3C DID | On-chain identity standard for verified users |
-| ERC-20 | Carbon credit token smart contract standard |
-| GDPR | User data privacy, right to deletion, data retention |
-| OWASP Top 10 | Web application security vulnerability prevention |
-| OpenZeppelin Standards | Smart contract security and audit patterns |
+- **IPCC Emission Factors** — CO₂e calculation constants for Scope 1/2/3 reporting
+- **GHG Protocol** — Greenhouse Gas emission quantification methodology
+- **OpenZeppelin** — Audited smart contract templates (ERC-20, AccessControl)
+- **Foundry** — Rust-based smart contract development framework (forge / anvil / cast / chisel)
+- **scikit-learn** — Isolation Forest and One-Class SVM implementations
+- **Meta Prophet** — Open-source time-series forecasting model
+- **shadcn/ui + Radix UI** — Accessible, composable React component primitives
 
 ---
 
-## Glossary
+## 🏁 Final Words
 
-| Term | Definition |
-|---|---|
-| tCO₂e | Tonnes of CO₂ equivalent — standard unit for measuring greenhouse gas emissions |
-| Scope 1 | Direct emissions from owned/controlled sources (factory furnaces, company vehicles) |
-| Scope 2 | Indirect emissions from purchased electricity, heat, or steam |
-| Scope 3 | All other indirect emissions in the value chain (supply chain, transport, waste) |
-| Baseline | Expected emission level for an industry, used to measure reduction or excess |
-| Carbon Credit | A permit representing the right to emit one tonne of CO₂e, or proof of one tonne reduced |
-| ERC-20 | Ethereum token standard for fungible tokens — used for carbon credit tokens |
-| Isolation Forest | ML algorithm for anomaly detection that isolates outliers in data |
-| Smart Contract | Self-executing code on blockchain that automatically enforces agreement terms |
-| PKI | Public Key Infrastructure — system for digital certificates and signatures |
-| IPFS | InterPlanetary File System — decentralized file storage protocol |
-| GHG Protocol | Global standard for measuring and managing greenhouse gas emissions |
-| ESG Report | Environmental, Social, and Governance compliance report |
-| Polygon | EVM-compatible blockchain with low gas fees (~$0.001/tx) |
-| Foundry | Fast Rust-based smart contract development framework (forge/anvil/cast/chisel) |
-| RBAC | Role-Based Access Control — permissions assigned based on user role |
+Building EcoChain in a hackathon timeframe taught us that the hardest engineering problems aren't purely technical — they're architectural. Bridging the worlds of Python AI, Node.js APIs, React UX, and Solidity smart contracts into a single coherent system required careful design, constant iteration, and strong teamwork.
+
+We're proud of what **Team Tikshna** built. EcoChain isn't just a prototype — it's a functional, production-grade blueprint for how carbon compliance should work. Transparent by default, verified by machines, and secured by mathematics.
+
+> *"The best time to fix the carbon market was 20 years ago. The second best time is now — with verifiable AI and blockchain."*
 
 ---
 
-## License
-
-This project is **Confidential & Proprietary** — EcoChain Platform © 2026. All rights reserved.
-
----
-
-*EcoChain Platform | PRD Version 1.0 | March 2026*
+<div align="center">
+Made with 🌿 by <strong>Team Tikshna</strong> — EcoChain © 2026
+</div>

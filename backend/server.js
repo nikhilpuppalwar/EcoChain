@@ -17,17 +17,28 @@ const server = http.createServer(app);
 
 // Middleware
 app.use(helmet());
+const allowedOrigins = [
+    'http://localhost:5173',
+    'http://localhost:5174',
+    process.env.FRONTEND_URL,
+].filter(Boolean);
+
 app.use(cors({
     origin: function (origin, callback) {
-        // allow requests with no origin (like mobile apps or curl requests)
+        // Allow requests with no origin (mobile apps, curl, Postman, server-to-server)
         if (!origin) return callback(null, true);
 
-        // allow localhost and any ngrok subdomain
-        if (origin === 'http://localhost:5173' || origin.endsWith('.ngrok-free.dev') || origin === process.env.FRONTEND_URL) {
+        // Allow exact matches from allowedOrigins list
+        if (allowedOrigins.includes(origin)) {
             return callback(null, true);
         }
 
-        const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+        // Allow any Vercel deployment (preview & production) and ngrok tunnels
+        if (origin.endsWith('.vercel.app') || origin.endsWith('.ngrok-free.app') || origin.endsWith('.ngrok-free.dev')) {
+            return callback(null, true);
+        }
+
+        const msg = `CORS: Origin '${origin}' is not allowed. Add it to FRONTEND_URL in your Render environment variables.`;
         return callback(new Error(msg), false);
     },
     credentials: true,
