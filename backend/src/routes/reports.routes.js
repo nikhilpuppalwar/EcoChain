@@ -1,92 +1,202 @@
-const express = require('express');
-const router = express.Router();
-const axios = require('axios');
+/**
+ * reports.routes.js
+ *
+ * Faithful Node.js port of:
+ *   ai/Report_Generator/backend/report_generator.py
+ *   ai/Report_Generator/backend/calculations.py
+ *   ai/Report_Generator/backend/api.py
+ *
+ * Generates a comprehensive 18-section .docx ESG report with:
+ *   - Parallel AI narrative generation via OpenRouter
+ *   - Scope 1/2/3 bar chart embedded in the document
+ *   - Full environmental metrics table
+ *   - Cloudinary upload for persistent hosting
+ *   - MongoDB record for past-reports list
+ *
+ * No Python microservice required.
+ */
+
+'use strict';
+
+const express  = require('express');
+const router   = express.Router();
+const axios    = require('axios');
 const { verifyToken } = require('../middleware/auth');
-const ESGReport = require('../models/ESGReport');
-const cloudinaryUtil = require('../utils/cloudinary');
+const ESGReport       = require('../models/ESGReport');
+const cloudinaryUtil  = require('../utils/cloudinary');
 
 const {
-    Document, Packer, Paragraph, TextRun, HeadingLevel,
-    Table, TableRow, TableCell, WidthType, AlignmentType,
-    BorderStyle, ShadingType, Header, Footer,
-    PageNumberElement,   // ← correct class (not PageNumber constructor)
-    convertInchesToTwip, PageBreak
+    Document, Packer, Paragraph, TextRun,
+    Table, TableRow, TableCell,
+    WidthType, AlignmentType, BorderStyle, ShadingType,
+    Header, Footer, PageNumberElement,
+    HeadingLevel, convertInchesToTwip, PageBreak, ImageRun,
 } = require('docx');
 
-// ─── All routes require authentication ─────────────────────────────────────────
-router.use(verifyToken);
+// ─── 1. CALCULATIONS (port of calculations.py) ─────────────────────────────────
+function calculateEmissions(d) {
+    // Same factors as calculations.py
+    const scope1 = (d.diesel || 0) * 2.68 + (d.petrol || 0) * 2.31 + (d.coal || 0) * 2.42;
+    const scope2 = (d.electricity || 0) * 0.708;
+    const scope3 = (d.transport_distance || 0) * (d.cargo_weight || 0) * 0.00012;
+    const total  = scope1 + scope2 + scope3;
 
-// ─── Emission factors (GHG Protocol / DEFRA 2023 / India grid) ─────────────────
-const EF = {
-    diesel:     2.68,   // kg CO2e / litre
-    petrol:     2.31,   // kg CO2e / litre
-    coal:       2.42,   // kg CO2e / kg
-    grid_kwh:   0.82,   // kg CO2e / kWh  (India grid 2023)
-    truck_tkm:  0.10,   // kg CO2e / tonne-km
-};
+    const revenue        = d.revenue        || 1;
+    const wasteGenerated = d.waste_generated || 1;
+    const employees      = d.employees      || 1;
+    const boardMembers   = d.board_members  || 1;
 
-function calcEmissions(d) {
-    const s1 = ((d.diesel  || 0) * EF.diesel
-              + (d.petrol  || 0) * EF.petrol
-              + (d.coal    || 0) * EF.coal) / 1000;
-    const s2 = ((d.electricity || 0) * EF.grid_kwh) / 1000;
-    const s3 = ((d.transport_distance || 0) * (d.cargo_weight || 0) * EF.truck_tkm) / 1000;
-    const total = s1 + s2 + s3;
-    const intensity    = d.revenue > 0 ? (total / d.revenue) * 1e6 : 0;
-    const recycleRate  = d.waste_generated > 0 ? (d.waste_recycled / d.waste_generated) * 100 : 0;
-    const genderRatio  = d.employees > 0 ? ((d.female_employees / d.employees) * 100).toFixed(1) : '0';
-    const boardDiversi = d.board_members > 0 ? ((d.female_directors / d.board_members) * 100).toFixed(1) : '0';
     return {
-        scope1: +s1.toFixed(2), scope2: +s2.toFixed(2), scope3: +s3.toFixed(2),
-        total: +total.toFixed(2), intensity: +intensity.toFixed(4),
-        recycleRate: +recycleRate.toFixed(1),
-        genderRatio, boardDiversity: boardDiversi,
+        scope1:           +scope1.toFixed(3),
+        scope2:           +scope2.toFixed(3),
+        scope3:           +scope3.toFixed(3),
+        total:            +total.toFixed(3),
+        carbon_intensity: +(total / revenue).toFixed(6),
+        recycle_rate:     +((d.waste_recycled || 0) / wasteGenerated).toFixed(4),
+        female_ratio:     +((d.female_employees || 0) / employees).toFixed(4),
+        board_diversity:  +((d.female_directors || 0) / boardMembers).toFixed(4),
     };
 }
 
-// ─── AI narrative via OpenRouter (falls back to rule-based) ─────────────────────
-async function generateAINarrative(d, em) {
-    const apiKey = process.env.OPENROUTER_API_KEY;
-    const useLLM = apiKey && !apiKey.startsWith('your_') && apiKey.length > 10;
+// ─── 2. CHART GENERATION (port of matplotlib bar chart) ────────────────────────
+async function generateBarChart(scope1, scope2, scope3) {
+    try {
+        const { createCanvas } = require('@napi-rs/canvas');
+        const W = 640, H = 400;
+        const canvas = createCanvas(W, H);
+        const ctx    = canvas.getContext('2d');
 
-    const fallback = () => ({
-        exec_summary:
-            `${d.company} operates in the ${d.industry} sector and generated a total of ${em.total} tCO₂e during the reporting period. ` +
-            `Scope 1 direct emissions were ${em.scope1} tCO₂e, Scope 2 electricity-related emissions contributed ${em.scope2} tCO₂e, ` +
-            `and Scope 3 value-chain emissions totalled ${em.scope3} tCO₂e. ` +
-            `Emission intensity stands at ${em.intensity} tCO₂e per USD million revenue. ` +
-            `A recycling rate of ${em.recycleRate}% and a female workforce ratio of ${em.genderRatio}% reflect the company's commitment to sustainability and social equity.`,
-        scope1_analysis:
-            `Scope 1 direct emissions of ${em.scope1} tCO₂e arise from combustion of ${d.diesel} litres of diesel, ${d.petrol} litres of petrol, and ${d.coal} kg of coal. ` +
-            `Key abatement strategies include transitioning vehicle fleets to CNG or electric alternatives, optimising boiler efficiency, and piloting biofuel blends.`,
-        scope2_analysis:
-            `Scope 2 market-based emissions of ${em.scope2} tCO₂e derive from ${(d.electricity || 0).toLocaleString()} kWh of purchased grid electricity at 0.82 kg CO₂e/kWh (India grid). ` +
-            `Priority actions include Renewable Energy Certificate procurement, on-site solar installation, and power purchase agreements with certified renewable generators.`,
-        scope3_analysis:
-            `Scope 3 value-chain emissions of ${em.scope3} tCO₂e are attributable to logistics covering ${(d.transport_distance || 0).toLocaleString()} km with ${d.cargo_weight} tonnes of cargo. ` +
-            `Decarbonisation requires shifting freight to rail and coastal shipping, optimising load factors, and collaborating with tier-1 suppliers on science-based targets.`,
-        strategy:
-            `Near-term (0–2 years): energy audits, LED retrofits, ISO 14001 certification, and waste segregation at source. ` +
-            `Medium-term (2–5 years): 50% renewable electricity procurement, electric vehicle deployment, and a circular economy programme targeting 80% waste recycling. ` +
-            `Long-term (5–10 years): net-zero pathway aligned with SBTi 1.5 °C trajectory and carbon credit purchases for residual emissions.`,
-        governance:
-            `${d.company} maintains a board of ${d.board_members} members with ${d.female_directors} female directors (${em.boardDiversity}%). ` +
-            `Recommended improvements include establishing a dedicated ESG Committee, linking executive compensation to climate KPIs, and publishing an annual TCFD-aligned climate risk disclosure.`,
-    });
+        // Background
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(0, 0, W, H);
 
-    if (!useLLM) return fallback();
+        const bars   = [
+            { label: 'Scope 1', value: scope1, color: '#FF6B6B' },
+            { label: 'Scope 2', value: scope2, color: '#FFB347' },
+            { label: 'Scope 3', value: scope3, color: '#4ECDC4' },
+        ];
+        const maxVal = Math.max(scope1, scope2, scope3, 1);
+        const pad    = { top: 40, bottom: 70, left: 80, right: 40 };
+        const plotH  = H - pad.top - pad.bottom;
+        const plotW  = W - pad.left - pad.right;
+        const barW   = (plotW / bars.length) * 0.5;
+        const gap    = (plotW / bars.length) * 0.5;
 
-    const prompt = `You are an expert ESG analyst. Generate a professional ESG report narrative for the company below.
-Return ONLY a valid JSON object with exactly these keys: exec_summary, scope1_analysis, scope2_analysis, scope3_analysis, strategy, governance.
-Each value must be 3-4 sentences of professional ESG report language. No text outside the JSON.
+        // Y-axis label
+        ctx.save();
+        ctx.translate(18, H / 2);
+        ctx.rotate(-Math.PI / 2);
+        ctx.fillStyle = '#333';
+        ctx.font      = '13px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('tCO₂e', 0, 0);
+        ctx.restore();
 
-Company: ${d.company} | Industry: ${d.industry} | Revenue: USD ${d.revenue}
-Scope 1: ${em.scope1} tCO2e (diesel ${d.diesel}L, petrol ${d.petrol}L, coal ${d.coal}kg)
-Scope 2: ${em.scope2} tCO2e (electricity ${d.electricity} kWh)
-Scope 3: ${em.scope3} tCO2e (logistics ${d.transport_distance}km / ${d.cargo_weight}t cargo)
-Total: ${em.total} tCO2e | Intensity: ${em.intensity} tCO2e/USD-M | Recycle rate: ${em.recycleRate}%
-Workforce: ${d.employees} employees, ${d.female_employees} female (${em.genderRatio}%)
-Board: ${d.board_members} members, ${d.female_directors} female directors (${em.boardDiversity}%)`;
+        // Gridlines
+        ctx.strokeStyle = '#E5E7EB';
+        ctx.lineWidth   = 1;
+        for (let i = 0; i <= 5; i++) {
+            const y = pad.top + plotH - (i / 5) * plotH;
+            ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(W - pad.right, y); ctx.stroke();
+            ctx.fillStyle  = '#666';
+            ctx.font       = '11px sans-serif';
+            ctx.textAlign  = 'right';
+            ctx.fillText(((maxVal * i) / 5).toFixed(1), pad.left - 6, y + 4);
+        }
+
+        // Bars
+        bars.forEach((bar, i) => {
+            const barH = (bar.value / maxVal) * plotH;
+            const x    = pad.left + i * (barW + gap) + gap / 2;
+            const y    = pad.top + plotH - barH;
+
+            ctx.fillStyle = bar.color;
+            ctx.beginPath();
+            ctx.roundRect(x, y, barW, barH, [4, 4, 0, 0]);
+            ctx.fill();
+
+            // Value label on top
+            ctx.fillStyle  = '#333';
+            ctx.font       = 'bold 12px sans-serif';
+            ctx.textAlign  = 'center';
+            ctx.fillText(bar.value.toFixed(2), x + barW / 2, y - 8);
+
+            // X-axis label
+            ctx.fillStyle  = '#555';
+            ctx.font       = '13px sans-serif';
+            ctx.fillText(bar.label, x + barW / 2, H - pad.bottom + 22);
+        });
+
+        // Title
+        ctx.fillStyle  = '#111827';
+        ctx.font       = 'bold 15px sans-serif';
+        ctx.textAlign  = 'center';
+        ctx.fillText('Emission Distribution by Scope (tCO₂e)', W / 2, 24);
+
+        return canvas.toBuffer('image/png');
+    } catch (err) {
+        console.warn('[ESG] Chart generation skipped:', err.message);
+        return null;
+    }
+}
+
+// ─── 3. AI SECTION GENERATION (port of generate_section) ───────────────────────
+const SECTIONS = [
+    '1. Executive Summary',
+    '2. Corporate Identity and Overview',
+    '3. Macro Environmental Impact',
+    '4. Carbon Reduction Master Strategy',
+    '5. Direct Emission Profile (Scope 1)',
+    '6. Indirect Energy Emissions (Scope 2)',
+    '7. Value Chain Emissions (Scope 3)',
+    '8. Emission Analysis and Distribution',
+    '9. Waste Management and Recycling Protocols',
+    '10. Water Resource Utilization',
+    '11. Renewable Energy Transition Models',
+    '12. Supply Chain Sustainability',
+    '13. Social Responsibility and Workforce Demographics',
+    '14. Corporate Governance & Board Diversity',
+    '15. GHG Protocol Verification and Compliance',
+    '16. Climate Risk Factors and TCFD Alignment',
+    '17. Future Sustainability Roadmap 2030',
+    '18. Concluding Remarks and Commitments',
+];
+
+function fallbackSection(title, d, metrics) {
+    return (
+        `This section covers ${title} for ${d.company} operating in the ${d.industry} sector. ` +
+        `Based on the reported data, total Scope 1 emissions are ${metrics.scope1} tCO₂e, ` +
+        `Scope 2 emissions are ${metrics.scope2} tCO₂e, and ` +
+        `Scope 3 (value chain) emissions are ${metrics.scope3} tCO₂e, ` +
+        `yielding a combined footprint of ${metrics.total} tCO₂e. ` +
+        `Carbon intensity relative to annual revenue (USD ${(d.revenue || 0).toLocaleString()}) is ` +
+        `${metrics.carbon_intensity} tCO₂e per USD. ` +
+        `Waste recycling rate stands at ${(metrics.recycle_rate * 100).toFixed(1)}%. ` +
+        `Female workforce representation is ${(metrics.female_ratio * 100).toFixed(1)}% ` +
+        `and board diversity is ${(metrics.board_diversity * 100).toFixed(1)}%. ` +
+        `The organisation is advised to implement a structured emission reduction roadmap aligned with ` +
+        `GHG Protocol standards and ISO 14064 requirements to demonstrate continued commitment to ` +
+        `environmental stewardship and regulatory compliance. ` +
+        `Adopting science-based targets in line with the Paris Agreement will further strengthen ` +
+        `stakeholder confidence and support long-term business resilience against climate-related risks.`
+    );
+}
+
+async function generateSectionAI(title, d, metrics, apiKey) {
+    if (!apiKey || apiKey.startsWith('your_') || apiKey.length < 10) {
+        return fallbackSection(title, d, metrics);
+    }
+
+    const prompt =
+        `Write a professional ESG carbon audit report section titled "${title}".\n\n` +
+        `Company: ${d.company}\nIndustry: ${d.industry}\nRevenue: USD ${(d.revenue || 0).toLocaleString()}\n\n` +
+        `Scope 1: ${metrics.scope1} tCO₂e\nScope 2: ${metrics.scope2} tCO₂e\nScope 3: ${metrics.scope3} tCO₂e\n` +
+        `Total: ${metrics.total} tCO₂e\nCarbon Intensity: ${metrics.carbon_intensity} tCO₂e/USD\n` +
+        `Recycle Rate: ${(metrics.recycle_rate * 100).toFixed(1)}%\n` +
+        `Female Workforce: ${(metrics.female_ratio * 100).toFixed(1)}%\n` +
+        `Board Diversity: ${(metrics.board_diversity * 100).toFixed(1)}%\n\n` +
+        `Write about sustainability strategy, risks, compliance and environmental impact. ` +
+        `Generate a highly detailed, comprehensive 300-word analysis. Be extremely thorough.`;
 
     try {
         const res = await axios.post(
@@ -94,7 +204,6 @@ Board: ${d.board_members} members, ${d.female_directors} female directors (${em.
             {
                 model: 'meta-llama/llama-3.1-8b-instruct:free',
                 messages: [{ role: 'user', content: prompt }],
-                response_format: { type: 'json_object' },
             },
             {
                 headers: {
@@ -103,105 +212,127 @@ Board: ${d.board_members} members, ${d.female_directors} female directors (${em.
                     'HTTP-Referer': 'https://ecochain.app',
                     'X-Title': 'EcoChain ESG Report Generator',
                 },
-                timeout: 45000,
+                timeout: 30000,
             }
         );
-        const content = res.data?.choices?.[0]?.message?.content?.trim();
-        if (content) {
-            const parsed = JSON.parse(content);
-            if (parsed.exec_summary && parsed.strategy) return parsed;
-        }
+        const text = res.data?.choices?.[0]?.message?.content?.trim();
+        return text && text.length > 40 ? text : fallbackSection(title, d, metrics);
     } catch (err) {
-        console.warn('[ESG Report] LLM call failed, using rule-based fallback:', err.message);
+        console.warn(`[ESG] LLM failed for "${title}":`, err.message);
+        return fallbackSection(title, d, metrics);
     }
-    return fallback();
 }
 
-// ─── Build a branded DOCX buffer ───────────────────────────────────────────────
-async function buildDocx(d, em, ai) {
-    const GREEN   = '1A7A4A';
-    const DKGREY  = '1E293B';
-    const LTGREY  = 'F1F5F9';
-    const MIDGREY = '64748B';
+// ─── 4. DOCX BUILDER (port of generate_report) ─────────────────────────────────
+async function buildReport(d, metrics, sectionTexts, chartBuf) {
+    const GREEN    = '1A7A4A';
+    const DKGREY   = '1E293B';
+    const LTGREY   = 'F1F5F9';
+    const MIDGREY  = '64748B';
+    const NONE     = { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' };
+    const ROW_LINE = { style: BorderStyle.SINGLE, size: 1, color: 'E2E8F0' };
 
-    const BORDER_NONE = { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' };
-    const BORDER_ROW  = { style: BorderStyle.SINGLE, size: 1, color: 'E2E8F0' };
+    const now        = new Date();
+    const reportDate = now.toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
 
-    // ── Helper: body paragraph ──
-    const body = (text) => new Paragraph({
-        children: [new TextRun({ text, size: 22, color: '334155' })],
-        spacing: { after: 180 },
+    // ── Helpers ──
+    const para = (text, opts = {}) => new Paragraph({
+        children: [new TextRun({ text, size: opts.size || 22, color: opts.color || '334155', bold: opts.bold || false, italics: opts.italic || false })],
+        alignment: opts.align || AlignmentType.JUSTIFIED,
+        spacing: { after: opts.after !== undefined ? opts.after : 180 },
     });
 
-    // ── Helper: section heading ──
-    const sectionHeading = (text) => new Paragraph({
-        children: [new TextRun({ text, bold: true, size: 28, color: GREEN, font: 'Calibri' })],
+    const heading1 = (text) => new Paragraph({
+        children: [new TextRun({ text, bold: true, size: 30, color: GREEN, font: 'Arial' })],
         spacing: { before: 360, after: 160 },
-        border: { bottom: { style: BorderStyle.SINGLE, size: 2, color: 'E2E8F0' } },
+        border: { bottom: { style: BorderStyle.SINGLE, size: 3, color: 'D1FAE5' } },
     });
 
-    // ── Helper: KPI table row ──
     const kpiRow = (label, value) => new TableRow({
         children: [
             new TableCell({
-                children: [new Paragraph({
-                    children: [new TextRun({ text: label, bold: true, size: 20, color: DKGREY })],
-                })],
-                borders: { top: BORDER_NONE, bottom: { style: BorderStyle.SINGLE, size: 1, color: 'E2E8F0' }, left: BORDER_NONE, right: BORDER_NONE },
+                children: [new Paragraph({ children: [new TextRun({ text: String(label), bold: true, size: 20, color: DKGREY })] })],
+                borders: { top: NONE, bottom: ROW_LINE, left: NONE, right: NONE },
                 shading: { type: ShadingType.SOLID, color: LTGREY },
                 width: { size: 60, type: WidthType.PERCENTAGE },
-                margins: { top: 80, bottom: 80, left: 120, right: 120 },
+                margins: { top: 80, bottom: 80, left: 140, right: 140 },
             }),
             new TableCell({
-                children: [new Paragraph({
-                    alignment: AlignmentType.RIGHT,
-                    children: [new TextRun({ text: String(value), bold: true, size: 22, color: GREEN })],
-                })],
-                borders: { top: BORDER_NONE, bottom: { style: BorderStyle.SINGLE, size: 1, color: 'E2E8F0' }, left: BORDER_NONE, right: BORDER_NONE },
+                children: [new Paragraph({ alignment: AlignmentType.RIGHT, children: [new TextRun({ text: String(value), bold: true, size: 22, color: GREEN })] })],
+                borders: { top: NONE, bottom: ROW_LINE, left: NONE, right: NONE },
                 shading: { type: ShadingType.SOLID, color: LTGREY },
                 width: { size: 40, type: WidthType.PERCENTAGE },
-                margins: { top: 80, bottom: 80, left: 120, right: 120 },
+                margins: { top: 80, bottom: 80, left: 140, right: 140 },
             }),
         ],
     });
 
-    // ── Helper: KPI table ──
     const kpiTable = (rows) => new Table({
         rows,
         width: { size: 100, type: WidthType.PERCENTAGE },
-        borders: { top: BORDER_NONE, bottom: BORDER_NONE, left: BORDER_NONE, right: BORDER_NONE, insideH: BORDER_NONE, insideV: BORDER_NONE },
+        borders: { top: NONE, bottom: NONE, left: NONE, right: NONE, insideH: NONE, insideV: NONE },
     });
 
-    const now = new Date();
-    const reportDate = now.toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
+    // ── Build children for main section ──
+    const mainChildren = [];
+
+    SECTIONS.forEach((sec, idx) => {
+        mainChildren.push(heading1(sec));
+
+        const rawText = sectionTexts[sec] || fallbackSection(sec, d, metrics);
+        rawText.split('\n').forEach(line => {
+            if (line.trim().length > 0) {
+                mainChildren.push(para(line.trim()));
+            }
+        });
+
+        // Insert bar chart after "Emission Analysis" section (section 8, same as Python)
+        if (sec.includes('Emission Analysis') && chartBuf) {
+            mainChildren.push(new Paragraph({
+                children: [new ImageRun({ data: chartBuf, transformation: { width: 480, height: 300 } })],
+                alignment: AlignmentType.CENTER,
+                spacing: { before: 160, after: 80 },
+            }));
+            mainChildren.push(para('Fig 1 – Emission Distribution Matrix (Scope 1, 2, 3)', { align: AlignmentType.CENTER, italic: true, size: 20, color: '64748B', after: 240 }));
+        }
+
+        mainChildren.push(new Paragraph({ children: [new PageBreak()] }));
+    });
+
+    // ── Environmental Metrics Table (same as Python table) ──
+    mainChildren.push(heading1('Environmental Metrics'));
+    mainChildren.push(kpiTable([
+        kpiRow('Metric', 'Value'),
+        kpiRow('Scope 1 — Direct Emissions',         `${metrics.scope1} tCO₂e`),
+        kpiRow('Scope 2 — Electricity Emissions',    `${metrics.scope2} tCO₂e`),
+        kpiRow('Scope 3 — Value Chain Emissions',    `${metrics.scope3} tCO₂e`),
+        kpiRow('Total Emissions',                    `${metrics.total} tCO₂e`),
+        kpiRow('Carbon Intensity',                   `${metrics.carbon_intensity} tCO₂e/USD`),
+        kpiRow('Recycle Rate',                       `${(metrics.recycle_rate * 100).toFixed(1)}%`),
+        kpiRow('Female Workforce %',                 `${(metrics.female_ratio * 100).toFixed(1)}%`),
+        kpiRow('Board Diversity %',                  `${(metrics.board_diversity * 100).toFixed(1)}%`),
+    ]));
 
     const doc = new Document({
         sections: [
-            // ─────────────────────────────────────────────────────────────────
-            // SECTION 1 — Cover Page (no header/footer on cover)
-            // ─────────────────────────────────────────────────────────────────
+            // ── Cover page ──
             {
                 children: [
-                    new Paragraph({ children: [new TextRun({ text: '', break: 4 })] }),
+                    new Paragraph({ children: [new TextRun({ text: '', break: 5 })] }),
                     new Paragraph({
                         alignment: AlignmentType.CENTER,
-                        children: [new TextRun({ text: 'EcoChain', bold: true, size: 64, color: GREEN, font: 'Calibri' })],
-                        spacing: { after: 100 },
-                    }),
-                    new Paragraph({
-                        alignment: AlignmentType.CENTER,
-                        children: [new TextRun({ text: 'Environmental, Social & Governance Report', bold: true, size: 36, color: DKGREY, font: 'Calibri' })],
+                        children: [new TextRun({ text: d.company, bold: true, size: 72, color: GREEN, font: 'Arial' })],
                         spacing: { after: 120 },
                     }),
                     new Paragraph({
                         alignment: AlignmentType.CENTER,
-                        children: [new TextRun({ text: d.company, size: 30, color: MIDGREY })],
-                        spacing: { after: 80 },
+                        children: [new TextRun({ text: 'Comprehensive Carbon Audit & ESG Sustainability Report 2025', bold: true, size: 30, color: DKGREY })],
+                        spacing: { after: 100 },
                     }),
                     new Paragraph({
                         alignment: AlignmentType.CENTER,
-                        children: [new TextRun({ text: `${d.industry}  ·  ${reportDate}`, size: 22, color: '94A3B8' })],
-                        spacing: { after: 60 },
+                        children: [new TextRun({ text: `${d.industry}  ·  ${reportDate}`, size: 24, color: MIDGREY })],
+                        spacing: { after: 80 },
                     }),
                     new Paragraph({
                         alignment: AlignmentType.CENTER,
@@ -209,17 +340,15 @@ async function buildDocx(d, em, ai) {
                     }),
                 ],
             },
-            // ─────────────────────────────────────────────────────────────────
-            // SECTION 2 — Main Report (header + footer)
-            // ─────────────────────────────────────────────────────────────────
+            // ── Main report with header/footer ──
             {
                 properties: {
                     page: {
                         margin: {
-                            top: convertInchesToTwip(1.0),
+                            top:    convertInchesToTwip(1.0),
                             bottom: convertInchesToTwip(1.0),
-                            left: convertInchesToTwip(1.25),
-                            right: convertInchesToTwip(1.25),
+                            left:   convertInchesToTwip(1.25),
+                            right:  convertInchesToTwip(1.25),
                         },
                     },
                 },
@@ -227,7 +356,7 @@ async function buildDocx(d, em, ai) {
                     default: new Header({
                         children: [new Paragraph({
                             alignment: AlignmentType.RIGHT,
-                            children: [new TextRun({ text: `${d.company}  ·  ESG Report ${now.getFullYear()}`, size: 18, color: '94A3B8', italics: true })],
+                            children: [new TextRun({ text: `${d.company}  ·  ESG Carbon Audit Report ${now.getFullYear()}`, size: 18, color: '94A3B8', italics: true })],
                         })],
                     }),
                 },
@@ -243,100 +372,7 @@ async function buildDocx(d, em, ai) {
                         })],
                     }),
                 },
-                children: [
-                    // 1. Executive Summary
-                    sectionHeading('1. Executive Summary'),
-                    body(ai.exec_summary),
-
-                    // 2. KPI Dashboard
-                    sectionHeading('2. Emissions KPI Dashboard'),
-                    kpiTable([
-                        kpiRow('Scope 1 — Direct Emissions',             `${em.scope1} tCO₂e`),
-                        kpiRow('Scope 2 — Electricity (Market-Based)',    `${em.scope2} tCO₂e`),
-                        kpiRow('Scope 3 — Value Chain',                   `${em.scope3} tCO₂e`),
-                        kpiRow('Total GHG Emissions',                     `${em.total} tCO₂e`),
-                        kpiRow('Emission Intensity',                      `${em.intensity} tCO₂e / USD-M Revenue`),
-                        kpiRow('Waste Recycling Rate',                    `${em.recycleRate}%`),
-                        kpiRow('Workforce Gender Ratio',                  `${em.genderRatio}% female`),
-                        kpiRow('Board Diversity',                         `${em.boardDiversity}% female directors`),
-                    ]),
-                    new Paragraph({ spacing: { after: 200 } }),
-
-                    // 3. Scope 1
-                    sectionHeading('3. Scope 1 — Direct Emissions Analysis'),
-                    body(ai.scope1_analysis),
-                    kpiTable([
-                        kpiRow('Diesel consumed',   `${(d.diesel  || 0).toLocaleString()} litres`),
-                        kpiRow('Petrol consumed',   `${(d.petrol  || 0).toLocaleString()} litres`),
-                        kpiRow('Coal consumed',     `${(d.coal    || 0).toLocaleString()} kg`),
-                        kpiRow('Scope 1 total',     `${em.scope1} tCO₂e`),
-                    ]),
-                    new Paragraph({ spacing: { after: 200 } }),
-
-                    // 4. Scope 2
-                    sectionHeading('4. Scope 2 — Energy Indirect Emissions'),
-                    body(ai.scope2_analysis),
-                    kpiTable([
-                        kpiRow('Grid electricity consumed',  `${(d.electricity || 0).toLocaleString()} kWh`),
-                        kpiRow('Emission factor (India grid)', '0.82 kg CO₂e / kWh'),
-                        kpiRow('Scope 2 total',               `${em.scope2} tCO₂e`),
-                    ]),
-                    new Paragraph({ spacing: { after: 200 } }),
-
-                    // 5. Scope 3
-                    sectionHeading('5. Scope 3 — Value Chain Emissions'),
-                    body(ai.scope3_analysis),
-                    kpiTable([
-                        kpiRow('Transport distance', `${(d.transport_distance || 0).toLocaleString()} km`),
-                        kpiRow('Cargo weight',       `${(d.cargo_weight || 0).toLocaleString()} tonnes`),
-                        kpiRow('Scope 3 total',      `${em.scope3} tCO₂e`),
-                    ]),
-                    new Paragraph({ spacing: { after: 200 } }),
-
-                    // 6. Waste & Social
-                    sectionHeading('6. Waste & Social Performance'),
-                    kpiTable([
-                        kpiRow('Total waste generated', `${(d.waste_generated || 0).toLocaleString()} kg`),
-                        kpiRow('Waste recycled',         `${(d.waste_recycled  || 0).toLocaleString()} kg`),
-                        kpiRow('Recycling rate',          `${em.recycleRate}%`),
-                        kpiRow('Total employees',         `${(d.employees        || 0).toLocaleString()}`),
-                        kpiRow('Female employees',        `${(d.female_employees || 0).toLocaleString()} (${em.genderRatio}%)`),
-                        kpiRow('Board size',              `${d.board_members} members`),
-                        kpiRow('Female directors',        `${d.female_directors} (${em.boardDiversity}%)`),
-                    ]),
-                    new Paragraph({ spacing: { after: 200 } }),
-
-                    // 7. Strategy
-                    sectionHeading('7. Sustainability Strategy & Roadmap'),
-                    body(ai.strategy),
-
-                    // 8. Governance
-                    sectionHeading('8. Governance & Compliance'),
-                    body(ai.governance),
-
-                    // 9. Methodology
-                    sectionHeading('9. Reporting Methodology'),
-                    body(
-                        'This report has been prepared in accordance with the GHG Protocol Corporate Standard (WBCSD/WRI), ' +
-                        'GRI Standards for sustainability reporting, and SEBI BRSR guidelines. ' +
-                        'Emission factors are sourced from DEFRA 2023, US EPA, and the India Ministry of Power grid emission factor (2023 update). ' +
-                        'All calculations have been independently verified by the EcoChain AI audit engine.'
-                    ),
-
-                    // 10. Disclaimer
-                    sectionHeading('10. Disclaimer'),
-                    body(
-                        'AI-generated narratives are intended as a drafting aid. ' +
-                        'The company is responsible for verifying all quantitative data and ensuring compliance with applicable regulatory requirements ' +
-                        'before submission to statutory bodies. EcoChain provides this report as-is without warranty of accuracy.'
-                    ),
-
-                    new Paragraph({
-                        alignment: AlignmentType.CENTER,
-                        children: [new TextRun({ text: `— End of Report —   ${d.company}  ·  Generated by EcoChain AI Platform`, size: 18, italics: true, color: '94A3B8' })],
-                        spacing: { before: 480 },
-                    }),
-                ],
+                children: mainChildren,
             },
         ],
     });
@@ -344,103 +380,108 @@ async function buildDocx(d, em, ai) {
     return Packer.toBuffer(doc);
 }
 
-// ─── Route: GET /api/reports/past ───────────────────────────────────────────────
+// ─── 5. ROUTES ──────────────────────────────────────────────────────────────────
+router.use(verifyToken);
+
+// GET /api/reports/past
 router.get('/past', async (req, res, next) => {
     try {
-        const reports = await ESGReport.find({ company: req.user.company, status: 'completed' }).sort({ createdAt: -1 });
+        const reports = await ESGReport
+            .find({ company: req.user.company, status: 'completed' })
+            .sort({ createdAt: -1 });
         res.status(200).json({ success: true, data: reports });
-    } catch (error) { next(error); }
+    } catch (err) { next(err); }
 });
 
-// ─── Route: POST /api/reports/generate ─────────────────────────────────────────
-/**
- * Synchronous generation: build .docx in Node.js, upload to Cloudinary, return URL.
- * No Python microservice required.
- */
+// POST /api/reports/generate  ←  primary endpoint used by frontend
 router.post('/generate', async (req, res) => {
     try {
         const d = req.body;
 
-        // Basic validation
+        // Validation
         const required = [
-            'company', 'industry', 'revenue',
-            'diesel', 'petrol', 'coal', 'electricity',
-            'transport_distance', 'cargo_weight',
-            'waste_generated', 'waste_recycled',
-            'employees', 'female_employees', 'board_members', 'female_directors',
+            'company','industry','revenue',
+            'diesel','petrol','coal','electricity',
+            'transport_distance','cargo_weight',
+            'waste_generated','waste_recycled',
+            'employees','female_employees','board_members','female_directors',
         ];
-        for (const key of required) {
-            if (d[key] === undefined || d[key] === null || d[key] === '') {
-                return res.status(400).json({ success: false, message: `Missing required field: ${key}` });
+        for (const k of required) {
+            if (d[k] === undefined || d[k] === null || d[k] === '') {
+                return res.status(400).json({ success: false, message: `Missing required field: ${k}` });
             }
         }
 
-        // 1. Calculate emissions
-        const em = calcEmissions(d);
+        // 1. Calculate
+        const metrics = calculateEmissions(d);
 
-        // 2. Generate AI narrative
-        const ai = await generateAINarrative(d, em);
+        // 2. Generate chart
+        const chartBuf = await generateBarChart(metrics.scope1, metrics.scope2, metrics.scope3);
 
-        // 3. Build DOCX buffer
-        const buffer = await buildDocx(d, em, ai);
+        // 3. Generate all 18 sections in parallel (same as Python ThreadPoolExecutor)
+        const apiKey = process.env.OPENROUTER_API_KEY || '';
+        const sectionPromises = SECTIONS.map(sec =>
+            generateSectionAI(sec, d, metrics, apiKey).then(text => ({ sec, text }))
+        );
+        const results    = await Promise.all(sectionPromises);
+        const sectionTexts = {};
+        results.forEach(({ sec, text }) => { sectionTexts[sec] = text; });
 
-        const filename = `ESG_${d.company.replace(/\s+/g, '_')}_${Date.now()}.docx`;
+        // 4. Build DOCX
+        const buffer = await buildReport(d, metrics, sectionTexts, chartBuf);
+
+        const safeName = d.company.replace(/[^a-zA-Z0-9 _-]/g, '').trim().replace(/\s+/g, '_');
+        const filename = `${safeName}_ESG_Report_${Date.now()}.docx`;
         const sizeMB   = (buffer.length / (1024 * 1024)).toFixed(2);
-        let cloudinaryUrl = '';
 
-        // 4. Upload to Cloudinary
+        // 5. Upload to Cloudinary
+        let cloudinaryUrl = '';
         try {
             cloudinaryUrl = await cloudinaryUtil.uploadFile(
-                buffer,
-                filename,
+                buffer, filename,
                 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
             );
-        } catch (uploadErr) {
-            console.error('[ESG Report] Cloudinary upload failed:', uploadErr.message);
-            // Will fallback to base64 below
+        } catch (upErr) {
+            console.error('[ESG] Cloudinary upload failed:', upErr.message);
         }
 
-        // 5. Save record to MongoDB
+        // 6. Save to MongoDB
         try {
-            const newReport = new ESGReport({
+            await ESGReport.create({
                 company: req.user.company,
-                jobId: `sync_${Date.now()}`,
-                name: `${d.company} ESG Report ${new Date().toLocaleDateString('en-IN', { month: 'short', year: 'numeric' })}`,
-                type: 'ESG',
-                size: `${sizeMB} MB`,
-                url: cloudinaryUrl,
-                status: 'completed',
+                jobId:   `sync_${Date.now()}`,
+                name:    `${d.company} ESG Report ${new Date().toLocaleDateString('en-IN', { month: 'short', year: 'numeric' })}`,
+                type:    'ESG',
+                size:    `${sizeMB} MB`,
+                url:     cloudinaryUrl,
+                status:  'completed',
             });
-            await newReport.save();
         } catch (dbErr) {
-            console.error('[ESG Report] DB save failed:', dbErr.message);
+            console.error('[ESG] DB save failed:', dbErr.message);
         }
 
-        // 6. Respond with Cloudinary URL or base64 fallback
+        // 7. Respond
         if (cloudinaryUrl) {
             return res.json({ success: true, cloudinaryUrl, downloadUrl: cloudinaryUrl });
         }
 
-        const base64  = buffer.toString('base64');
-        const dataUri = `data:application/vnd.openxmlformats-officedocument.wordprocessingml.document;base64,${base64}`;
+        // Base64 fallback so browser can still download even if Cloudinary is not configured
+        const dataUri = `data:application/vnd.openxmlformats-officedocument.wordprocessingml.document;base64,${buffer.toString('base64')}`;
         return res.json({ success: true, cloudinaryUrl: '', downloadUrl: dataUri });
 
     } catch (err) {
-        console.error('[ESG Report] Generation error:', err.message, err.stack);
+        console.error('[ESG] Report generation error:', err.message, err.stack);
         res.status(500).json({ success: false, message: 'Report generation failed', detail: err.message });
     }
 });
 
-// ─── Route: POST /api/reports/generate-async ───────────────────────────────────
-/** Delegates to sync generation. Returns completed status immediately. */
-router.post('/generate-async', async (req, res) => {
-    // Forward to /generate logic inline
+// POST /api/reports/generate-async  ←  delegates to sync (Python no longer needed)
+router.post('/generate-async', (req, res, next) => {
     req.url = '/generate';
-    router.handle(req, res, () => {});
+    router.handle(req, res, next);
 });
 
-// ─── Route: GET /api/reports/status/:jobId ─────────────────────────────────────
-/** Reads directly from DB — no Python polling needed. */
+// GET /api/reports/status/:jobId  ←  kept for backwards compat, reads from DB
 router.get('/status/:jobId', async (req, res) => {
     try {
         const report = await ESGReport.findOne({ jobId: req.params.jobId });
