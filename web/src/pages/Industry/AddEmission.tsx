@@ -206,28 +206,32 @@ export default function AddEmission() {
     };
 
     const handleNext = () => {
-        if (!currentFormData.category || !currentFormData.date || !currentFormData.amount) {
-            toast.error("Please fill in all required general fields (Category, Date, Amount).");
+        if (!currentFormData.category || !currentFormData.date) {
+            toast.error("Please fill in the required fields: Category and Date.");
             return;
         }
 
-        // Validate all dynamic fields for the current category are filled
-        const requiredFields = CATEGORY_FIELDS[currentFormData.category] || [];
-        const missingFields = requiredFields.filter(
+        // Only validate the primary quantity fields (skip optional text/meta fields)
+        const primaryFields = (CATEGORY_FIELDS[currentFormData.category] || []).filter(
+            f => f.type === 'number' || f.type === 'select'
+        );
+        const missingFields = primaryFields.filter(
             f => !currentFormData.dynamicFields[f.name] || currentFormData.dynamicFields[f.name].trim() === ''
         );
 
         if (missingFields.length > 0) {
-            toast.error(`Please fill in all mandatory specific fields: ${missingFields.map(f => f.label).join(', ')}`);
+            toast.error(`Please fill in: ${missingFields.map(f => f.label).join(', ')}`);
             return;
         }
 
-        // Optional: Ensure Evidence Document is provided as it was made mandatory in backend
-        // if (!currentFormData.evidenceDocument) {
-        //     toast.error("Evidence Documentation is mandatory for verification.");
-        //     return;
-        // }
+        // Compute amount from dynamic fields if not manually entered
+        const computedAmount = currentFormData.amount || getCalculatedAmount();
+        if (!computedAmount || parseFloat(computedAmount) <= 0) {
+            toast.error("Please enter a valid emission quantity or use the AI Estimator.");
+            return;
+        }
 
+        setCurrentFormData(prev => ({ ...prev, amount: computedAmount }));
         saveCurrentStepData(false);
 
         if (currentStep < 3) {
@@ -286,22 +290,25 @@ export default function AddEmission() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         
-        // Final validation for the 3rd step before submitting
-        const requiredFields = CATEGORY_FIELDS[currentFormData.category] || [];
-        const missingFields = requiredFields.filter(
+        // Final validation for the 3rd step — only primary numeric/select fields are mandatory
+        const primaryFields = (CATEGORY_FIELDS[currentFormData.category] || []).filter(
+            f => f.type === 'number' || f.type === 'select'
+        );
+        const missingFields = primaryFields.filter(
             f => !currentFormData.dynamicFields[f.name] || currentFormData.dynamicFields[f.name].trim() === ''
         );
 
         if (missingFields.length > 0) {
-            toast.error(`Please fill in all mandatory fields before submitting: ${missingFields.map(f => f.label).join(', ')}`);
+            toast.error(`Please fill in: ${missingFields.map(f => f.label).join(', ')}`);
             return;
         }
 
-        saveCurrentStepData(false);
+        // Compute amount from dynamic fields if not manually entered
+        const currentAmount = currentFormData.amount || getCalculatedAmount();
+
         setIsSubmitting(true);
 
         try {
-            const currentAmount = currentFormData.amount || getCalculatedAmount();
             const finalWizardData = {
                 ...wizardData,
                 [`scope${currentStep}` as keyof WizardData]: { ...currentFormData, amount: currentAmount }
@@ -331,7 +338,8 @@ export default function AddEmission() {
                     combinedData.location = data.location;
                 }
 
-                combinedData.quantityTonnes += parseFloat(data.amount) || 0;
+                const qty = parseFloat(data.amount) || 0;
+                combinedData.quantityTonnes += qty;
 
                 let combinedNotes = `[${scopeKey.toUpperCase()} - ${data.category}]\n`;
                 Object.entries(data.dynamicFields).forEach(([k, v]) => {
@@ -358,9 +366,17 @@ export default function AddEmission() {
             });
 
             if (combinedData.quantityTonnes <= 0) {
-                toast.error("No valid emissions data to submit.");
+                toast.error("No valid emissions data to submit. Please enter quantity values.");
                 setIsSubmitting(false);
                 return;
+            }
+
+            // Ensure periodYear/Month fallback if all scopes were skipped except current
+            if (!combinedData.periodYear) {
+                const [year, month] = currentFormData.date.split('-');
+                combinedData.periodYear = year;
+                combinedData.periodMonth = month;
+                if (currentFormData.location) combinedData.location = currentFormData.location;
             }
 
             const formData = new FormData();
@@ -368,7 +384,7 @@ export default function AddEmission() {
             formData.append('periodMonth', combinedData.periodMonth);
             formData.append('quantityTonnes', combinedData.quantityTonnes.toString());
             formData.append('emissionSource', combinedData.emissionSource);
-            formData.append('notes', combinedData.notes);
+            formData.append('notes', combinedData.notes || 'Submitted via web form');
             if (combinedData.location) formData.append('location', combinedData.location);
 
             if (combinedData.wasteGeneration.length) formData.append('wasteGeneration', JSON.stringify(combinedData.wasteGeneration));
@@ -381,18 +397,21 @@ export default function AddEmission() {
             }
 
             const { default: api } = await import('../../lib/api');
-            await api.post('/emissions', formData, {
+            const response = await api.post('/emissions', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
 
-            // Need to still update wizardData so the success screen looks right
-            setWizardData(finalWizardData as WizardData);
-            
-            toast.success("Emission records successfully combined and logged.");
-            setIsSubmitted(true);
-        } catch (error) {
-            toast.error("Failed to log emissions. Please try again.");
-            console.error("Submission Error:", error);
+            if (response.data?.success || response.status === 201) {
+                setWizardData(finalWizardData as WizardData);
+                toast.success("Emission records successfully logged and sent for verification!");
+                setIsSubmitted(true);
+            } else {
+                throw new Error(response.data?.message || 'Unexpected response from server');
+            }
+        } catch (error: any) {
+            const serverMsg = error?.response?.data?.message || error?.message || 'Unknown error';
+            console.error("Submission Error:", error?.response?.data || error);
+            toast.error(`Failed to log emissions: ${serverMsg}`);
         } finally {
             setIsSubmitting(false);
         }
