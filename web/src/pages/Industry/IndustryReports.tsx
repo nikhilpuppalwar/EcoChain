@@ -191,21 +191,33 @@ export default function IndustryReports() {
                 female_directors: parseInt(form.female_directors, 10),
             };
 
-            // Sync endpoint — generates DOCX in Node.js, uploads to Cloudinary, returns URL
-            const res = await api.post('/reports/generate', payload, { timeout: 90000 });
-            const data = res.data;
-
-            setLoading(false);
-            setActiveStep(-1);
-
-            const url = data.cloudinaryUrl || data.downloadUrl;
-            if (url) {
-                setDownloadUrl(url);
-                toast.success('ESG Report generated! Ready to download.');
-                fetchPastReports();
-            } else {
-                throw new Error('No download URL returned from server');
-            }
+            const res = await api.post('/reports/generate-async', payload);
+            const initData = res.data;
+            const jobId = initData.jobId;
+            
+            // Poll for status
+            const pollInterval = setInterval(async () => {
+                try {
+                    const stRes = await api.get(`/reports/status/${jobId}`);
+                    const stData = stRes.data;
+                    
+                    if (stData.status === 'completed') {
+                        clearInterval(pollInterval);
+                        setLoading(false);
+                        setActiveStep(-1);
+                        setDownloadUrl(stData.cloudinaryUrl);
+                        toast.success('ESG Report generated successfully! Ready to download.');
+                        fetchPastReports();
+                    } else if (stData.status === 'failed') {
+                        clearInterval(pollInterval);
+                        setLoading(false);
+                        setActiveStep(-1);
+                        toast.error(stData.error || 'Report generation failed');
+                    }
+                } catch (pollErr) {
+                    console.warn("Polling error", pollErr);
+                }
+            }, 5000);
 
         } catch (err: any) {
             console.error('ESG Report generation error:', err);
@@ -213,8 +225,8 @@ export default function IndustryReports() {
                      || err?.response?.data?.detail
                      || err?.response?.data?.error
                      || err?.message
-                     || 'Failed to generate report.';
-            toast.error(msg);
+                     || 'Failed to start report generation.';
+            toast.toast?.error ? toast.toast.error(msg) : toast.error(msg);
             setLoading(false);
             setActiveStep(-1);
         }
