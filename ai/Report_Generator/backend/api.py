@@ -27,6 +27,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.get("/")
+def root():
+    return {"message": "EcoChain Report Generator API is running."}
+
+
 class ReportData(BaseModel):
     company: str
     industry: str
