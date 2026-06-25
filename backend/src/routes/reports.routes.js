@@ -104,7 +104,7 @@ router.post('/generate-async', async (req, res) => {
             type: 'ESG',
             size: '0 MB',
             url: '',
-            status: 'processing',
+            status: 'pending',
         });
 
         return res.json({ success: true, jobId });
