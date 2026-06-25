@@ -106,6 +106,8 @@ This service auto-generates the BRSR docx report narratives and resides in the `
 5. Go to the **Environment Variables** tab and click **Add Environment Variable**:
    * Key: `OPENROUTER_API_KEY`
    * Value: `your_openrouter_api_key` *(If you have one; otherwise leave blank to fallback to built-in templates)*
+   * Key: `PYTHON_VERSION`
+   * Value: `3.11.9` *(This is crucial! It tells Render to use a modern Python version, ensuring compatible wheels for pydantic, matplotlib, and openai are installed cleanly without compiling from source)*
 6. Click **Deploy Web Service**.
 7. Copy the generated URL (e.g., `https://ecochain-ai-reports.onrender.com`).
 
