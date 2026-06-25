@@ -329,7 +329,7 @@ export default function IndustryReports() {
                             <a 
                                 href={downloadUrl}
                                 download={downloadUrl.startsWith('data:') ? 'ESG_Report.docx' : undefined}
-                                target="_blank"
+                                target={downloadUrl.startsWith('data:') ? undefined : '_blank'}
                                 rel="noopener noreferrer"
                                 className="flex items-center gap-2 bg-[#1A7A4A] text-white font-bold px-4 py-2 rounded-lg hover:bg-[#15613b] transition-colors text-sm"
                             >

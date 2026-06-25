@@ -289,7 +289,7 @@ async function buildReport(d, metrics, sectionTexts, chartBuf) {
         // Insert bar chart after "Emission Analysis" section (section 8, same as Python)
         if (sec.includes('Emission Analysis') && chartBuf) {
             mainChildren.push(new Paragraph({
-                children: [new ImageRun({ data: chartBuf, transformation: { width: 480, height: 300 } })],
+                children: [new ImageRun({ type: 'png', data: chartBuf, transformation: { width: 480, height: 300 } })],
                 alignment: AlignmentType.CENTER,
                 spacing: { before: 160, after: 80 },
             }));
