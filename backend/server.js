@@ -72,6 +72,7 @@ app.use('/api/admin', require('./src/routes/admin.routes'));
 
 
 // Basic Health Check
+app.get('/', (req, res) => res.status(200).send('EcoChain Backend API is running.'));
 app.get('/health', (req, res) => res.json({ status: 'ok', time: new Date() }));
 
 // Global Error Handler
