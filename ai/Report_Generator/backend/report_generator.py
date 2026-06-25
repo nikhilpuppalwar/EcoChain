@@ -70,7 +70,8 @@ Generate a highly detailed, extremely comprehensive 600-word analysis. Be extrem
     try:
         response = client.chat.completions.create(
             model="meta-llama/llama-3.1-70b-instruct",
-            messages=[{"role": "user", "content": prompt}]
+            messages=[{"role": "user", "content": prompt}],
+            timeout=15.0
         )
         return response.choices[0].message.content
     except Exception as e:
