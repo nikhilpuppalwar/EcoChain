@@ -62,8 +62,9 @@ exports.createEmission = async (req, res, next) => {
         } = req.body;
         
         // Ensure robust backward/forward compatibility handling depending on the client used
-        const actualMonth = periodMonth || (period ? period.split('-')[1].replace('Q', '0') : 1);
-        const actualYear = periodYear || (period ? period.split('-')[0] : new Date().getFullYear());
+        // parseInt ensures the value is always a Number (schema requires Number, min:1, max:12)
+        const actualMonth = parseInt(periodMonth || (period ? period.split('-')[1].replace('Q', '0') : 1), 10);
+        const actualYear = parseInt(periodYear || (period ? period.split('-')[0] : new Date().getFullYear()), 10);
         let sumTonnes = parseFloat(quantityTonnes || 0);
         if (scope1 || scope2 || scope3) {
             sumTonnes += parseFloat(scope1 || 0) + parseFloat(scope2 || 0) + parseFloat(scope3 || 0);
@@ -76,17 +77,49 @@ exports.createEmission = async (req, res, next) => {
         let evidenceFileName = undefined;
         let evidenceUrl = undefined;
 
+        // Wrap file upload so a Pinata/IPFS failure does NOT crash the whole submission
         if (req.file) {
-            evidenceFileName = req.file.originalname;
-            const ipfsHash = await pinataUtil.uploadFile(req.file.buffer, evidenceFileName, req.file.mimetype);
-            evidenceUrl = `https://gateway.pinata.cloud/ipfs/${ipfsHash}`;
+            try {
+                evidenceFileName = req.file.originalname;
+                const ipfsHash = await pinataUtil.uploadFile(req.file.buffer, evidenceFileName, req.file.mimetype);
+                evidenceUrl = `https://gateway.pinata.cloud/ipfs/${ipfsHash}`;
+            } catch (uploadError) {
+                console.error('[EMISSION] Evidence upload to IPFS failed (non-fatal):', uploadError.message);
+                // Still store the filename so the record knows a file was attached
+                evidenceFileName = req.file.originalname;
+                evidenceUrl = null;
+            }
         }
 
-        // Map frontend JSON strings back to objects (if they are passed as JSON strings via form-data)
-        const parsedWaste = wasteGeneration ? JSON.parse(wasteGeneration) : undefined;
-        const parsedLogistics = logisticsTransport ? JSON.parse(logisticsTransport) : undefined;
-        const parsedVehicles = vehicleEmissions ? JSON.parse(vehicleEmissions) : undefined;
-        const parsedProduction = productionOutput ? JSON.parse(productionOutput) : undefined;
+        // Safely parse JSON strings from multipart form-data.
+        // Values may arrive as a JSON string (form-data) or already as an object (JSON body).
+        // Never crash on malformed JSON — return undefined instead.
+        const safeParse = (val) => {
+            if (!val) return undefined;
+            if (typeof val === 'object') return val;
+            try { return JSON.parse(val); } catch (_) { return undefined; }
+        };
+
+        const rawWaste      = safeParse(wasteGeneration);
+        const rawLogistics  = safeParse(logisticsTransport);
+        const rawVehicles   = safeParse(vehicleEmissions);
+        const rawProduction = safeParse(productionOutput);
+
+        // Sanitize wasteGeneration enums so Mongoose validation never rejects them
+        const VALID_WASTE_TYPES = ['Solid', 'Liquid', 'Hazardous', 'e_waste', 'organic'];
+        const VALID_WASTE_UNITS = ['kg', 'tonne', 'Tons', 'Kg'];
+        const parsedWaste = Array.isArray(rawWaste)
+            ? rawWaste.map(w => ({
+                ...w,
+                wasteType: VALID_WASTE_TYPES.includes(w.wasteType) ? w.wasteType : 'Solid',
+                unit: VALID_WASTE_UNITS.includes(w.unit) ? w.unit : undefined,
+              }))
+            : undefined;
+
+        const parsedLogistics  = Array.isArray(rawLogistics)  ? rawLogistics  : undefined;
+        const parsedVehicles   = Array.isArray(rawVehicles)   ? rawVehicles   : undefined;
+        const parsedProduction = (rawProduction && typeof rawProduction === 'object' && !Array.isArray(rawProduction))
+            ? rawProduction : undefined;
 
         const emission = await EmissionEntry.create({
             company: req.user.company,
@@ -94,7 +127,7 @@ exports.createEmission = async (req, res, next) => {
             periodYear: actualYear,
             quantityTonnes: sumTonnes,
             emissionSource: emissionSource || 'Aggregated Scopes',
-            notes: notes || 'Submitted via script',
+            notes: (notes && notes.trim()) ? notes.trim() : 'Submitted via web form',
             location,
             wasteGeneration: parsedWaste,
             logisticsTransport: parsedLogistics,
@@ -105,45 +138,9 @@ exports.createEmission = async (req, res, next) => {
             status: 'submitted' // Starts at submitted, awaits AI check -> 'pending_govt_assignment'
         });
 
-        // Auto-Trigger the AI Check in the background
-        try {
-            await internalTriggerAICheck(emission._id);
-        } catch (aiError) {
-            console.error('Failed to run AI check automatically on submission:', aiError.message);
-        }
-
-        // Log SUBMISSION event to the decentralized ledger (non-blocking)
-        const Company = require('../models/Company');
-        const company = await Company.findById(req.user.company);
-        logBlockchainEvent({
-            eventType: 'SUBMISSION',
-            submission: emission,
-            company,
-            details: `Industry submitted ${sumTonnes} tCO₂e for period ${actualMonth}/${actualYear}. Source: ${emissionSource || 'Mixed'}.`,
-            actor: 'industry'
-        });
-
-        // Notify government users
-        const govUsers = await User.find({ role: 'government', isActive: true });
-
-        // Create notifications for all gov admins (in production, targeted by jurisdiction)
-        const notifications = govUsers.map(govUser => ({
-            user: govUser._id,
-            type: 'compliance_alert',
-            title: 'New Emission Report',
-            message: `A new emission report of ${sumTonnes} tCO2e was submitted and processed.`
-        }));
-        await Notification.insertMany(notifications);
-
-        broadcastToRole('government', {
-            type: 'report_submitted',
-            emissionId: emission._id,
-            message: 'A new emission report was submitted'
-        });
-
-        // Return the specific JSON formatting expected by the user's manual curl test
-        res.status(201).json({ 
-            message: "Emission submitted successfully", 
+        // Send success response immediately — background tasks run after
+        res.status(201).json({
+            message: 'Emission submitted successfully',
             submission: {
                 _id: emission._id,
                 status: emission.status,
@@ -151,9 +148,54 @@ exports.createEmission = async (req, res, next) => {
                 evidenceUrl
             },
             success: true,
-            data: emission // Included so standard frontend doesn't break
+            data: emission
         });
+
+        // ── Background: AI Check ──────────────────────────────────────────
+        try {
+            await internalTriggerAICheck(emission._id);
+        } catch (aiError) {
+            console.error('[EMISSION] AI check failed (non-fatal):', aiError.message);
+        }
+
+        // ── Background: Blockchain Ledger ────────────────────────────────
+        try {
+            const Company = require('../models/Company');
+            const company = await Company.findById(req.user.company);
+            logBlockchainEvent({
+                eventType: 'SUBMISSION',
+                submission: emission,
+                company,
+                details: `Industry submitted ${sumTonnes} tCO\u2082e for period ${actualMonth}/${actualYear}. Source: ${emissionSource || 'Mixed'}.`,
+                actor: 'industry'
+            });
+        } catch (ledgerError) {
+            console.error('[EMISSION] Ledger log failed (non-fatal):', ledgerError.message);
+        }
+
+        // ── Background: Notify government users ──────────────────────────
+        try {
+            const govUsers = await User.find({ role: 'government', isActive: true }).select('_id').lean();
+            if (govUsers.length > 0) {
+                const notifications = govUsers.map(govUser => ({
+                    user: govUser._id,
+                    type: 'compliance_alert',
+                    title: 'New Emission Report',
+                    message: `A new emission report of ${sumTonnes} tCO2e was submitted and is awaiting review.`
+                }));
+                await Notification.insertMany(notifications, { ordered: false });
+            }
+            broadcastToRole('government', {
+                type: 'report_submitted',
+                emissionId: emission._id,
+                message: 'A new emission report was submitted'
+            });
+        } catch (notifError) {
+            console.error('[EMISSION] Notification failed (non-fatal):', notifError.message);
+        }
+
     } catch (error) {
+        console.error('[EMISSION] createEmission fatal error:', error.message);
         next(error);
     }
 };
@@ -193,12 +235,18 @@ exports.updateEmission = async (req, res, next) => {
         emission.notes = notes || emission.notes;
 
         if (req.file) {
-            emission.evidenceFileName = req.file.originalname;
-            emission.evidenceUrl = await cloudinaryUtil.uploadFile(
-                req.file.buffer,
-                emission.evidenceFileName,
-                req.file.mimetype
-            );
+            try {
+                emission.evidenceFileName = req.file.originalname;
+                const ipfsHash = await pinataUtil.uploadFile(
+                    req.file.buffer,
+                    emission.evidenceFileName,
+                    req.file.mimetype
+                );
+                emission.evidenceUrl = `https://gateway.pinata.cloud/ipfs/${ipfsHash}`;
+            } catch (uploadError) {
+                console.error('[EMISSION] Evidence upload failed on update (non-fatal):', uploadError.message);
+                emission.evidenceFileName = req.file.originalname;
+            }
         }
 
         await emission.save();
