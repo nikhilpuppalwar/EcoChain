@@ -191,37 +191,30 @@ export default function IndustryReports() {
                 female_directors: parseInt(form.female_directors, 10),
             };
 
-            const res = await api.post('/reports/generate-async', payload);
-            const initData = res.data;
-            const jobId = initData.jobId;
-            
-            // Poll for status
-            const pollInterval = setInterval(async () => {
-                try {
-                    const stRes = await api.get(`/reports/status/${jobId}`);
-                    const stData = stRes.data;
-                    
-                    if (stData.status === 'completed') {
-                        clearInterval(pollInterval);
-                        setLoading(false);
-                        setActiveStep(-1);
-                        setDownloadUrl(stData.cloudinaryUrl || `${API_BASE}/api/reports/download/${encodeURIComponent(stData.report)}`);
-                        toast.success('ESG Report generated! Ready to download.');
-                        fetchPastReports();
-                    } else if (stData.status === 'failed') {
-                        clearInterval(pollInterval);
-                        setLoading(false);
-                        setActiveStep(-1);
-                        toast.error(stData.error || 'Report generation failed');
-                    }
-                } catch (pollErr) {
-                    console.warn("Polling error", pollErr);
-                }
-            }, 5000);
+            // Sync endpoint — generates DOCX in Node.js, uploads to Cloudinary, returns URL
+            const res = await api.post('/reports/generate', payload, { timeout: 90000 });
+            const data = res.data;
+
+            setLoading(false);
+            setActiveStep(-1);
+
+            const url = data.cloudinaryUrl || data.downloadUrl;
+            if (url) {
+                setDownloadUrl(url);
+                toast.success('ESG Report generated! Ready to download.');
+                fetchPastReports();
+            } else {
+                throw new Error('No download URL returned from server');
+            }
 
         } catch (err: any) {
-            console.error(err);
-            toast.error(err.response?.data?.message || err.message || 'Failed to start report generation.');
+            console.error('ESG Report generation error:', err);
+            const msg = err?.response?.data?.message
+                     || err?.response?.data?.detail
+                     || err?.response?.data?.error
+                     || err?.message
+                     || 'Failed to generate report.';
+            toast.error(msg);
             setLoading(false);
             setActiveStep(-1);
         }
@@ -335,7 +328,9 @@ export default function IndustryReports() {
                             </div>
                             <a 
                                 href={downloadUrl}
-                                download
+                                download={downloadUrl.startsWith('data:') ? 'ESG_Report.docx' : undefined}
+                                target="_blank"
+                                rel="noopener noreferrer"
                                 className="flex items-center gap-2 bg-[#1A7A4A] text-white font-bold px-4 py-2 rounded-lg hover:bg-[#15613b] transition-colors text-sm"
                             >
                                 <span className="material-symbols-outlined text-sm">download</span>
