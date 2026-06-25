@@ -75,8 +75,8 @@ EcoChain replaces fragmented, fraud-prone manual processes with a **single, auto
 ### Team Members:
 | Name | Role | Contact |
 |---|---|---|
-| **PRATIK GHAVATE** | 👑 Team Leader | [pratik.ghavate23@pccoepune.org](mailto:pratik.ghavate23@pccoepune.org) |
-| **Nikhil Puppalwar** | Full-Stack & Blockchain Dev | [nikhilpuppalwar16@gmail.com](mailto:nikhilpuppalwar16@gmail.com) |
+| **PRATIK GHAVATE** | PPT and Backend Dev | [pratik.ghavate23@pccoepune.org](mailto:pratik.ghavate23@pccoepune.org) |
+| **Nikhil Puppalwar** | Full-Stack & Blockchain Dev & 👑 Team Leader | [nikhilpuppalwar16@gmail.com](mailto:nikhilpuppalwar16@gmail.com) |
 | **Nihar Salvi** | AI/ML & Backend Dev | [niharsalvi2@gmail.com](mailto:niharsalvi2@gmail.com) |
 | **VIJAY DHAME** | Frontend & Smart Contract Dev | [vijay.dhame23@pccoepune.org](mailto:vijay.dhame23@pccoepune.org) |
 
