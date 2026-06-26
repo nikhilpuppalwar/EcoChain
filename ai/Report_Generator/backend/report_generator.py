@@ -50,22 +50,12 @@ def generate_section(title, data):
             f"environmental stewardship and regulatory compliance."
         )
 
-    prompt = f"""
-Write a professional ESG carbon audit report section.
+    prompt = f"""Write a concise professional ESG carbon audit report section titled "{title}".
 
-Company: {data['company']}
-Industry: {data['industry']}
-Revenue: {data['revenue']}
+Company: {data['company']} | Industry: {data['industry']} | Revenue: USD {data['revenue']:,}
+Scope 1: {round(data.get('scope1', 0), 2)} tCO2e | Scope 2: {round(data.get('scope2', 0), 2)} tCO2e | Scope 3: {round(data.get('scope3', 0), 2)} tCO2e
 
-Scope1: {data['scope1']}
-Scope2: {data['scope2']}
-Scope3: {data['scope3']}
-
-Write about sustainability strategy,
-risks, compliance and environmental impact.
-
-Generate a highly detailed, extremely comprehensive 600-word analysis. Be extremely thorough.
-"""
+Write 2-3 paragraphs (around 150-200 words) covering sustainability strategy, compliance and environmental impact. Be professional and data-driven."""
 
     try:
         response = client.chat.completions.create(
@@ -131,30 +121,22 @@ def generate_report(data):
 
     sections = [
         "1. Executive Summary",
-        "2. Corporate Identity and Overview",
-        "3. Macro Environmental Impact",
-        "4. Carbon Reduction Master Strategy",
-        "5. Direct Emission Profile (Scope 1)",
-        "6. Indirect Energy Emissions (Scope 2)",
-        "7. Value Chain Emissions (Scope 3)",
-        "8. Emission Analysis and Distribution",
-        "9. Waste Management and Recycling Protocols",
-        "10. Water Resource Utilization",
-        "11. Renewable Energy Transition Models",
-        "12. Supply Chain Sustainability",
-        "13. Social Responsibility and Workforce Demographics",
-        "14. Corporate Governance & Board Diversity",
-        "15. GHG Protocol Verification and Compliance",
-        "16. Climate Risk Factors and TCFD Alignment",
-        "17. Future Sustainability Roadmap 2030",
-        "18. Concluding Remarks and Commitments"
+        "2. Direct Emission Profile (Scope 1)",
+        "3. Indirect Energy Emissions (Scope 2)",
+        "4. Value Chain Emissions (Scope 3)",
+        "5. Emission Analysis and Distribution",
+        "6. Waste Management and Recycling",
+        "7. Social Responsibility and Workforce",
+        "8. Corporate Governance & Board Diversity",
+        "9. GHG Protocol Compliance & TCFD Alignment",
+        "10. Sustainability Roadmap 2030",
     ]
 
     def process_section(sec):
         return sec, generate_section(sec, data)
 
-    # Parallelize LLM text generation - max 10 to avoid excessive API rate limits
-    with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+    # Parallelize LLM text generation - max 6 concurrent requests
+    with concurrent.futures.ThreadPoolExecutor(max_workers=6) as executor:
         results = dict(executor.map(process_section, sections))
 
     for sec in sections:

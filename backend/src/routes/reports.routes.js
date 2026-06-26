@@ -101,6 +101,10 @@ router.post('/generate-async', async (req, res) => {
             }
         }
 
+        // Pre-warm the Python Render instance (fire-and-forget; ignore errors)
+        const cleanBase = PYTHON_SERVICE_URL.replace(/\\/generate-report$/, '');
+        axios.get(`${cleanBase}/`, { timeout: 5000 }).catch(() => {});
+
         // Call the Python AI Report service
         let pythonRes;
         try {

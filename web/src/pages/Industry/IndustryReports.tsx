@@ -44,10 +44,10 @@ const DEFAULT_FORM: FormData = {
 
 // ─── Animated progress steps ─────────────────────────────────────────────────
 const PROGRESS_STEPS = [
-    { label: 'Calculating emissions', icon: 'calculate', delay: 0 },
-    { label: 'Running ESG analysis', icon: 'analytics', delay: 1800 },
-    { label: 'Generating AI narratives', icon: 'psychology', delay: 5000 },
-    { label: 'Building Word document', icon: 'description', delay: 25000 },
+    { label: 'Connecting to AI service', icon: 'cloud', delay: 0 },
+    { label: 'Calculating emissions', icon: 'calculate', delay: 4000 },
+    { label: 'Generating AI narratives', icon: 'psychology', delay: 10000 },
+    { label: 'Building Word document', icon: 'description', delay: 20000 },
 ];
 
 // ─── Past reports (static demo data) ─────────────────────────────────────────
@@ -209,6 +209,10 @@ export default function IndustryReports() {
                 board_members: parseInt(form.board_members, 10),
                 female_directors: parseInt(form.female_directors, 10),
             };
+
+            // Fire-and-forget wake-up ping to pre-warm Render free-tier instance
+            // before submitting the heavy generation job. Errors are intentionally ignored.
+            api.get('/reports/status/__warmup__').catch(() => {});
 
             const res = await api.post('/reports/generate-async', payload);
             const initData = res.data;
