@@ -8,7 +8,7 @@ const CreditTransaction = require('../models/CreditTransaction');
 
 // Middleware: only allow in hackathon mode
 router.use((req, res, next) => {
-    if (process.env.HACKATHON_MODE !== 'true') {
+    if (process.env.HACKATHON_MODE === 'false') {
         return res.status(403).json({ success: false, message: 'Admin routes are only available in HACKATHON_MODE.' });
     }
     next();

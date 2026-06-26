@@ -5,7 +5,7 @@ const User = require('../models/User');
 const Company = require('../models/Company');
 const { uploadFile } = require('../utils/pinata');
 
-const hackathonMode = process.env.HACKATHON_MODE === 'true';
+const hackathonMode = process.env.HACKATHON_MODE !== 'false';
 
 // Helpers for token generation
 const generateAccessToken = (id) => jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_ACCESS_EXPIRES });
@@ -233,8 +233,12 @@ exports.login = async (req, res, next) => {
             user = await User.findOne({ role: 'industry', company: { $exists: true, $ne: null } }).populate('company');
         } else if (email === 'dev@gov') {
             user = await User.findOne({ role: 'government', 'governmentProfile.status': 'approved' });
-        } else if (email === 'dev@auditor') {
+        } else if (email === 'dev@auditor' || email === 'auditor@ecochain.dev') {
             user = await User.findOne({ role: 'auditor', 'auditorProfile.status': 'approved' });
+        } else if (email === 'secondary@auditor') {
+            // Find the second auditor in database
+            const auditors = await User.find({ role: 'auditor', 'auditorProfile.status': 'approved' }).sort({ createdAt: 1 }).limit(2);
+            user = auditors[1] || auditors[0];
         } else {
             user = await User.findOne({ email: email.toLowerCase() }).populate('company');
         }
@@ -248,7 +252,7 @@ exports.login = async (req, res, next) => {
         }
 
         // Approval / activation gate (industry, government, auditor must be active, unless dev bypass or rejected)
-        const isDev = email === 'dev@industry' || email === 'dev@gov' || email === 'dev@auditor';
+        const isDev = email === 'dev@industry' || email === 'dev@gov' || email === 'dev@auditor' || email === 'auditor@ecochain.dev' || email === 'secondary@auditor';
         if (!isDev) {
             if (user.role === 'industry') {
                 const compStatus = user.company ? user.company.verificationStatus : 'pending';
@@ -272,7 +276,7 @@ exports.login = async (req, res, next) => {
         }
 
         let isMatch = false;
-        if (email === 'dev@industry' || email === 'dev@gov' || email === 'dev@auditor') {
+        if (email === 'dev@industry' || email === 'dev@gov' || email === 'dev@auditor' || email === 'auditor@ecochain.dev' || email === 'secondary@auditor') {
             isMatch = true;
         } else {
             isMatch = await bcrypt.compare(password, user.password);

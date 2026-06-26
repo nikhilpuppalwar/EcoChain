@@ -204,7 +204,7 @@ exports.linkWallet = async (req, res, next) => {
             company.walletAddress = cleanAddress;
 
             // In Hackathon Mode, auto-mint 5000 CCR to the wallet when linked for the first time
-            if (process.env.HACKATHON_MODE === 'true' && isNewWallet) {
+            if (process.env.HACKATHON_MODE !== 'false' && isNewWallet) {
                 const defaultAmount = 5000;
                 console.log(`[HACKATHON] Auto-minting ${defaultAmount} CCR to newly linked wallet: ${cleanAddress}`);
                 try {

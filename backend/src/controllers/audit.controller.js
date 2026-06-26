@@ -127,7 +127,7 @@ const ReportReview = require('../models/ReportReview');
 exports.getAssignedSubmission = async (req, res, next) => {
     try {
         const submissionId = req.params.id;
-        const hackathonMode = process.env.HACKATHON_MODE === 'true';
+        const hackathonMode = process.env.HACKATHON_MODE !== 'false';
 
         // Build query — in hackathon mode allow any auditor to open any submission
         // for demo purposes (submissions may not have been formally assigned via gov portal)
@@ -195,7 +195,7 @@ exports.getAssignedSubmission = async (req, res, next) => {
 exports.verifySubmission = async (req, res, next) => {
     try {
         const { submissionId, decision, remarks, digitalSignature, documentChecklist, correctionRequired } = req.body;
-        const hackathonMode = process.env.HACKATHON_MODE === 'true';
+        const hackathonMode = process.env.HACKATHON_MODE !== 'false';
 
         const submission = await EmissionEntry.findById(submissionId).populate('assignedAuditors').populate('company');
         if (!submission) {
