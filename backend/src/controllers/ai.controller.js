@@ -7,7 +7,11 @@ const Company = require('../models/Company');
 const Notification = require('../models/Notification');
 const { broadcastToRole } = require('../utils/websocket');
 
-const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://localhost:8000';
+const DEFAULT_AI_URL = process.env.NODE_ENV === 'production'
+    ? 'https://ecochain-ai-anomaly.onrender.com'
+    : 'http://localhost:8000';
+
+const AI_SERVICE_URL = process.env.AI_SERVICE_URL || DEFAULT_AI_URL;
 
 /* ===========================
  * INTERNAL HELPER — Build AI payload from emission entry

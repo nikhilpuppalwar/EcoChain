@@ -29,7 +29,11 @@ const { verifyToken } = require('../middleware/auth');
 const ESGReport = require('../models/ESGReport');
 const cloudinaryUtil = require('../utils/cloudinary');
 
-const PYTHON_SERVICE_URL = process.env.PYTHON_REPORT_API_URL || 'http://localhost:8001';
+const DEFAULT_PYTHON_URL = process.env.NODE_ENV === 'production'
+    ? 'https://ecochain-ai-reports.onrender.com'
+    : 'http://localhost:8001';
+
+const PYTHON_SERVICE_URL = process.env.PYTHON_REPORT_API_URL || DEFAULT_PYTHON_URL;
 
 /**
  * Helper: Download a .docx from the Python service and upload it to Cloudinary.

@@ -7,7 +7,11 @@ const generateBRSRReport = async (submission, auditReport) => {
     console.log(`[BRSR Generator] Generating report for submission ${submission._id}...`);
     
     try {
-        const REPORT_API_URL = process.env.PYTHON_REPORT_API_URL || 'http://localhost:8001/generate-report';
+        const DEFAULT_REPORT_API_URL = process.env.NODE_ENV === 'production'
+            ? 'https://ecochain-ai-reports.onrender.com/generate-report'
+            : 'http://localhost:8001/generate-report';
+
+        const REPORT_API_URL = process.env.PYTHON_REPORT_API_URL || DEFAULT_REPORT_API_URL;
         
         // Map submission data to what the FastAPI payload (ReportData) expects
         const payload = {
