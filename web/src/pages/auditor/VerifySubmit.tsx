@@ -38,15 +38,35 @@ export default function VerifySubmit() {
 
     const [submissionData, setSubmissionData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
+    const [queue, setQueue] = useState<any[]>([]);
 
     useEffect(() => {
         const fetchData = async () => {
+            // If id is 'new' or not a valid ObjectId, load the queue picker instead
+            if (!id || id === 'new' || id.length !== 24) {
+                try {
+                    const qRes = await api.get('/audit/queue');
+                    setQueue(qRes.data.data || []);
+                } catch (err) {
+                    console.error('Failed to load audit queue', err);
+                }
+                setLoading(false);
+                return;
+            }
             try {
                 const res = await api.get(`/audit/submission/${id}`);
                 setSubmissionData(res.data.data);
-            } catch (err) {
-                toast.error('Failed to load submission data');
+            } catch (err: any) {
+                const msg = err?.response?.data?.message || 'Failed to load submission data';
+                toast.error(msg);
                 console.error(err);
+                // If invalid ID, fall back to queue picker
+                if (err?.response?.status === 400 || err?.response?.status === 404) {
+                    try {
+                        const qRes = await api.get('/audit/queue');
+                        setQueue(qRes.data.data || []);
+                    } catch {}
+                }
             } finally {
                 setLoading(false);
             }
@@ -269,8 +289,83 @@ export default function VerifySubmit() {
         return <div className="p-8 text-center text-gray-500">Loading submission data...</div>;
     }
 
+    // ── Submission Picker ──────────────────────────────────────────────────────
+    // Shown when navigating to /auditor/verify/new or when submission lookup fails
     if (!submissionData) {
-        return <div className="p-8 text-center text-red-500 font-bold">Failed to load submission or you are not assigned to it.</div>;
+        return (
+            <div className="space-y-5 max-w-2xl mx-auto">
+                <div>
+                    <h1 className="text-2xl font-black text-gray-900">Verify &amp; Submit</h1>
+                    <p className="text-gray-400 text-sm mt-1">Select a submission from your audit queue to begin verification.</p>
+                </div>
+
+                {queue.length === 0 ? (
+                    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-12 text-center">
+                        <span className="material-symbols-outlined text-5xl text-gray-300 block mb-3">assignment</span>
+                        <p className="font-bold text-gray-500">No submissions assigned to you yet.</p>
+                        <p className="text-sm text-gray-400 mt-1">The government portal will assign cases to you once submissions are reviewed.</p>
+                        <button
+                            onClick={() => navigate('/auditor/queue')}
+                            className="mt-5 inline-flex items-center gap-2 bg-[#1A7A4A] text-white font-bold px-5 py-2.5 rounded-xl hover:bg-[#15613b] transition-colors text-sm"
+                        >
+                            <span className="material-symbols-outlined text-sm">list</span>
+                            View Audit Queue
+                        </button>
+                    </div>
+                ) : (
+                    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                        <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-xl bg-blue-50 flex items-center justify-center">
+                                <span className="material-symbols-outlined text-blue-600 text-sm">assignment_ind</span>
+                            </div>
+                            <div>
+                                <h2 className="font-black text-gray-900 text-sm">Your Assigned Submissions</h2>
+                                <p className="text-xs text-gray-400">{queue.length} pending verification</p>
+                            </div>
+                        </div>
+                        <div className="divide-y divide-gray-50">
+                            {queue.map((item: any) => {
+                                const riskFlag = item.aiResult?.riskFlag;
+                                const flagColor = riskFlag === 'GREEN' ? 'text-green-600' : riskFlag === 'AMBER' ? 'text-amber-600' : 'text-red-600';
+                                const flagEmoji = riskFlag === 'GREEN' ? '🟢' : riskFlag === 'AMBER' ? '🟡' : '🔴';
+                                return (
+                                    <div
+                                        key={item._id}
+                                        className="flex items-center justify-between px-5 py-4 hover:bg-gray-50 transition-colors cursor-pointer"
+                                        onClick={() => navigate(`/auditor/verify/${item._id}`)}
+                                    >
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-10 h-10 rounded-xl bg-[#1A7A4A]/10 flex items-center justify-center flex-shrink-0">
+                                                <span className="material-symbols-outlined text-[#1A7A4A] text-sm">fact_check</span>
+                                            </div>
+                                            <div>
+                                                <p className="font-bold text-gray-900 text-sm">{item.company?.name || 'Unknown Company'}</p>
+                                                <p className="text-xs text-gray-400">
+                                                    {item.periodMonth}/{item.periodYear} · {item.emissionSource || 'General'} · {item.quantityTonnes} tCO₂e
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-3 flex-shrink-0">
+                                            {riskFlag && (
+                                                <span className={`text-xs font-black ${flagColor}`}>{flagEmoji} {riskFlag}</span>
+                                            )}
+                                            <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                                                item.status === 'pending_audit' ? 'bg-amber-100 text-amber-700' :
+                                                item.status === 'awaiting_second_auditor' ? 'bg-purple-100 text-purple-700' :
+                                                'bg-blue-100 text-blue-700'
+                                            }`}>
+                                                {item.status?.replace(/_/g, ' ')}
+                                            </span>
+                                            <span className="material-symbols-outlined text-gray-300 text-sm">chevron_right</span>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                )}
+            </div>
+        );
     }
 
     return (

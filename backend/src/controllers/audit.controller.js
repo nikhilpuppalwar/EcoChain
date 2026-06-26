@@ -129,6 +129,13 @@ exports.getAssignedSubmission = async (req, res, next) => {
         const submissionId = req.params.id;
         const hackathonMode = process.env.HACKATHON_MODE !== 'false';
 
+        // Guard: validate that submissionId is a valid MongoDB ObjectId
+        // Prevents a 500 crash when the sidebar links to /auditor/verify/new
+        const mongoose = require('mongoose');
+        if (!mongoose.Types.ObjectId.isValid(submissionId)) {
+            return res.status(400).json({ success: false, message: 'Invalid submission ID. Please select a submission from the Audit Queue.' });
+        }
+
         // Build query — in hackathon mode allow any auditor to open any submission
         // for demo purposes (submissions may not have been formally assigned via gov portal)
         const query = hackathonMode
