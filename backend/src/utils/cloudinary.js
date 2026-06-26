@@ -15,8 +15,10 @@ const uploadFile = (fileBuffer, fileName, mimeType = '') => {
         // Prevent crashing if no credentials are configured
         const config = cloudinary.config();
         if (!config.cloud_name || config.cloud_name === 'PLEASE_SET_YOUR_CLOUD_NAME') {
-             console.error("Cloudinary Error: Missing Cloud Name. File upload skipped.");
-             return resolve("https://res.cloudinary.com/demo/image/upload/sample.jpg"); // Return a dummy URL so the DB insertion doesn't fail
+            return reject(new Error('Cloudinary upload skipped: CLOUDINARY_CLOUD_NAME is not configured.'));
+        }
+        if (!config.api_secret || config.api_secret === 'your_cloudinary_api_secret_here') {
+            return reject(new Error('Cloudinary upload skipped: CLOUDINARY_API_SECRET is not configured. Set it in your Render environment variables.'));
         }
 
         // Determine if file needs to be uploaded as a 'raw' asset (non-image files like docx, pdf, xlsx)

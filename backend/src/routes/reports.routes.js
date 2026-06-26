@@ -31,13 +31,46 @@ const cloudinaryUtil = require('../utils/cloudinary');
 
 const PYTHON_SERVICE_URL = process.env.PYTHON_REPORT_API_URL || 'http://localhost:8001';
 
+/**
+ * Helper: Download a .docx from the Python service and upload it to Cloudinary.
+ * Updates the ESGReport document in-place and returns the cloudinary URL.
+ */
+async function downloadAndUpload(report, filename) {
+    const cleanBaseUrl = PYTHON_SERVICE_URL.replace(/\/generate-report$/, '');
+
+    // Download the generated file from Python microservice
+    const downloadRes = await axios.get(
+        `${cleanBaseUrl}/download/${encodeURIComponent(filename)}`,
+        { responseType: 'arraybuffer', timeout: 30000 }
+    );
+
+    const buffer = Buffer.from(downloadRes.data);
+    const sizeMB = (buffer.length / (1024 * 1024)).toFixed(2);
+
+    // Upload to Cloudinary
+    const cloudinaryUrl = await cloudinaryUtil.uploadFile(
+        buffer,
+        filename,
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    );
+
+    // Persist results to MongoDB
+    report.status = 'completed';
+    report.url = cloudinaryUrl;
+    report.size = `${sizeMB} MB`;
+    await report.save();
+
+    return cloudinaryUrl;
+}
+
 router.use(verifyToken);
 
 // GET /api/reports/past
 router.get('/past', async (req, res, next) => {
     try {
+        // Return completed AND failed/stuck reports so users can retry failed uploads
         const reports = await ESGReport
-            .find({ company: req.user.company, status: 'completed' })
+            .find({ company: req.user.company, status: { $in: ['completed', 'failed'] } })
             .sort({ createdAt: -1 });
         res.status(200).json({ success: true, data: reports });
     } catch (err) {
@@ -125,12 +158,20 @@ router.get('/status/:jobId', async (req, res) => {
             return res.status(404).json({ success: false, status: 'not_found', message: 'Job not found' });
         }
 
-        // If completed or failed, return immediately
-        if (report.status === 'completed' || report.status === 'failed') {
+        // If already completed AND has a valid URL, return immediately
+        if (report.status === 'completed' && report.url) {
             return res.json({
-                status: report.status,
+                status: 'completed',
                 cloudinaryUrl: report.url,
                 report: report.name,
+            });
+        }
+
+        // If marked failed (and no retry requested), return immediately
+        if (report.status === 'failed') {
+            return res.json({
+                status: 'failed',
+                error: 'Report generation previously failed. Use the repair endpoint to retry.',
             });
         }
 
@@ -150,42 +191,15 @@ router.get('/status/:jobId', async (req, res) => {
         if (pythonData.status === 'completed') {
             const filename = pythonData.report;
 
-            // Download file from Python microservice
-            let downloadRes;
+            // Download from Python + upload to Cloudinary via shared helper
+            let cloudinaryUrl;
             try {
-                downloadRes = await axios.get(`${cleanBaseUrl}/download/${encodeURIComponent(filename)}`, {
-                    responseType: 'arraybuffer',
-                    timeout: 20000,
-                });
-            } catch (err) {
-                console.error(`[Node Backend] Failed to download file ${filename} from Python microservice:`, err.message);
-                return res.json({ status: 'processing' });
-            }
-
-            const buffer = Buffer.from(downloadRes.data);
-            const sizeMB = (buffer.length / (1024 * 1024)).toFixed(2);
-
-            // Upload file to Cloudinary
-            let cloudinaryUrl = '';
-            try {
-                cloudinaryUrl = await cloudinaryUtil.uploadFile(
-                    buffer,
-                    filename,
-                    'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-                );
+                cloudinaryUrl = await downloadAndUpload(report, filename);
             } catch (upErr) {
                 console.error('[Node Backend] Cloudinary upload failed during async report completion:', upErr.message);
-                // Mark job as failed if Cloudinary upload failed and we cannot host it
-                report.status = 'failed';
-                await report.save();
-                return res.json({ status: 'failed', error: 'Cloudinary upload failed' });
+                // Keep status as pending so next poll re-tries — don't mark failed yet
+                return res.json({ status: 'processing' });
             }
-
-            // Update record in MongoDB
-            report.status = 'completed';
-            report.url = cloudinaryUrl;
-            report.size = `${sizeMB} MB`;
-            await report.save();
 
             return res.json({
                 status: 'completed',
@@ -210,6 +224,61 @@ router.get('/status/:jobId', async (req, res) => {
 router.post('/generate', (req, res, next) => {
     req.url = '/generate-async';
     router.handle(req, res, next);
+});
+
+/**
+ * POST /api/reports/repair/:reportId
+ * Re-download the .docx from the Python service and re-upload to Cloudinary.
+ * Used to fix past reports that completed generation but have an empty/missing URL
+ * (e.g. because Cloudinary credentials were not configured at the time).
+ */
+router.post('/repair/:reportId', async (req, res) => {
+    try {
+        const report = await ESGReport.findById(req.params.reportId);
+        if (!report) {
+            return res.status(404).json({ success: false, message: 'Report not found' });
+        }
+
+        // Derive the expected filename from the report name
+        // Report name format: "<Company> ESG Report <Month> <Year>"
+        // Filename format: "<Company>_ESG_Report.docx"
+        const company = report.name
+            .replace(/\s+ESG Report.*$/, '')  // strip " ESG Report Jun 2026"
+            .trim();
+        const safeCompany = company.replace(/[^a-zA-Z0-9 _-]/g, '').trim().replace(/ /g, '_');
+        const filename = `${safeCompany}_ESG_Report.docx`;
+
+        const cleanBaseUrl = PYTHON_SERVICE_URL.replace(/\/generate-report$/, '');
+
+        // Verify file still exists on Python service
+        let headCheck;
+        try {
+            headCheck = await axios.head(
+                `${cleanBaseUrl}/download/${encodeURIComponent(filename)}`,
+                { timeout: 8000 }
+            );
+        } catch (err) {
+            return res.status(503).json({
+                success: false,
+                message: `Generated file '${filename}' is no longer available on the AI service. ` +
+                         'Please regenerate this report from the form.',
+            });
+        }
+
+        // Re-download and upload to Cloudinary
+        let cloudinaryUrl;
+        try {
+            cloudinaryUrl = await downloadAndUpload(report, filename);
+        } catch (upErr) {
+            console.error('[Node Backend] Repair: Cloudinary upload failed:', upErr.message);
+            return res.status(500).json({ success: false, message: 'Cloudinary upload failed: ' + upErr.message });
+        }
+
+        return res.json({ success: true, cloudinaryUrl });
+    } catch (err) {
+        console.error('[Node Backend] Repair error:', err.message);
+        res.status(500).json({ success: false, message: 'Repair failed: ' + err.message });
+    }
 });
 
 module.exports = router;

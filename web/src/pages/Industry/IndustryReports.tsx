@@ -131,6 +131,7 @@ export default function IndustryReports() {
     const linkRef = useRef<HTMLAnchorElement>(null);
 
     const [pastReports, setPastReports] = useState<any[]>([]);
+    const [retrying, setRetrying] = useState<Record<string, boolean>>({});
 
     const fetchPastReports = async () => {
         try {
@@ -146,6 +147,24 @@ export default function IndustryReports() {
     useEffect(() => {
         fetchPastReports();
     }, []);
+
+    const handleRetry = async (reportId: string) => {
+        setRetrying(prev => ({ ...prev, [reportId]: true }));
+        try {
+            const res = await api.post(`/reports/repair/${reportId}`);
+            if (res.data.success) {
+                toast.success('Report upload repaired! You can now download it.');
+                await fetchPastReports();
+            } else {
+                toast.error(res.data.message || 'Repair failed.');
+            }
+        } catch (err: any) {
+            const msg = err?.response?.data?.message || err?.message || 'Repair request failed.';
+            toast.error(msg);
+        } finally {
+            setRetrying(prev => ({ ...prev, [reportId]: false }));
+        }
+    };
 
     const handleChange = (key: keyof FormData, value: string) => {
         setForm(prev => ({ ...prev, [key]: value }));
@@ -451,12 +470,22 @@ export default function IndustryReports() {
                                     </a>
                                 ) : (
                                     <button
-                                        onClick={() => toast.error('No upload link available.')}
-                                        className="text-xs font-bold text-slate-400 border border-slate-200 px-3 py-1
-                                                   rounded-lg cursor-not-allowed flex-shrink-0"
-                                        disabled
+                                        onClick={() => handleRetry(r._id)}
+                                        disabled={!!retrying[r._id]}
+                                        title="Re-upload report to cloud storage"
+                                        className="flex items-center gap-1.5 text-xs font-bold text-amber-600 border border-amber-300
+                                                   bg-amber-50 px-3 py-1 rounded-lg hover:bg-amber-100 transition-colors
+                                                   flex-shrink-0 disabled:opacity-60 disabled:cursor-not-allowed"
                                     >
-                                        Unavailable
+                                        {retrying[r._id] ? (
+                                            <svg className="animate-spin w-3 h-3" fill="none" viewBox="0 0 24 24">
+                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                                            </svg>
+                                        ) : (
+                                            <span className="material-symbols-outlined text-xs">cloud_upload</span>
+                                        )}
+                                        {retrying[r._id] ? 'Retrying…' : 'Retry Upload'}
                                     </button>
                                 )}
                             </div>
